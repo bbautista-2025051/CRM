@@ -28,14 +28,16 @@ const currencySymbol = (currency: string): string => {
   return symbol;
 };
 
+const NUMBER_LOCALE = 'es-GT';
+
 const formatCurrencyNumber = (numeric: number, currency: string): string => {
   const key = currency.toUpperCase();
   const symbol = currencySymbol(key);
-  const formatted = new Intl.NumberFormat('en-US', {
+  const formatted = new Intl.NumberFormat(NUMBER_LOCALE, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(numeric);
-  return `${symbol} ${formatted}`;
+  }).format(Math.abs(numeric));
+  return `${numeric < 0 ? '-' : ''}${symbol} ${formatted}`;
 };
 
 export const formatMoney = (
@@ -52,13 +54,13 @@ export const formatMoney = (
 };
 
 export const formatNumber = (value: number, maximumFractionDigits = 0): string =>
-  new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(value);
+  new Intl.NumberFormat(NUMBER_LOCALE, { maximumFractionDigits }).format(value);
 
 export const formatCompactMoney = (value: string | number, currency = 'GTQ'): string => {
   const numeric = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(numeric)) return '—';
   try {
-    const compact = new Intl.NumberFormat('en-US', {
+    const compact = new Intl.NumberFormat(NUMBER_LOCALE, {
       style: 'currency',
       currency,
       notation: 'compact',

@@ -49,7 +49,7 @@ export const RevenueChart = ({
       <EmptyState
         icon={ChartNoAxesCombined}
         title="Aún no hay ingresos confirmados"
-        description="Cuando confirmes ventas verás aquí la evolución de los últimos 6 meses."
+        description="Cuando confirmes ventas verás aquí los ingresos en quetzales según el mes, el año y el vendedor seleccionados."
         compact
       />
     );

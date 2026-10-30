@@ -184,6 +184,7 @@ export const getDashboard = async (filters: DashboardFilters = {}) => {
         COUNT(*)::int AS count
       FROM sales
       WHERE status = 'CONFIRMED'
+        AND currency = ${env.DEFAULT_CURRENCY}
         AND sale_date >= ${salesDateRange.start.toISOString().slice(0, 10)}::date
         AND sale_date < ${salesDateRange.end.toISOString().slice(0, 10)}::date
         ${

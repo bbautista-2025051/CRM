@@ -31,7 +31,7 @@ const sale = {
   ownerId: '',
   saleDate: '2026-10-30',
   amount: '1500.50',
-  currency: 'usd',
+  currency: 'gtq',
   status: 'PENDING' as const,
   notes: '',
 };
@@ -135,7 +135,7 @@ describe('opportunityFormSchema', () => {
 describe('saleFormSchema', () => {
   it('normaliza la moneda a mayúsculas', () => {
     const parsed = saleFormSchema.parse(sale);
-    expect(parsed.currency).toBe('USD');
+    expect(parsed.currency).toBe('GTQ');
   });
 
   it('rechaza fechas con formato incorrecto y montos inválidos', () => {

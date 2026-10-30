@@ -34,7 +34,7 @@ const defaults = (
   ownerId: sale?.ownerId ?? ownerId ?? '',
   saleDate: sale?.saleDate?.slice(0, 10) ?? todayISO(),
   amount: sale?.amount ?? '',
-  currency: sale?.currency ?? 'USD',
+  currency: sale?.currency ?? 'GTQ',
   status: sale?.status ?? 'PENDING',
   notes: sale?.notes ?? '',
 });
@@ -369,23 +369,13 @@ export const SaleFormModal = ({
             />
           </Field>
           <Field label="Moneda" htmlFor="sale-currency" error={errors.currency?.message} required>
-            <Input
+            <Select
               id="sale-currency"
-              list="sale-currencies"
-              placeholder="USD"
-              maxLength={3}
-              className="uppercase"
               invalid={Boolean(errors.currency)}
               {...register('currency')}
-            />
-            <datalist id="sale-currencies">
-              <option value="USD" />
-              <option value="EUR" />
-              <option value="COP" />
-              <option value="MXN" />
-              <option value="CLP" />
-              <option value="PEN" />
-            </datalist>
+            >
+              <option value="GTQ">Quetzal (GTQ)</option>
+            </Select>
           </Field>
           {editing && admin ? (
             <Field

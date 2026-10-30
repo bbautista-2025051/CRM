@@ -156,7 +156,7 @@ export const saleFormSchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .regex(/^[A-Z]{3}$/, 'Usa un código ISO de 3 letras (ej. USD)'),
+    .regex(/^[A-Z]{3}$/, 'Usa un código ISO de 3 letras (ej. GTQ)'),
   status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED']),
   notes: optionalText('Las observaciones', 2000),
 });

@@ -204,7 +204,7 @@ export const openApiDocument = {
           ownerId: { type: 'string', format: 'uuid' },
           saleDate: { type: 'string', format: 'date' },
           amount: { type: 'number', exclusiveMinimum: 0 },
-          currency: { type: 'string', minLength: 3, maxLength: 3, example: 'USD' },
+          currency: { type: 'string', minLength: 3, maxLength: 3, example: 'GTQ' },
           status: {
             type: 'string',
             enum: ['PENDING', 'CONFIRMED', 'CANCELLED'],

@@ -219,7 +219,7 @@ model Sale {
   ownerId       String     @map("owner_id") @db.Uuid
   saleDate      DateTime   @map("sale_date") @db.Date
   amount        Decimal    @db.Decimal(14, 2)
-  currency      String     @default("USD") @db.VarChar(3)
+  currency      String     @default("GTQ") @db.VarChar(3)
   status        SaleStatus @default(PENDING)
   notes         String?    @db.Text
   createdAt     DateTime   @default(now()) @map("created_at")

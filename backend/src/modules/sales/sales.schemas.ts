@@ -37,8 +37,8 @@ export const saleBodySchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .regex(/^[A-Z]{3}$/, 'La moneda debe ser un código ISO de 3 letras (ej. USD)')
-    .default('USD'),
+    .regex(/^[A-Z]{3}$/, 'La moneda debe ser un código ISO de 3 letras (ej. GTQ)')
+    .default('GTQ'),
   status: z.nativeEnum(SaleStatus).optional().default(SaleStatus.PENDING),
   notes: optionalText(2000, 'Las observaciones'),
 });
@@ -53,7 +53,7 @@ export const updateSaleSchema = z
       .string()
       .trim()
       .toUpperCase()
-      .regex(/^[A-Z]{3}$/, 'La moneda debe ser un código ISO de 3 letras (ej. USD)')
+      .regex(/^[A-Z]{3}$/, 'La moneda debe ser un código ISO de 3 letras (ej. GTQ)')
       .optional(),
     status: z.nativeEnum(SaleStatus).optional(),
     notes: optionalText(2000, 'Las observaciones'),
