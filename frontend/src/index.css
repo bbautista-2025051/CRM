@@ -1,0 +1,185 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --canvas: 247 249 252;
+  --surface: 255 255 255;
+  --elevated: 255 255 255;
+  --line: 226 232 240;
+  --ink: 15 23 42;
+  --muted: 100 116 139;
+  --brand: 37 99 235;
+  --brand-strong: 29 78 216;
+  --brand-soft: 239 246 255;
+  --brand-ink: 255 255 255;
+  --accent: 13 148 136;
+  --accent-soft: 240 253 250;
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: 7 11 20;
+  --surface: 13 20 33;
+  --elevated: 19 28 45;
+  --line: 39 51 71;
+  --ink: 226 232 240;
+  --muted: 148 163 184;
+  --brand: 96 165 250;
+  --brand-strong: 59 130 246;
+  --brand-soft: 21 38 66;
+  --brand-ink: 8 15 30;
+  --accent: 45 212 191;
+  --accent-soft: 18 68 65;
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    border-color: rgb(var(--line));
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: rgb(var(--brand) / 0.2);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--brand) / 0.65);
+    outline-offset: 2px;
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: rgb(var(--ink));
+    -webkit-box-shadow: 0 0 0 1000px rgb(var(--surface)) inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  dialog::backdrop {
+    background: rgb(2 6 23 / 0.6);
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-line bg-surface shadow-card;
+  }
+
+  .card-hover {
+    @apply transition duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-float;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+  }
+
+  .label {
+    @apply mb-1.5 block text-[13px] font-medium text-ink;
+  }
+
+  .hint {
+    @apply mt-1.5 text-xs text-muted;
+  }
+
+  .input-base {
+    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition placeholder:text-muted/70 hover:border-muted/50 focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-elevated disabled:text-muted;
+  }
+
+  .table-wrap {
+    @apply w-full overflow-x-auto;
+  }
+
+  .table-base {
+    @apply w-full min-w-[720px] border-collapse text-left text-sm;
+  }
+
+  .table-base thead th {
+    @apply whitespace-nowrap border-b border-line bg-elevated/70 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted;
+  }
+
+  .table-base tbody td {
+    @apply border-b border-line/70 px-4 py-3.5 align-middle text-sm;
+  }
+
+  .table-base tbody tr {
+    @apply transition-colors hover:bg-elevated/60;
+  }
+
+  .table-base tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-elevated hover:text-ink;
+  }
+
+  .nav-link-active {
+    @apply bg-brand-soft text-brand-strong dark:text-brand;
+  }
+
+  .brand-gradient {
+    background:
+      radial-gradient(1200px 600px at 15% 0%, rgb(37 99 235 / 0.32), transparent 55%),
+      radial-gradient(900px 500px at 100% 100%, rgb(13 148 136 / 0.24), transparent 55%),
+      linear-gradient(160deg, #07101f 0%, #0b1729 45%, #0a1a2f 100%);
+  }
+
+  .dot-grid {
+    background-image: radial-gradient(rgb(var(--muted) / 0.2) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--muted) / 0.35) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background-color: rgb(var(--muted) / 0.35);
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-elevated;
+  }
+
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/5;
+  }
+}
+
+.recharts-cartesian-axis-tick-value {
+  fill: rgb(var(--muted));
+  font-size: 12px;
+}
+
+.recharts-cartesian-grid line {
+  stroke: rgb(var(--line));
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "nexo-crm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CRM web full stack con React, Express, Prisma y PostgreSQL",
+  "packageManager": "pnpm@11.17.0",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @nexo/backend --filter @nexo/frontend dev",
+    "dev:backend": "pnpm --filter @nexo/backend dev",
+    "dev:frontend": "pnpm --filter @nexo/frontend dev",
+    "build": "pnpm -r build",
+    "start": "pnpm --filter @nexo/backend start",
+    "test": "pnpm --filter @nexo/backend test && pnpm --filter @nexo/frontend test",
+    "test:backend": "pnpm --filter @nexo/backend test",
+    "test:frontend": "pnpm --filter @nexo/frontend test",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @nexo/backend prisma:generate",
+    "db:migrate": "pnpm --filter @nexo/backend prisma:migrate",
+    "db:deploy": "pnpm --filter @nexo/backend prisma:deploy",
+    "db:seed": "pnpm --filter @nexo/backend seed",
+    "create-admin": "pnpm --filter @nexo/backend create-admin"
+  }
+}

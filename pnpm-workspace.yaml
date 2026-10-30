@@ -1,0 +1,16 @@
+packages:
+  - backend
+  - frontend
+
+# pnpm 11: permite explícitamente los scripts de build necesarios.
+allowBuilds:
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@scarf/scarf': false
+  esbuild: true
+  prisma: true
+
+minimumReleaseAgeExclude:
+  - express-rate-limit@8.7.2
+  - google-auth-library@11.3.2
+  - lucide-react@1.64.0
