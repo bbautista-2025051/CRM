@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -13,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { dashboardApi, unwrap } from '@/lib/endpoints';
+import { dashboardApi, unwrap, usersApi } from '@/lib/endpoints';
 import {
   formatDate,
   formatDateTime,
@@ -38,6 +39,7 @@ import {
   SectorChart,
   StageChart,
 } from '@/components/charts/DashboardCharts';
+import { Select } from '@/components/ui/Input';
 
 const greeting = (): string => {
   const hour = new Date().getHours();
@@ -49,10 +51,62 @@ const greeting = (): string => {
 export const DashboardPage = () => {
   usePageTitle('Panel');
   const { user } = useAuth();
-  const query = useQuery({
-    queryKey: ['dashboard', 'summary'],
-    queryFn: async () => unwrap(await dashboardApi.summary()),
+  const currentYear = new Date().getFullYear();
+  const [roleFilter, setRoleFilter] = useState('');
+  const [userFilter, setUserFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState(String(currentYear));
+
+  const usersQuery = useQuery({
+    queryKey: ['dashboard', 'users'],
+    queryFn: () =>
+      usersApi.list({
+        page: 1,
+        pageSize: 500,
+        sortBy: 'name',
+        sortOrder: 'asc',
+      }),
   });
+
+  const users = usersQuery.data?.data ?? [];
+
+  const query = useQuery({
+    queryKey: ['dashboard', 'summary', { role: roleFilter, userId: userFilter, month: monthFilter, year: yearFilter }],
+    queryFn: async () =>
+      unwrap(
+        await dashboardApi.summary({
+          role: roleFilter || undefined,
+          userId: userFilter || undefined,
+          month: monthFilter || undefined,
+          year: yearFilter || undefined,
+        }),
+      ),
+  });
+
+  const months = useMemo(
+    () => [
+      { value: '', label: 'Todos los meses' },
+      { value: '1', label: 'Enero' },
+      { value: '2', label: 'Febrero' },
+      { value: '3', label: 'Marzo' },
+      { value: '4', label: 'Abril' },
+      { value: '5', label: 'Mayo' },
+      { value: '6', label: 'Junio' },
+      { value: '7', label: 'Julio' },
+      { value: '8', label: 'Agosto' },
+      { value: '9', label: 'Septiembre' },
+      { value: '10', label: 'Octubre' },
+      { value: '11', label: 'Noviembre' },
+      { value: '12', label: 'Diciembre' },
+    ],
+    [],
+  );
+
+  const years = useMemo(
+    () =>
+      Array.from({ length: 5 }, (_, index) => String(currentYear - index)).reverse(),
+    [currentYear],
+  );
 
   const data = query.data;
   const primaryRevenue = data?.totals.salesByCurrency.find(
@@ -92,6 +146,64 @@ export const DashboardPage = () => {
           </>
         }
       />
+
+      <div className="card p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-ink">Filtros del panel</p>
+            <p className="text-xs text-muted">Combina usuario, rol, mes y año.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              aria-label="Filtrar por rol"
+              value={roleFilter}
+              onChange={(event) => setRoleFilter(event.target.value)}
+              className="min-w-[180px]"
+            >
+              <option value="">Todos</option>
+              <option value="ADMIN">Administrador</option>
+              <option value="VENDEDOR">Vendedor</option>
+            </Select>
+            <Select
+              aria-label="Filtrar por usuario"
+              value={userFilter}
+              onChange={(event) => setUserFilter(event.target.value)}
+              className="min-w-[220px]"
+            >
+              <option value="">Todos los usuarios</option>
+              {users.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
+            <Select
+              aria-label="Filtrar por mes"
+              value={monthFilter}
+              onChange={(event) => setMonthFilter(event.target.value)}
+              className="min-w-[150px]"
+            >
+              {months.map((month) => (
+                <option key={month.value || 'all'} value={month.value}>
+                  {month.label}
+                </option>
+              ))}
+            </Select>
+            <Select
+              aria-label="Filtrar por año"
+              value={yearFilter}
+              onChange={(event) => setYearFilter(event.target.value)}
+              className="min-w-[120px]"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
+      </div>
 
       {query.isLoading ? (
         <>
@@ -161,7 +273,7 @@ export const DashboardPage = () => {
           <div className="grid gap-4 xl:grid-cols-12">
             <Card className="xl:col-span-8">
               <CardHeader
-                title="Ingresos de los últimos 6 meses"
+                title={monthFilter ? `Ingresos del mes ${months.find((item) => item.value === monthFilter)?.label ?? ''}` : `Ingresos del año ${yearFilter}`}
                 description="Solo ventas con estado confirmada"
                 action={
                   <Badge tone="brand" dot>

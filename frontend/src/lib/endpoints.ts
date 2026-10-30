@@ -40,7 +40,12 @@ export const authApi = {
 };
 
 export const dashboardApi = {
-  summary: () => api.get<DataEnvelope<DashboardData>>('/api/dashboard/summary'),
+  summary: (params: {
+    role?: string;
+    userId?: string;
+    month?: string;
+    year?: string | number;
+  } = {}) => api.get<DataEnvelope<DashboardData>>(`/api/dashboard/summary${buildQuery(params)}`),
 };
 
 export const companiesApi = {

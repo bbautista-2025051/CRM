@@ -7,21 +7,92 @@ interface MonthlySalesRow {
   count: number;
 }
 
-const monthKeys = (count: number): string[] => {
-  const now = new Date();
+interface DashboardFilters {
+  role?: 'ADMIN' | 'VENDEDOR';
+  userId?: string;
+  month?: string | number;
+  year?: string | number;
+}
+
+const normalizeYear = (value?: string | number): number => {
+  const numeric = Number(value ?? new Date().getUTCFullYear());
+  return Number.isFinite(numeric) ? numeric : new Date().getUTCFullYear();
+};
+
+const normalizeMonth = (value?: string | number): number | null => {
+  if (value === undefined || value === null || value === '' || value === 'all') return null;
+  const numeric = Number(value);
+  if (!Number.isInteger(numeric) || numeric < 1 || numeric > 12) return null;
+  return numeric;
+};
+
+const monthKeys = (year: number, selectedMonth?: number | null): string[] => {
+  if (selectedMonth) {
+    return [`${year}-${String(selectedMonth).padStart(2, '0')}`];
+  }
+
   const keys: string[] = [];
-  for (let index = count - 1; index >= 0; index -= 1) {
-    const date = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - index, 1),
-    );
-    keys.push(
-      `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`,
-    );
+  for (let month = 1; month <= 12; month += 1) {
+    keys.push(`${year}-${String(month).padStart(2, '0')}`);
   }
   return keys;
 };
 
-export const getDashboard = async () => {
+const buildDateRange = (year: number, month?: number | null) => {
+  if (month) {
+    const start = new Date(Date.UTC(year, month - 1, 1));
+    const end = new Date(Date.UTC(year, month, 1));
+    return { start, end };
+  }
+
+  return {
+    start: new Date(Date.UTC(year, 0, 1)),
+    end: new Date(Date.UTC(year + 1, 0, 1)),
+  };
+};
+
+const buildSalesWhere = (
+  ownerIds: string[],
+  selectedYear: number,
+  selectedMonth: number | null,
+) => {
+  const dateRange = buildDateRange(selectedYear, selectedMonth);
+  const where: Record<string, unknown> = {
+    status: 'CONFIRMED',
+    saleDate: { gte: dateRange.start, lt: dateRange.end },
+    ...(ownerIds.length ? { ownerId: { in: ownerIds } } : {}),
+  };
+  return where;
+};
+
+const buildOwnerScope = async (filters: DashboardFilters) => {
+  const userIds = new Set<string>();
+
+  if (filters.userId) {
+    userIds.add(filters.userId);
+  } else if (filters.role) {
+    const users = await prisma.user.findMany({
+      where: { role: filters.role },
+      select: { id: true },
+    });
+    users.forEach((user) => userIds.add(user.id));
+  }
+
+  return Array.from(userIds);
+};
+
+export const getDashboard = async (filters: DashboardFilters = {}) => {
+  const year = normalizeYear(filters.year);
+  const month = normalizeMonth(filters.month);
+  const ownerIds = await buildOwnerScope(filters);
+  const salesDateRange = buildDateRange(year, month);
+  const ownerScope = ownerIds.length ? { ownerId: { in: ownerIds } } : {};
+  const activityScope = ownerIds.length
+    ? { userId: { in: ownerIds } }
+    : filters.userId
+      ? { userId: filters.userId }
+      : {};
+
   const [
     companiesTotal,
     activeCompanies,
@@ -42,25 +113,66 @@ export const getDashboard = async () => {
     recentOpportunities,
     recentSales,
   ] = await Promise.all([
-    prisma.company.count(),
-    prisma.company.count({ where: { status: 'ACTIVE' } }),
+    prisma.company.count({
+      where: filters.userId ? { createdById: filters.userId } : filters.role ? { createdById: { not: null } } : undefined,
+    }),
+    prisma.company.count({
+      where: {
+        status: 'ACTIVE',
+        ...(filters.userId ? { createdById: filters.userId } : filters.role ? { createdById: { not: null } } : {}),
+      },
+    }),
     prisma.client.count({ where: { status: 'ACTIVE' } }),
-    prisma.opportunity.count({ where: { status: 'OPEN' } }),
+    prisma.opportunity.count({
+      where: {
+        status: 'OPEN',
+        ...ownerScope,
+      },
+    }),
     prisma.opportunity.aggregate({
-      where: { status: 'OPEN' },
+      where: {
+        status: 'OPEN',
+        ...ownerScope,
+      },
       _sum: { value: true },
     }),
-    prisma.sale.count({ where: { status: 'CONFIRMED' } }),
-    prisma.opportunity.count({ where: { status: 'WON' } }),
-    prisma.opportunity.count({ where: { status: 'LOST' } }),
+    prisma.sale.count({
+      where: {
+        status: 'CONFIRMED',
+        saleDate: { gte: salesDateRange.start, lt: salesDateRange.end },
+        ...ownerScope,
+      },
+    }),
+    prisma.opportunity.count({
+      where: {
+        status: 'WON',
+        ...(month || year ? { wonAt: { gte: salesDateRange.start, lt: salesDateRange.end } } : {}),
+        ...ownerScope,
+      },
+    }),
+    prisma.opportunity.count({
+      where: {
+        status: 'LOST',
+        ...(month || year ? { lostAt: { gte: salesDateRange.start, lt: salesDateRange.end } } : {}),
+        ...ownerScope,
+      },
+    }),
     prisma.sale.groupBy({
       by: ['currency'],
-      where: { status: 'CONFIRMED' },
+      where: {
+        status: 'CONFIRMED',
+        saleDate: { gte: salesDateRange.start, lt: salesDateRange.end },
+        ...ownerScope,
+      },
       _sum: { amount: true },
       _count: { _all: true },
     }),
     prisma.opportunity.groupBy({
       by: ['stage'],
+      where: {
+        ...ownerScope,
+        ...(month || year ? { createdAt: { gte: salesDateRange.start, lt: salesDateRange.end } } : {}),
+      },
       _count: { _all: true },
       _sum: { value: true },
     }),
@@ -71,7 +183,9 @@ export const getDashboard = async () => {
         COUNT(*)::int AS count
       FROM sales
       WHERE status = 'CONFIRMED'
-        AND sale_date >= (date_trunc('month', CURRENT_DATE) - INTERVAL '5 months')
+        AND sale_date >= ${salesDateRange.start.toISOString()}
+        AND sale_date < ${salesDateRange.end.toISOString()}
+        ${ownerIds.length ? prisma.sql`AND owner_id IN (${prisma.join(ownerIds)})` : prisma.sql``}
       GROUP BY 1
       ORDER BY 1
     `,
@@ -94,12 +208,16 @@ export const getDashboard = async () => {
     prisma.activityLog.findMany({
       take: 8,
       orderBy: { createdAt: 'desc' },
+      where: activityScope,
       include: {
         user: { select: { id: true, name: true, avatarUrl: true } },
       },
     }),
     prisma.opportunity.findMany({
       take: 5,
+      where: {
+        ...ownerScope,
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         company: { select: { id: true, name: true } },
@@ -109,6 +227,9 @@ export const getDashboard = async () => {
     }),
     prisma.sale.findMany({
       take: 5,
+      where: {
+        ...ownerScope,
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         client: { select: { id: true, firstName: true, lastName: true } },
@@ -128,13 +249,13 @@ export const getDashboard = async () => {
         select: { id: true, name: true },
       })
     : [];
-  const companyNameById = new Map(companies.map((company) => [company.id, company.name]));
 
+  const companyNameById = new Map(companies.map((company) => [company.id, company.name]));
   const monthMap = new Map(monthlyRows.map((row) => [row.month, row]));
-  const monthlySales = monthKeys(6).map((month) => {
-    const row = monthMap.get(month);
+  const monthlySales = monthKeys(year, month).map((monthKey) => {
+    const row = monthMap.get(monthKey);
     return {
-      month,
+      month: monthKey,
       total: row ? Number(row.total).toFixed(2) : '0.00',
       count: row?.count ?? 0,
     };
@@ -178,8 +299,7 @@ export const getDashboard = async () => {
         ...clientsByCompanyRows.map((row) => ({
           companyId: row.companyId,
           company:
-            (row.companyId ? companyNameById.get(row.companyId) : null) ??
-            'Sin empresa',
+            (row.companyId ? companyNameById.get(row.companyId) : null) ?? 'Sin empresa',
           count: row._count._all,
         })),
         ...(clientsWithoutCompany > 0

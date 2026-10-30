@@ -10,57 +10,63 @@ const currencySymbol = (currency: string): string => {
 
   let symbol = `${key} `;
   try {
-    const parts = new Intl.NumberFormat('es-CO', {
+    const parts = new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: key,
       currencyDisplay: 'symbol',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).formatToParts(0);
     const value = parts.find((part) => part.type === 'currency')?.value;
     if (value) symbol = value;
   } catch {
     symbol = `${key} `;
   }
+
+  if (key === 'GTQ') symbol = 'Q';
   currencySymbolCache.set(key, symbol);
   return symbol;
 };
 
-/**
- * Formatea un Decimal serializado como string sin convertirlo a number,
- * evitando pérdidas de precisión en importes grandes.
- */
+const formatCurrencyNumber = (numeric: number, currency: string): string => {
+  const key = currency.toUpperCase();
+  const symbol = currencySymbol(key);
+  const formatted = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(numeric);
+  return `${symbol} ${formatted}`;
+};
+
 export const formatMoney = (
   value: string | number | null | undefined,
-  currency = 'USD',
+  currency = 'GTQ',
 ): string => {
   if (value === null || value === undefined || value === '') return '—';
 
-  const raw = String(value).trim();
-  const negative = raw.startsWith('-');
-  const unsigned = negative ? raw.slice(1) : raw;
-  const [integerPart, fractionPart = ''] = unsigned.split('.');
-  const integer = integerPart.replace(/^0+(?=\d)/, '') || '0';
-  const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  const decimals = `${fractionPart}00`.slice(0, 2);
-  const symbol = currencySymbol(currency);
+  const parsed = Number(String(value).trim());
+  if (!Number.isFinite(parsed)) return '—';
 
-  return `${negative ? '-' : ''}${symbol}${grouped},${decimals}`;
+  const standardized = Number.isInteger(parsed) ? parsed.toFixed(2) : parsed.toFixed(2);
+  return formatCurrencyNumber(Number(standardized), currency);
 };
 
 export const formatNumber = (value: number, maximumFractionDigits = 0): string =>
-  new Intl.NumberFormat('es-CO', { maximumFractionDigits }).format(value);
+  new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(value);
 
-export const formatCompactMoney = (value: string | number, currency = 'USD'): string => {
+export const formatCompactMoney = (value: string | number, currency = 'GTQ'): string => {
   const numeric = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(numeric)) return '—';
   try {
-    return new Intl.NumberFormat('es-CO', {
+    const compact = new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
       notation: 'compact',
       maximumFractionDigits: 1,
     }).format(numeric);
+    return compact.replace(/^([A-Za-z$€£¥Q]+)/, '$1 ');
   } catch {
-    return `${currency} ${formatNumber(numeric)}`;
+    return `${currencySymbol(currency)} ${formatNumber(numeric)}`;
   }
 };
 
@@ -72,11 +78,6 @@ export const toDateOnly = (value: string | null | undefined): Date | null => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-/**
- * Las columnas de tipo fecha (sin hora) llegan como "AAAA-MM-DD" o como
- * "AAAA-MM-DDT00:00:00.000Z". En ambos casos se interpretan como fecha civil
- * para evitar que la zona horaria reste un día al mostrarla.
- */
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}(?:T00:00:00(?:\.000)?Z)?$/;
 
 export const formatDate = (
@@ -122,7 +123,6 @@ export const fullName = (
   person: { firstName: string; lastName: string } | null | undefined,
 ): string => (person ? `${person.firstName} ${person.lastName}`.trim() : '—');
 
-/** Fecha de hoy en formato AAAA-MM-DD según la zona horaria local. */
 export const todayISO = (): string => {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, '0');
