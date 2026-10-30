@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatDate,
   formatDateTime,
+  formatCompactMoney,
   formatMoney,
   formatNumber,
   formatPercent,
@@ -27,6 +28,11 @@ describe('formatMoney', () => {
 
   it('rellena decimales faltantes', () => {
     expect(formatMoney('10', 'USD')).toContain('10,00');
+  });
+
+  it('muestra la moneda guatemalteca con el símbolo Q', () => {
+    expect(formatMoney('10', 'GTQ')).toBe('Q 10,00');
+    expect(formatCompactMoney('1234567', 'GTQ')).toContain('Q');
   });
 
   it('devuelve un guion para valores vacíos', () => {

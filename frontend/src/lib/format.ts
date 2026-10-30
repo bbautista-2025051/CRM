@@ -31,11 +31,13 @@ const currencySymbol = (currency: string): string => {
 const formatCurrencyNumber = (numeric: number, currency: string): string => {
   const key = currency.toUpperCase();
   const symbol = currencySymbol(key);
-  const formatted = new Intl.NumberFormat('en-US', {
+  const formatted = new Intl.NumberFormat('es-ES', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(numeric);
-  return `${symbol} ${formatted}`;
+  return numeric < 0
+    ? `-${symbol} ${formatted.slice(1)}`
+    : `${symbol} ${formatted}`;
 };
 
 export const formatMoney = (
@@ -52,7 +54,7 @@ export const formatMoney = (
 };
 
 export const formatNumber = (value: number, maximumFractionDigits = 0): string =>
-  new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(value);
+  new Intl.NumberFormat('es-ES', { maximumFractionDigits }).format(value);
 
 export const formatCompactMoney = (value: string | number, currency = 'GTQ'): string => {
   const numeric = typeof value === 'number' ? value : Number(value);
@@ -63,6 +65,7 @@ export const formatCompactMoney = (value: string | number, currency = 'GTQ'): st
       currency,
       notation: 'compact',
       maximumFractionDigits: 1,
+      currencyDisplay: currency.toUpperCase() === 'GTQ' ? 'narrowSymbol' : 'symbol',
     }).format(numeric);
     return compact.replace(/^([A-Za-z$€£¥Q]+)/, '$1 ');
   } catch {

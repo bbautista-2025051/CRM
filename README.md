@@ -142,7 +142,7 @@ obligatoria, el servidor no inicia y muestra el listado de errores sin filtrar s
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | Habilita el acceso con Google. Vacías = función deshabilitada. |
 | `UPLOAD_DIR` | No | Carpeta de avatares (por defecto `uploads`). |
 | `MAX_AVATAR_SIZE_MB` | No | Tamaño máximo de avatar (1–10, por defecto 2). |
-| `DEFAULT_CURRENCY` | No | Moneda base para importes y totales (por defecto `USD`). |
+| `DEFAULT_CURRENCY` | No | Moneda base para importes y totales (por defecto `GTQ`). |
 | `ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Solo script | Datos usados por `pnpm create-admin`. |
 | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` / `SEED_DEMO_DATA` | No | Seed de demostración opcional. |
 | `VITE_API_URL` | No | Base de la API en el frontend (vacío = mismo origen vía proxy). |
