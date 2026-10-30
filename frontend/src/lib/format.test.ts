@@ -15,11 +15,11 @@ import {
 describe('formatMoney', () => {
   it('conserva la precisión de importes grandes sin usar Number', () => {
     const formatted = formatMoney('123456789012345.678', 'USD');
-    expect(formatted).toContain('123.456.789.012.345,67');
+    expect(formatted).toContain('123,456,789,012,345.67');
   });
 
-  it('agrupa miles y usa coma decimal', () => {
-    expect(formatMoney('1234567.8', 'COP')).toContain('1.234.567,80');
+  it('agrupa miles y usa punto decimal', () => {
+    expect(formatMoney('1234567.8', 'COP')).toContain('1,234,567.80');
   });
 
   it('antepone el signo negativo', () => {
@@ -27,11 +27,16 @@ describe('formatMoney', () => {
   });
 
   it('rellena decimales faltantes', () => {
-    expect(formatMoney('10', 'USD')).toContain('10,00');
+    expect(formatMoney('10', 'USD')).toContain('10.00');
+  });
+
+  it('muestra el quetzal con el símbolo Q', () => {
+    expect(formatMoney('1500.5')).toBe('Q 1,500.50');
+    expect(formatMoney('1500.5', 'GTQ')).toBe('Q 1,500.50');
   });
 
   it('muestra la moneda guatemalteca con el símbolo Q', () => {
-    expect(formatMoney('10', 'GTQ')).toBe('Q 10,00');
+    expect(formatMoney('10', 'GTQ')).toBe('Q 10.00');
     expect(formatCompactMoney('1234567', 'GTQ')).toContain('Q');
   });
 
@@ -44,11 +49,11 @@ describe('formatMoney', () => {
 
 describe('formatNumber / formatPercent', () => {
   it('formatea números con separadores locales', () => {
-    expect(formatNumber(1234567)).toBe('1.234.567');
+    expect(formatNumber(1234567)).toBe('1,234,567');
   });
 
   it('formatea porcentajes con un decimal', () => {
-    expect(formatPercent(12.34)).toBe('12,3%');
+    expect(formatPercent(12.34)).toBe('12.3%');
     expect(formatPercent(null)).toBe('—');
   });
 });

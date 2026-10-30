@@ -197,7 +197,7 @@ describe('Operaciones comerciales', () => {
         opportunityId: opportunity.body.data.id,
         saleDate: today(),
         amount: 1500.5,
-        currency: 'USD',
+        currency: 'GTQ',
         status: 'PENDING',
       });
 
@@ -231,7 +231,7 @@ describe('Operaciones comerciales', () => {
     const afterConfirm = await admin.agent.get('/api/dashboard/summary');
     expect(afterConfirm.body.data.totals.confirmedSales).toBe(1);
     expect(afterConfirm.body.data.totals.salesByCurrency).toEqual([
-      { currency: 'USD', total: '1500.50', count: 1 },
+      { currency: 'GTQ', total: '1500.50', count: 1 },
     ]);
 
     const summary = await admin.agent.get('/api/sales/summary');
@@ -325,7 +325,7 @@ describe('Operaciones comerciales', () => {
         opportunityId: vendorOpportunity.body.data.id,
         saleDate: today(),
         amount: 2500,
-        currency: 'USD',
+        currency: 'GTQ',
       });
     expect(vendorSale.status).toBe(201);
     expect(vendorSale.body.data.status).toBe('PENDING');

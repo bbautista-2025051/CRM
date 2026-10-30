@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   ArrowUpRight,
@@ -40,6 +40,7 @@ import {
   StageChart,
 } from '@/components/charts/DashboardCharts';
 import { Select } from '@/components/ui/Input';
+import { isAdmin } from '@/lib/permissions';
 
 const greeting = (): string => {
   const hour = new Date().getHours();
@@ -52,35 +53,42 @@ export const DashboardPage = () => {
   usePageTitle('Panel');
   const { user } = useAuth();
   const currentYear = new Date().getFullYear();
-  const [roleFilter, setRoleFilter] = useState('');
-  const [userFilter, setUserFilter] = useState('');
+  const [vendorFilter, setVendorFilter] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
   const [yearFilter, setYearFilter] = useState(String(currentYear));
+  const canFilterVendors = isAdmin(user?.role);
 
-  const usersQuery = useQuery({
-    queryKey: ['dashboard', 'users'],
+  const vendorsQuery = useQuery({
+    queryKey: ['dashboard', 'vendors'],
     queryFn: () =>
       usersApi.list({
         page: 1,
         pageSize: 500,
+        role: 'VENDEDOR',
+        status: 'ACTIVE',
         sortBy: 'name',
         sortOrder: 'asc',
       }),
+    enabled: canFilterVendors,
   });
 
-  const users = usersQuery.data?.data ?? [];
+  const vendors = vendorsQuery.data?.data ?? [];
 
   const query = useQuery({
-    queryKey: ['dashboard', 'summary', { role: roleFilter, userId: userFilter, month: monthFilter, year: yearFilter }],
+    queryKey: [
+      'dashboard',
+      'summary',
+      { userId: vendorFilter, month: monthFilter, year: yearFilter },
+    ],
     queryFn: async () =>
       unwrap(
         await dashboardApi.summary({
-          role: roleFilter || undefined,
-          userId: userFilter || undefined,
+          userId: vendorFilter || undefined,
           month: monthFilter || undefined,
           year: yearFilter || undefined,
         }),
       ),
+    placeholderData: keepPreviousData,
   });
 
   const months = useMemo(
@@ -117,6 +125,50 @@ export const DashboardPage = () => {
   );
   const todayLabel = formatDate(new Date(), "EEEE, d 'de' MMMM 'de' yyyy");
 
+  const chartFilters = (
+    <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
+      <Select
+        aria-label="Filtrar gráfica por mes"
+        value={monthFilter}
+        onChange={(event) => setMonthFilter(event.target.value)}
+        className="min-w-[150px]"
+      >
+        {months.map((month) => (
+          <option key={month.value || 'all'} value={month.value}>
+            {month.label}
+          </option>
+        ))}
+      </Select>
+      <Select
+        aria-label="Filtrar gráfica por año"
+        value={yearFilter}
+        onChange={(event) => setYearFilter(event.target.value)}
+        className="min-w-[120px]"
+      >
+        {years.map((year) => (
+          <option key={year} value={year}>
+            {year}
+          </option>
+        ))}
+      </Select>
+      {canFilterVendors ? (
+        <Select
+          aria-label="Filtrar gráfica por vendedor"
+          value={vendorFilter}
+          onChange={(event) => setVendorFilter(event.target.value)}
+          className="min-w-[220px]"
+        >
+          <option value="">Todos los vendedores</option>
+          {vendors.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </Select>
+      ) : null}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -147,71 +199,18 @@ export const DashboardPage = () => {
         }
       />
 
-      <div className="card p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-ink">Filtros del panel</p>
-            <p className="text-xs text-muted">Combina usuario, rol, mes y año.</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Select
-              aria-label="Filtrar por rol"
-              value={roleFilter}
-              onChange={(event) => setRoleFilter(event.target.value)}
-              className="min-w-[180px]"
-            >
-              <option value="">Todos</option>
-              <option value="ADMIN">Administrador</option>
-              <option value="VENDEDOR">Vendedor</option>
-            </Select>
-            <Select
-              aria-label="Filtrar por usuario"
-              value={userFilter}
-              onChange={(event) => setUserFilter(event.target.value)}
-              className="min-w-[220px]"
-            >
-              <option value="">Todos los usuarios</option>
-              {users.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </Select>
-            <Select
-              aria-label="Filtrar por mes"
-              value={monthFilter}
-              onChange={(event) => setMonthFilter(event.target.value)}
-              className="min-w-[150px]"
-            >
-              {months.map((month) => (
-                <option key={month.value || 'all'} value={month.value}>
-                  {month.label}
-                </option>
-              ))}
-            </Select>
-            <Select
-              aria-label="Filtrar por año"
-              value={yearFilter}
-              onChange={(event) => setYearFilter(event.target.value)}
-              className="min-w-[120px]"
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </Select>
-          </div>
-        </div>
-      </div>
-
       {query.isLoading ? (
         <>
           <CardsSkeleton />
           <div className="grid gap-4 xl:grid-cols-12">
-            <div className="card h-[370px] p-5 xl:col-span-8">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="mt-8 h-[260px] w-full" />
+            <div className="card xl:col-span-8">
+              <div className="px-5 pt-5">
+                <Skeleton className="h-4 w-40" />
+              </div>
+              {chartFilters}
+              <div className="p-5">
+                <Skeleton className="h-[260px] w-full" />
+              </div>
             </div>
             <div className="card h-[370px] p-5 xl:col-span-4">
               <Skeleton className="h-4 w-36" />
@@ -273,14 +272,19 @@ export const DashboardPage = () => {
           <div className="grid gap-4 xl:grid-cols-12">
             <Card className="xl:col-span-8">
               <CardHeader
-                title={monthFilter ? `Ingresos del mes ${months.find((item) => item.value === monthFilter)?.label ?? ''}` : `Ingresos del año ${yearFilter}`}
-                description="Solo ventas con estado confirmada"
+                title={
+                  monthFilter
+                    ? `Ingresos de ${months.find((item) => item.value === monthFilter)?.label ?? ''} ${yearFilter}`
+                    : `Ingresos del año ${yearFilter}`
+                }
+                description="Ventas confirmadas en quetzales (Q)"
                 action={
                   <Badge tone="brand" dot>
-                    {data.defaultCurrency}
+                    Quetzal (GTQ)
                   </Badge>
                 }
               />
+              {chartFilters}
               <CardBody className="pb-3">
                 <RevenueChart data={data.charts.monthlySales} currency={data.defaultCurrency} />
               </CardBody>
