@@ -58,12 +58,11 @@ export const DashboardPage = () => {
   const [yearFilter, setYearFilter] = useState(String(currentYear));
 
   const usersQuery = useQuery({
-    queryKey: ['dashboard', 'users', 'VENDEDOR'],
+    queryKey: ['dashboard', 'users', 'ACTIVE'],
     queryFn: () =>
       usersApi.list({
         page: 1,
         pageSize: 500,
-        role: 'VENDEDOR',
         status: 'ACTIVE',
         sortBy: 'name',
         sortOrder: 'asc',
