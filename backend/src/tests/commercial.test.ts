@@ -440,7 +440,7 @@ describe('Operaciones comerciales', () => {
     expect(response.body.data.totals.openOpportunities).toBe(0);
     expect(response.body.data.totals.confirmedSales).toBe(0);
     expect(response.body.data.totals.conversionRate).toBeNull();
-    expect(response.body.data.charts.monthlySales).toHaveLength(6);
+    expect(response.body.data.charts.monthlySales).toHaveLength(12);
     expect(response.body.data.recentActivity).toHaveLength(0);
   });
 

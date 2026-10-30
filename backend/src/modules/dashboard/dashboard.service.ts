@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { env } from '../../config/env';
 import { prisma } from '../../config/prisma';
 
@@ -183,9 +184,15 @@ export const getDashboard = async (filters: DashboardFilters = {}) => {
         COUNT(*)::int AS count
       FROM sales
       WHERE status = 'CONFIRMED'
-        AND sale_date >= ${salesDateRange.start.toISOString()}
-        AND sale_date < ${salesDateRange.end.toISOString()}
-        ${ownerIds.length ? prisma.sql`AND owner_id IN (${prisma.join(ownerIds)})` : prisma.sql``}
+        AND sale_date >= ${salesDateRange.start.toISOString().slice(0, 10)}::date
+        AND sale_date < ${salesDateRange.end.toISOString().slice(0, 10)}::date
+        ${
+          ownerIds.length
+            ? Prisma.sql`AND owner_id IN (${Prisma.join(
+                ownerIds.map((id) => Prisma.sql`${id}::uuid`),
+              )})`
+            : Prisma.empty
+        }
       GROUP BY 1
       ORDER BY 1
     `,
