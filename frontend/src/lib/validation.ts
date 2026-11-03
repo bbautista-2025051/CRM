@@ -163,6 +163,34 @@ export const saleFormSchema = z.object({
 
 export type SaleFormValues = z.infer<typeof saleFormSchema>;
 
+export const projectFormSchema = z
+  .object({
+    name: requiredText('El nombre', 180, 2),
+    description: optionalText('La descripción', 4000),
+    companyId: z.string().trim(),
+    managerId: z.string().trim(),
+    status: z.enum(['ACTIVE', 'COMPLETED']),
+    startDate: optionalDate('La fecha de inicio'),
+    dueDate: optionalDate('La fecha de entrega'),
+  })
+  .refine(
+    (data) =>
+      !data.startDate || !data.dueDate || new Date(data.startDate) <= new Date(data.dueDate),
+    { path: ['dueDate'], message: 'La entrega no puede ser anterior al inicio' },
+  );
+
+export type ProjectFormValues = z.infer<typeof projectFormSchema>;
+
+export const taskFormSchema = z.object({
+  title: requiredText('El título', 180, 2),
+  description: optionalText('La descripción', 4000),
+  assigneeId: z.string().trim().min(1, 'Selecciona un integrante'),
+  status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED']),
+  dueDate: optionalDate('La fecha límite'),
+});
+
+export type TaskFormValues = z.infer<typeof taskFormSchema>;
+
 export const userCreateSchema = z.object({
   name: requiredText('El nombre', 120, 2),
   email: z

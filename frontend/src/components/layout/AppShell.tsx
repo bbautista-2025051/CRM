@@ -5,6 +5,7 @@ import {
   Building2,
   ChevronDown,
   CircleUserRound,
+  FolderKanban,
   Handshake,
   LayoutDashboard,
   LogOut,
@@ -12,6 +13,7 @@ import {
   Settings,
   ShieldCheck,
   Target,
+  Users,
   UsersRound,
   X,
 } from 'lucide-react';
@@ -49,6 +51,13 @@ const sections: Array<{ label: string; items: NavItem[] }> = [
     ],
   },
   {
+    label: 'Trabajo',
+    items: [
+      { to: '/projects', label: 'Proyectos', icon: FolderKanban },
+      { to: '/team', label: 'Equipo', icon: Users, adminOnly: true },
+    ],
+  },
+  {
     label: 'Administración',
     items: [
       { to: '/users', label: 'Usuarios', icon: ShieldCheck, adminOnly: true },
@@ -62,6 +71,8 @@ const sectionTitle = (pathname: string): string => {
   if (pathname.startsWith('/clients')) return 'Clientes';
   if (pathname.startsWith('/opportunities')) return 'Oportunidades';
   if (pathname.startsWith('/sales')) return 'Ventas';
+  if (pathname.startsWith('/projects')) return 'Proyectos';
+  if (pathname.startsWith('/team')) return 'Equipo';
   if (pathname.startsWith('/users')) return 'Usuarios';
   if (pathname.startsWith('/activity')) return 'Actividad';
   if (pathname.startsWith('/settings')) return 'Configuración';

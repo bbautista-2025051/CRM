@@ -12,6 +12,8 @@ export type OpportunityStage =
   | 'PERDIDA';
 export type OpportunityStatus = 'OPEN' | 'WON' | 'LOST';
 export type SaleStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+export type ProjectStatus = 'ACTIVE' | 'COMPLETED';
+export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 
 export interface PublicUser {
   id: string;
@@ -232,6 +234,108 @@ export interface DashboardData {
   recentActivity: ActivityLog[];
   recentOpportunities: Opportunity[];
   recentSales: Sale[];
+}
+
+export interface TaskCounts {
+  total: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
+  progress: number;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  companyId: string | null;
+  managerId: string | null;
+  status: ProjectStatus;
+  startDate: string | null;
+  dueDate: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  company?: { id: string; name: string } | null;
+  manager?: { id: string; name: string; avatarUrl?: string | null } | null;
+  taskCounts: TaskCounts;
+}
+
+export interface ProjectTask {
+  id: string;
+  projectId: string;
+  assigneeId: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  dueDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  assignee: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    role?: Role;
+  };
+}
+
+export interface ProjectDetail extends Project {
+  manager?: { id: string; name: string; email: string; avatarUrl: string | null } | null;
+  tasks: ProjectTask[];
+}
+
+export interface ProjectListResponse extends ListResponse<Project> {
+  counts: Record<ProjectStatus | 'total', number>;
+}
+
+export interface TeamTask {
+  id: string;
+  title: string;
+  status: TaskStatus;
+  dueDate: string | null;
+}
+
+export interface TeamMemberOverview {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    role: Role;
+    status: UserStatus;
+  };
+  tasks: TeamTask[];
+  taskCounts: Omit<TaskCounts, 'progress'>;
+  progress: number;
+}
+
+export interface TeamProject {
+  id: string;
+  name: string;
+  description: string | null;
+  status: ProjectStatus;
+  startDate: string | null;
+  dueDate: string | null;
+  manager: { id: string; name: string; avatarUrl: string | null } | null;
+  progress: number;
+  taskCounts: Omit<TaskCounts, 'progress'>;
+  members: TeamMemberOverview[];
+}
+
+export interface TeamOverview {
+  projects: TeamProject[];
+  summary: {
+    members: number;
+    projects: number;
+    activeProjects: number;
+    completedProjects: number;
+    totalTasks: number;
+    pendingTasks: number;
+    inProgressTasks: number;
+    completedTasks: number;
+    overallProgress: number;
+  };
 }
 
 export interface UserSession {

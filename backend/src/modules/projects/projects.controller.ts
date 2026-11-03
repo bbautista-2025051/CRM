@@ -1,0 +1,65 @@
+import type { Request, Response } from 'express';
+import { asyncHandler } from '../../utils/asyncHandler';
+import * as projectsService from './projects.service';
+
+export const list = asyncHandler(async (req: Request, res: Response) => {
+  res.status(200).json(await projectsService.listProjects(req.validated.query));
+});
+
+export const getById = asyncHandler(async (req: Request, res: Response) => {
+  const project = await projectsService.getProject(req.validated.params.id);
+  res.status(200).json({ data: project });
+});
+
+export const create = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  const project = await projectsService.createProject(req.validated.body, req.auth.user);
+  res.status(201).json({ data: project });
+});
+
+export const update = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  const project = await projectsService.updateProject(
+    req.validated.params.id,
+    req.validated.body,
+    req.auth.user,
+  );
+  res.status(200).json({ data: project });
+});
+
+export const remove = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  await projectsService.deleteProject(req.validated.params.id, req.auth.user);
+  res.status(204).send();
+});
+
+export const createTask = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  const task = await projectsService.createTask(
+    req.validated.params.id,
+    req.validated.body,
+    req.auth.user,
+  );
+  res.status(201).json({ data: task });
+});
+
+export const updateTask = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  const task = await projectsService.updateTask(
+    req.validated.params.id,
+    req.validated.params.taskId,
+    req.validated.body,
+    req.auth.user,
+  );
+  res.status(200).json({ data: task });
+});
+
+export const removeTask = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  await projectsService.deleteTask(
+    req.validated.params.id,
+    req.validated.params.taskId,
+    req.auth.user,
+  );
+  res.status(204).send();
+});
