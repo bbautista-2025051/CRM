@@ -12,10 +12,14 @@ import type {
   ListResponse,
   Opportunity,
   ProfileResponse,
+  ProjectDetail,
+  ProjectListResponse,
+  ProjectTask,
   PublicUser,
   Sale,
   SalesSummary,
   SessionPayload,
+  TeamOverview,
   ThemePreference,
   UserSession,
 } from '@/types';
@@ -143,6 +147,36 @@ export const salesApi = {
     api.patch<DataEnvelope<Sale>>(`/api/sales/${id}`, { status: 'CONFIRMED' }),
   cancel: (id: string) =>
     api.post<DataEnvelope<Sale> & { message: string }>(`/api/sales/${id}/cancel`),
+};
+
+export const projectsApi = {
+  list: (params: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    status?: string;
+    companyId?: string;
+    managerId?: string;
+    sortBy?: string;
+    sortOrder?: string;
+  }) => api.get<ProjectListResponse>(`/api/projects${buildQuery(params)}`),
+  get: (id: string) => api.get<DataEnvelope<ProjectDetail>>(`/api/projects/${id}`),
+  create: (payload: Record<string, unknown>) =>
+    api.post<DataEnvelope<ProjectDetail>>('/api/projects', payload),
+  update: (id: string, payload: Record<string, unknown>) =>
+    api.patch<DataEnvelope<ProjectDetail>>(`/api/projects/${id}`, payload),
+  remove: (id: string) => api.delete<void>(`/api/projects/${id}`),
+  createTask: (projectId: string, payload: Record<string, unknown>) =>
+    api.post<DataEnvelope<ProjectTask>>(`/api/projects/${projectId}/tasks`, payload),
+  updateTask: (projectId: string, taskId: string, payload: Record<string, unknown>) =>
+    api.patch<DataEnvelope<ProjectTask>>(`/api/projects/${projectId}/tasks/${taskId}`, payload),
+  removeTask: (projectId: string, taskId: string) =>
+    api.delete<void>(`/api/projects/${projectId}/tasks/${taskId}`),
+};
+
+export const teamApi = {
+  overview: (params: { projectId?: string; status?: string; search?: string } = {}) =>
+    api.get<DataEnvelope<TeamOverview>>(`/api/team/overview${buildQuery(params)}`),
 };
 
 export const usersApi = {

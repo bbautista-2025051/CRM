@@ -3,8 +3,10 @@ import type {
   CompanyStatus,
   OpportunityStage,
   OpportunityStatus,
+  ProjectStatus,
   Role,
   SaleStatus,
+  TaskStatus,
   UserStatus,
 } from '@/types';
 
@@ -91,6 +93,17 @@ export const SALE_STATUS_TONES: Record<SaleStatus, string> = {
     'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-300',
 };
 
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
+  ACTIVE: 'Activo',
+  COMPLETED: 'Terminado',
+};
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  PENDING: 'Pendiente',
+  IN_PROGRESS: 'En proceso',
+  COMPLETED: 'Completada',
+};
+
 export const ACTION_LABELS: Record<string, string> = {
   LOGIN: 'Inicio de sesión',
   LOGOUT: 'Cierre de sesión',
@@ -114,6 +127,8 @@ export const ENTITY_LABELS: Record<string, string> = {
   CLIENT: 'Cliente',
   OPPORTUNITY: 'Oportunidad',
   SALE: 'Venta',
+  PROJECT: 'Proyecto',
+  TASK: 'Tarea',
   USER: 'Usuario',
   SESSION: 'Sesión',
 };

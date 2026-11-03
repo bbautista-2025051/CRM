@@ -8,6 +8,8 @@ import { salesRouter } from '../modules/sales/sales.routes';
 import { dashboardRouter } from '../modules/dashboard/dashboard.routes';
 import { settingsRouter } from '../modules/settings/settings.routes';
 import { activityRouter } from '../modules/activity/activity.routes';
+import { projectsRouter } from '../modules/projects/projects.routes';
+import { teamRouter } from '../modules/team/team.routes';
 
 export const apiRouter = Router();
 
@@ -26,6 +28,8 @@ apiRouter.use('/companies', companiesRouter);
 apiRouter.use('/clients', clientsRouter);
 apiRouter.use('/opportunities', opportunitiesRouter);
 apiRouter.use('/sales', salesRouter);
+apiRouter.use('/projects', projectsRouter);
+apiRouter.use('/team', teamRouter);
 apiRouter.use('/dashboard', dashboardRouter);
 apiRouter.use('/settings', settingsRouter);
 apiRouter.use('/activity', activityRouter);
