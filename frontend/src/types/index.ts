@@ -69,11 +69,7 @@ export interface Company {
   createdById: string | null;
   createdAt: string;
   updatedAt: string;
-  _count?: {
-    clients: number;
-    opportunities: number;
-    sales: number;
-  };
+  _count?: { clients: number; opportunities: number; sales: number };
 }
 
 export interface CompanyOption {
@@ -102,10 +98,7 @@ export interface Client {
   createdAt: string;
   updatedAt: string;
   company?: { id: string; name: string } | null;
-  _count?: {
-    opportunities: number;
-    sales: number;
-  };
+  _count?: { opportunities: number; sales: number };
 }
 
 export interface ClientOption {
@@ -142,12 +135,7 @@ export interface Opportunity {
   company?: { id: string; name: string } | null;
   client?: { id: string; firstName: string; lastName: string; email?: string } | null;
   owner?: { id: string; name: string; email?: string; avatarUrl?: string | null };
-  sale?: {
-    id: string;
-    saleNumber: string;
-    status: SaleStatus;
-    amount?: string;
-  } | null;
+  sale?: { id: string; saleNumber: string; status: SaleStatus; amount?: string } | null;
 }
 
 export interface Sale {
@@ -180,11 +168,32 @@ export interface Sale {
 export interface SalesSummary {
   counts: Record<SaleStatus, number>;
   total: number;
-  byCurrency: Array<{
-    currency: string;
-    confirmedTotal: string;
-    confirmedCount: number;
-  }>;
+  byCurrency: Array<{ currency: string; confirmedTotal: string; confirmedCount: number }>;
+}
+
+export interface DashboardData {
+  defaultCurrency: string;
+  totals: {
+    companies: number;
+    activeCompanies: number;
+    clients: number;
+    openOpportunities: number;
+    openValue: string;
+    confirmedSales: number;
+    wonOpportunities: number;
+    lostOpportunities: number;
+    conversionRate: number | null;
+    salesByCurrency: Array<{ currency: string; total: string; count: number }>;
+  };
+  charts: {
+    monthlySales: Array<{ month: string; total: string; count: number }>;
+    opportunitiesByStage: Array<{ stage: OpportunityStage; count: number; value: string }>;
+    clientsByCompany: Array<{ companyId: string | null; company: string; count: number }>;
+    companiesBySector: Array<{ sector: string; count: number }>;
+  };
+  recentActivity: ActivityLog[];
+  recentOpportunities: Opportunity[];
+  recentSales: Sale[];
 }
 
 export interface ActivityLog {
@@ -197,4 +206,114 @@ export interface ActivityLog {
   metadata: Record<string, unknown> | null;
   createdAt: string;
   user: { id: string; name: string; avatarUrl: string | null } | null;
+}
+
+export interface ProjectTask {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string | null;
+  assigneeId: string;
+  status: TaskStatus;
+  dueDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  assignee?: { id: string; name: string; email?: string; avatarUrl: string | null; role?: Role } | null;
+}
+
+export interface ProjectTaskCounts {
+  total: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
+  progress: number;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  companyId: string | null;
+  managerId: string | null;
+  phone: string | null;
+  status: ProjectStatus;
+  startDate: string | null;
+  dueDate: string | null;
+  completedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  company?: { id: string; name: string } | null;
+  manager?: { id: string; name: string; email?: string; avatarUrl: string | null } | null;
+  taskCounts: ProjectTaskCounts;
+}
+
+export interface ProjectDetail extends Project {
+  tasks: ProjectTask[];
+}
+
+export interface ProjectListResponse {
+  data: Project[];
+  meta: PaginationMeta;
+  counts: { ACTIVE: number; COMPLETED: number; total: number };
+}
+
+export interface ProjectFile {
+  id: string;
+  projectId: string;
+  originalName: string;
+  storedName: string;
+  mimeType: string;
+  size: number;
+  uploadedById: string;
+  createdAt: string;
+  uploadedBy?: { id: string; name: string; avatarUrl: string | null };
+}
+
+export interface TeamOverview {
+  projects: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    status: ProjectStatus;
+    startDate: string | null;
+    dueDate: string | null;
+    manager: { id: string; name: string; avatarUrl: string | null } | null;
+    progress: number;
+    taskCounts: ProjectTaskCounts;
+    members: Array<{
+      user: { id: string; name: string; email: string; avatarUrl: string | null; role: Role; status: UserStatus };
+      tasks: Array<{ id: string; title: string; status: TaskStatus; dueDate: string | null }>;
+      taskCounts: Omit<ProjectTaskCounts, 'progress'>;
+      progress: number;
+    }>;
+  }>;
+  summary: {
+    members: number;
+    projects: number;
+    activeProjects: number;
+    completedProjects: number;
+    totalTasks: number;
+    pendingTasks: number;
+    inProgressTasks: number;
+    completedTasks: number;
+    overallProgress: number;
+  };
+}
+
+export interface ProfileResponse {
+  user: PublicUser;
+  googleEnabled: boolean;
+  googleClientId: string | null;
+  session: { expiresAt: string; rememberMe: boolean };
+}
+
+export interface UserSession {
+  id: string;
+  createdAt: string;
+  lastSeenAt: string;
+  expiresAt: string;
+  rememberMe: boolean;
+  ipAddress: string | null;
+  userAgent: string | null;
+  current: boolean;
 }
