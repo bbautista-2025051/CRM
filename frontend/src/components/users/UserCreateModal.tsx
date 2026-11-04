@@ -174,8 +174,11 @@ export const UserCreateModal = ({
           </Field>
           <Field label="Rol" htmlFor="user-role" error={errors.role?.message} required>
             <Select id="user-role" invalid={Boolean(errors.role)} {...register('role')}>
+              <option value="ADMIN">Admin</option>
+              <option value="PROGRAMADOR">Programador</option>
               <option value="VENDEDOR">Vendedor</option>
-              <option value="ADMIN">Administrador</option>
+              <option value="SUPERVISOR">Supervisor</option>
+              <option value="OPERACIONES">Operaciones</option>
             </Select>
           </Field>
           <Field label="Estado" htmlFor="user-status" error={errors.status?.message} required>

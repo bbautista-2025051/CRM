@@ -7,7 +7,15 @@ export const summary = asyncHandler(async (req: Request, res: Response) => {
     ?.query ?? req.query;
 
   const data = await dashboardService.getDashboard({
-    role: typeof query.role === 'string' && query.role ? (query.role as 'ADMIN' | 'VENDEDOR') : undefined,
+    role:
+      typeof query.role === 'string' && query.role
+        ? (query.role as
+            | 'ADMIN'
+            | 'PROGRAMADOR'
+            | 'VENDEDOR'
+            | 'SUPERVISOR'
+            | 'OPERACIONES')
+        : undefined,
     userId: typeof query.userId === 'string' && query.userId ? query.userId : undefined,
     month: typeof query.month === 'string' && query.month ? query.month : undefined,
     year: typeof query.year === 'string' && query.year ? query.year : undefined,

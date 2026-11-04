@@ -158,8 +158,11 @@ export const UserEditModal = ({
               invalid={Boolean(errors.role)}
               {...register('role')}
             >
+              <option value="ADMIN">Admin</option>
+              <option value="PROGRAMADOR">Programador</option>
               <option value="VENDEDOR">Vendedor</option>
-              <option value="ADMIN">Administrador</option>
+              <option value="SUPERVISOR">Supervisor</option>
+              <option value="OPERACIONES">Operaciones</option>
             </Select>
             {isSelf ? <p className="hint">No puedes cambiar tu propio rol.</p> : null}
           </Field>

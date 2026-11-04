@@ -1,7 +1,9 @@
+import { z } from 'zod';
 import { Router } from 'express';
-import { requireAuth, requireAdmin } from '../../middlewares/auth';
+import { requireAdmin, requireAuth } from '../../middlewares/auth';
 import { csrfProtection } from '../../middlewares/csrf';
 import { validate } from '../../middlewares/validate';
+import { idParamSchema } from '../../utils/zod';
 import * as controller from './users.controller';
 import {
   createUserSchema,
