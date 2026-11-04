@@ -192,15 +192,15 @@ export const ProjectDetailModal = ({
               </span>
             </div>
 
-              <dl className="divide-y divide-line rounded-xl border border-line bg-elevated/20">
-                <div className="px-4 py-3">
+              <dl className="divide-y divide-line">
+                <div className="px-1 py-3">
                   <dt className="text-[11px] uppercase tracking-wide text-muted">Descripción</dt>
                   <dd className="mt-1 whitespace-pre-line text-sm leading-6 text-ink">
                     {project.description || 'Sin descripción.'}
                   </dd>
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3">
+                <div className="flex items-center gap-3 px-1 py-3">
                   <Phone className="h-4 w-4 shrink-0 text-muted" />
                   <div className="min-w-0">
                     <dt className="text-[11px] uppercase tracking-wide text-muted">Teléfono</dt>
@@ -208,7 +208,7 @@ export const ProjectDetailModal = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3">
+                <div className="flex items-center gap-3 px-1 py-3">
                   <Building2 className="h-4 w-4 shrink-0 text-muted" />
                   <div className="min-w-0">
                     <dt className="text-[11px] uppercase tracking-wide text-muted">Empresa</dt>
@@ -218,7 +218,7 @@ export const ProjectDetailModal = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3">
+                <div className="flex items-center gap-3 px-1 py-3">
                   {project.manager ? (
                     <Avatar
                       name={project.manager.name}
@@ -237,7 +237,7 @@ export const ProjectDetailModal = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3">
+                <div className="flex items-center gap-3 px-1 py-3">
                   <CalendarDays className="h-4 w-4 shrink-0 text-muted" />
                   <div className="min-w-0">
                     <dt className="text-[11px] uppercase tracking-wide text-muted">Inicio</dt>
@@ -245,7 +245,7 @@ export const ProjectDetailModal = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3">
+                <div className="flex items-center gap-3 px-1 py-3">
                   <CalendarDays className="h-4 w-4 shrink-0 text-muted" />
                   <div className="min-w-0">
                     <dt className="text-[11px] uppercase tracking-wide text-muted">Entrega</dt>
@@ -330,7 +330,7 @@ export const ProjectDetailModal = ({
                     return (
                       <li
                         key={file.id}
-                        className="flex items-center gap-3 rounded-xl border border-line bg-elevated/40 p-2.5"
+                        className="flex items-center gap-3 rounded-[10px] p-2.5 transition-colors hover:bg-elevated"
                       >
                         <span
                           className={cn(

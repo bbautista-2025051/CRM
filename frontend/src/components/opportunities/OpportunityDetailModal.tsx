@@ -165,7 +165,7 @@ export const OpportunityDetailModal = ({
             </span>
           </div>
 
-          <div className="rounded-xl border border-line bg-elevated/40 p-4">
+          <div className="border-y border-line py-3.5">
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
@@ -284,7 +284,7 @@ export const OpportunityDetailModal = ({
           </dl>
 
           {opportunity.description ? (
-            <div className="rounded-xl border border-line bg-elevated/40 p-4">
+            <div className="border-t border-line pt-3.5">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                 Descripción
               </p>

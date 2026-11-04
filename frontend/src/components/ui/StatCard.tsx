@@ -19,6 +19,7 @@ export const StatCard = ({
   icon: Icon,
   tone = 'brand',
   loading = false,
+  flat = false,
   className,
 }: {
   label: string;
@@ -27,9 +28,11 @@ export const StatCard = ({
   icon: LucideIcon | NexoIcon;
   tone?: keyof typeof tones;
   loading?: boolean;
+  /** Sin caja: la métrica vive dentro de una tira dividida. */
+  flat?: boolean;
   className?: string;
 }) => (
-  <div className={cn('card p-5', className)}>
+  <div className={cn(!flat && 'card', 'px-5 py-4 sm:py-5', className)}>
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
         <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">

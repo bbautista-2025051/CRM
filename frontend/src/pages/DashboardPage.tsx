@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -26,7 +26,6 @@ import {
 } from '@/lib/format';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatCard } from '@/components/ui/StatCard';
-import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { buttonStyles } from '@/components/ui/Button';
 import { CardsSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -50,8 +49,25 @@ const greeting = (): string => {
   return 'Buenas noches';
 };
 
-export const DashboardPage = () => {
-  usePageTitle('Panel');
+const SectionHeader = ({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) => (
+  <div className="flex items-end justify-between gap-4">
+    <div className="min-w-0">
+      <h2 className="font-display text-[15px] font-bold tracking-[-0.01em] text-ink">{title}</h2>
+      {description ? <p className="mt-0.5 text-xs text-muted">{description}</p> : null}
+    </div>
+    {action ? <div className="shrink-0">{action}</div> : null}
+  </div>
+);
+
+export const DashboardPage = () => {  usePageTitle('Panel');
   const { user } = useAuth();
   const currentYear = new Date().getFullYear();
   const [roleFilter, setRoleFilter] = useState('');
@@ -213,25 +229,26 @@ export const DashboardPage = () => {
       {query.isLoading ? (
         <>
           <CardsSkeleton />
-          <div className="grid gap-4 xl:grid-cols-12">
-            <div className="card h-[370px] p-5 xl:col-span-8">
+          <div className="grid gap-6 xl:grid-cols-12">
+            <div className="h-[300px] border-t border-line pt-5 xl:col-span-8">
               <Skeleton className="h-4 w-40" />
-              <Skeleton className="mt-8 h-[260px] w-full" />
+              <Skeleton className="mt-8 h-[220px] w-full" />
             </div>
-            <div className="card h-[370px] p-5 xl:col-span-4">
+            <div className="h-[300px] border-t border-line pt-5 xl:col-span-4">
               <Skeleton className="h-4 w-36" />
-              <Skeleton className="mt-8 h-[260px] w-full" />
+              <Skeleton className="mt-8 h-[220px] w-full" />
             </div>
           </div>
         </>
       ) : query.isError ? (
-        <Card>
+        <div className="border-y border-line py-8">
           <ErrorState error={query.error} onRetry={() => void query.refetch()} />
-        </Card>
+        </div>
       ) : data ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid divide-y divide-line border-y border-line sm:grid-cols-2 sm:divide-y-0 xl:grid-cols-4 xl:divide-x">
             <StatCard
+              flat
               label="Ingresos confirmados"
               value={formatMoney(primaryRevenue?.total ?? '0.00', data.defaultCurrency)}
               hint={
@@ -253,6 +270,7 @@ export const DashboardPage = () => {
               tone="emerald"
             />
             <StatCard
+              flat
               label="Pipeline abierto"
               value={formatMoney(data.totals.openValue, data.defaultCurrency)}
               hint={`${data.totals.openOpportunities} oportunidades abiertas`}
@@ -260,6 +278,7 @@ export const DashboardPage = () => {
               tone="brand"
             />
             <StatCard
+              flat
               label="Tasa de conversión"
               value={formatPercent(data.totals.conversionRate)}
               hint={`${data.totals.wonOpportunities} ganadas · ${data.totals.lostOpportunities} perdidas`}
@@ -267,6 +286,7 @@ export const DashboardPage = () => {
               tone="sky"
             />
             <StatCard
+              flat
               label="Clientes activos"
               value={formatNumber(data.totals.clients)}
               hint={`${data.totals.activeCompanies} de ${data.totals.companies} empresas activas`}
@@ -275,9 +295,9 @@ export const DashboardPage = () => {
             />
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-12">
-            <Card className="xl:col-span-8">
-              <CardHeader
+          <div className="grid gap-6 xl:grid-cols-12">
+            <section className="border-t border-line pt-5 xl:col-span-8">
+              <SectionHeader
                 title={monthFilter ? `Ingresos del mes ${months.find((item) => item.value === monthFilter)?.label ?? ''}` : `Ingresos del año ${yearFilter}`}
                 description="Solo ventas con estado confirmada"
                 action={
@@ -286,13 +306,13 @@ export const DashboardPage = () => {
                   </Badge>
                 }
               />
-              <CardBody className="pb-3">
+              <div className="mt-5 pb-3">
                 <RevenueChart data={data.charts.monthlySales} currency={data.defaultCurrency} />
-              </CardBody>
-            </Card>
+              </div>
+            </section>
 
-            <Card className="xl:col-span-4">
-              <CardHeader
+            <section className="border-t border-line pt-5 xl:col-span-4">
+              <SectionHeader
                 title="Embudo de oportunidades"
                 description="Distribución actual por etapa"
                 action={
@@ -304,12 +324,12 @@ export const DashboardPage = () => {
                   </Link>
                 }
               />
-              <div className="grid grid-cols-3 divide-x divide-line border-b border-line">
+              <div className="mt-5 grid grid-cols-3 divide-x divide-line border-y border-line">
                 <div className="px-4 py-3">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                     Ganadas
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+                  <p className="metric mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400">
                     {data.totals.wonOpportunities}
                   </p>
                 </div>
@@ -317,7 +337,7 @@ export const DashboardPage = () => {
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                     Perdidas
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-rose-600 dark:text-rose-400">
+                  <p className="metric mt-1 text-lg font-semibold text-rose-600 dark:text-rose-400">
                     {data.totals.lostOpportunities}
                   </p>
                 </div>
@@ -325,20 +345,20 @@ export const DashboardPage = () => {
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                     Conversión
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-ink">
+                  <p className="metric mt-1 text-lg font-semibold text-ink">
                     {formatPercent(data.totals.conversionRate)}
                   </p>
                 </div>
               </div>
-              <CardBody className="pb-2">
+              <div className="pb-2">
                 <StageChart data={data.charts.opportunitiesByStage} />
-              </CardBody>
-            </Card>
+              </div>
+            </section>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-12">
-            <Card className="xl:col-span-7">
-              <CardHeader
+          <div className="grid gap-6 xl:grid-cols-12">
+            <section className="border-t border-line pt-5 xl:col-span-7">
+              <SectionHeader
                 title="Oportunidades recientes"
                 description="Últimas oportunidades creadas"
                 action={
@@ -350,6 +370,7 @@ export const DashboardPage = () => {
                   </Link>
                 }
               />
+              <div className="mt-3">
               {data.recentOpportunities.length === 0 ? (
                 <EmptyState
                   icon={OpportunitiesIcon}
@@ -413,10 +434,11 @@ export const DashboardPage = () => {
                   </table>
                 </div>
               )}
-            </Card>
+              </div>
+            </section>
 
-            <Card className="xl:col-span-5">
-              <CardHeader
+            <section className="border-t border-line pt-5 xl:col-span-5">
+              <SectionHeader
                 title="Actividad del equipo"
                 description="Últimos movimientos registrados"
                 action={
@@ -428,15 +450,15 @@ export const DashboardPage = () => {
                   </Link>
                 }
               />
-              <CardBody className="py-1">
+              <div className="mt-3">
                 <ActivityFeed items={data.recentActivity.slice(0, 6)} />
-              </CardBody>
-            </Card>
+              </div>
+            </section>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-12">
-            <Card className="xl:col-span-7">
-              <CardHeader
+          <div className="grid gap-6 xl:grid-cols-12">
+            <section className="border-t border-line pt-5 xl:col-span-7">
+              <SectionHeader
                 title="Clientes por empresa"
                 description="Cartera activa agrupada por empresa"
                 action={
@@ -448,24 +470,24 @@ export const DashboardPage = () => {
                   </Link>
                 }
               />
-              <CardBody>
+              <div className="mt-3">
                 <ClientsChart data={data.charts.clientsByCompany} />
-              </CardBody>
-            </Card>
+              </div>
+            </section>
 
-            <Card className="xl:col-span-5">
-              <CardHeader
+            <section className="border-t border-line pt-5 xl:col-span-5">
+              <SectionHeader
                 title="Empresas por sector"
                 description="Composición de la cartera activa"
               />
-              <CardBody>
+              <div className="mt-3">
                 <SectorChart data={data.charts.companiesBySector} />
-              </CardBody>
-            </Card>
+              </div>
+            </section>
           </div>
 
-          <Card>
-            <CardHeader
+          <section className="border-t border-line pt-5">
+            <SectionHeader
               title="Ventas recientes"
               description="Últimos registros de venta"
               action={
@@ -477,6 +499,7 @@ export const DashboardPage = () => {
                 </Link>
               }
             />
+            <div className="mt-3">
             {data.recentSales.length === 0 ? (
               <EmptyState
                 icon={SalesIcon}
@@ -547,7 +570,8 @@ export const DashboardPage = () => {
                 </table>
               </div>
             )}
-          </Card>
+            </div>
+          </section>
 
           <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-muted">
             <span className="inline-flex items-center gap-1.5">

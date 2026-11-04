@@ -286,13 +286,13 @@ export const SalesPage = () => {
       </div>
 
       {confirmedTotals.length > 0 ? (
-        <Card className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-line py-4">
           <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
             <Wallet className="h-4 w-4" /> Ingresos confirmados
           </span>
           {confirmedTotals.map((item) => (
             <span key={item.currency} className="flex items-baseline gap-2">
-              <span className="text-base font-semibold text-ink">
+              <span className="metric text-base font-semibold text-ink">
                 {formatMoney(item.confirmedTotal, item.currency)}
               </span>
               <span className="text-[11px] text-muted">
@@ -307,7 +307,7 @@ export const SalesPage = () => {
           ) : (
             <span className="ml-auto text-[11px] text-muted">Histórico completo</span>
           )}
-        </Card>
+        </div>
       ) : null}
 
       <Card>

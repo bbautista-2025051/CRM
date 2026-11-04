@@ -102,35 +102,29 @@ export const UsersPage = () => {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="card flex items-center gap-3 p-4">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-soft text-brand-strong dark:text-brand">
-            <UsersRound className="h-4 w-4" />
-          </span>
+      <div className="grid divide-y divide-line border-y border-line py-1 sm:grid-cols-3 sm:divide-y-0 sm:divide-x">
+        <div className="flex items-center gap-3 px-1 py-3 sm:px-2">
+          <UsersRound className="h-4 w-4 shrink-0 text-brand" />
           <div>
-            <p className="text-lg font-semibold leading-none text-ink">
+            <p className="metric text-lg font-semibold leading-none text-ink">
               {meta ? formatNumber(meta.total) : '—'}
             </p>
             <p className="mt-1 text-[11px] text-muted">Usuarios en el filtro actual</p>
           </div>
         </div>
-        <div className="card flex items-center gap-3 p-4">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-            <ShieldCheck className="h-4 w-4" />
-          </span>
+        <div className="flex items-center gap-3 px-1 py-3 sm:px-5">
+          <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
           <div>
-            <p className="text-lg font-semibold leading-none text-ink">
+            <p className="metric text-lg font-semibold leading-none text-ink">
               {formatNumber(users.filter((item) => item.role === 'ADMIN').length)}
             </p>
             <p className="mt-1 text-[11px] text-muted">Administradores en esta página</p>
           </div>
         </div>
-        <div className="card flex items-center gap-3 p-4">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
-            <KeyRound className="h-4 w-4" />
-          </span>
+        <div className="flex items-center gap-3 px-1 py-3 sm:px-5">
+          <KeyRound className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <div>
-            <p className="text-lg font-semibold leading-none text-ink">
+            <p className="metric text-lg font-semibold leading-none text-ink">
               {formatNumber(users.filter((item) => item.mustChangePassword).length)}
             </p>
             <p className="mt-1 text-[11px] text-muted">
