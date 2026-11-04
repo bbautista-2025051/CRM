@@ -25,6 +25,10 @@ const envSchema = z.object({
   SESSION_COOKIE_NAME: z.string().min(1).default('nexo_session'),
   SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(8),
   SESSION_REMEMBER_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+  JWT_SECRET: z
+    .string()
+    .min(32, 'JWT_SECRET debe tener al menos 32 caracteres'),
+  JWT_EXPIRES_IN: z.string().min(1).default('7d'),
   COOKIE_SECURE: booleanFromEnv,
   GOOGLE_CLIENT_ID: z.string().optional().default(''),
   GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
@@ -81,6 +85,8 @@ export const env = {
   maxAvatarBytes: raw.MAX_AVATAR_SIZE_MB * 1024 * 1024,
   sessionTtlMs: raw.SESSION_TTL_HOURS * 60 * 60 * 1000,
   sessionRememberMs: raw.SESSION_REMEMBER_DAYS * 24 * 60 * 60 * 1000,
+  jwtSecret: raw.JWT_SECRET,
+  jwtExpiresIn: raw.JWT_EXPIRES_IN,
 };
 
 export type Env = typeof env;
