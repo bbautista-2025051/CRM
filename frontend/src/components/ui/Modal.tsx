@@ -102,10 +102,10 @@ export const Modal = ({
   return createPortal(
     <div
       className={cn(
-        'fixed inset-0 z-[90] overflow-y-auto bg-slate-950/60',
+        'fixed z-[90] overflow-y-auto bg-slate-950/60',
         fullWindow
-          ? 'flex flex-col'
-          : 'flex items-start justify-center p-4 sm:items-center',
+          ? 'inset-y-0 right-0 left-0 flex flex-col lg:left-[var(--nexo-sidebar,0px)]'
+          : 'inset-0 flex items-start justify-center p-4 sm:items-center',
       )}
       onMouseDown={(event) => {
         if (closeOnBackdrop && event.target === event.currentTarget) onClose();
