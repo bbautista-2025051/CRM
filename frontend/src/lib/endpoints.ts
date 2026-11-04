@@ -178,8 +178,11 @@ export const projectsApi = {
     api.get<DataEnvelope<ProjectFile[]>>(`/api/projects/${projectId}/files`),
   listComments: (projectId: string) =>
     api.get<DataEnvelope<ProjectComment[]>>(`/api/projects/${projectId}/comments`),
-  createComment: (projectId: string, body: string) =>
-    api.post<DataEnvelope<ProjectComment>>(`/api/projects/${projectId}/comments`, { body }),
+  createComment: (projectId: string, body: string, fileIds: string[] = []) =>
+    api.post<DataEnvelope<ProjectComment>>(`/api/projects/${projectId}/comments`, {
+      body,
+      fileIds,
+    }),
   uploadFile: (projectId: string, file: File) => {
     const form = new FormData();
     form.append('file', file);

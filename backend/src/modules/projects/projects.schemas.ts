@@ -38,6 +38,9 @@ export const commentBodySchema = z.object({
     .trim()
     .min(1, 'Escribe un comentario')
     .max(4000, 'El comentario no puede superar 4000 caracteres'),
+  fileIds: z.array(z.string().uuid('El identificador del archivo no es válido')).max(10, {
+    message: 'Puedes adjuntar hasta 10 archivos por comentario',
+  }).optional(),
 });
 
 export const updateProjectSchema = projectBodySchema

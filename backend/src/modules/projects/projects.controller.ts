@@ -76,6 +76,7 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
   const comment = await projectsService.createProjectComment(
     req.validated.params.id,
     req.validated.body.body,
+    req.validated.body.fileIds ?? [],
     req.auth.user,
   );
   res.status(201).json({ data: comment });

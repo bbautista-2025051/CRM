@@ -366,6 +366,7 @@ export const listProjectComments = async (projectId: string) => {
     orderBy: { createdAt: 'desc' },
     include: {
       author: { select: { id: true, name: true, avatarUrl: true } },
+      files: true,
     },
   });
 };
@@ -373,6 +374,7 @@ export const listProjectComments = async (projectId: string) => {
 export const createProjectComment = async (
   projectId: string,
   body: string,
+  fileIds: string[],
   actor: User,
 ) => {
   const project = await prisma.project.findUnique({ where: { id: projectId } });
@@ -389,17 +391,33 @@ export const createProjectComment = async (
     },
   });
 
+  if (fileIds.length) {
+    await prisma.projectFile.updateMany({
+      where: { projectId, commentId: null, id: { in: fileIds } },
+      data: { commentId: comment.id },
+    });
+  }
+
   await logActivity({
     userId: actor.id,
     action: 'CREATE',
     entityType: 'PROJECT',
     entityId: projectId,
     description: `Comentario agregado al proyecto: ${project.name}`,
-    metadata: { commentId: comment.id },
+    metadata: { commentId: comment.id, attachments: fileIds.length },
   });
 
-  return comment;
+  return getProjectComment(comment.id);
 };
+
+const getProjectComment = (id: string) =>
+  prisma.projectComment.findUniqueOrThrow({
+    where: { id },
+    include: {
+      author: { select: { id: true, name: true, avatarUrl: true } },
+      files: true,
+    },
+  });
 
 // ---------------------------------------------------------------------------
 // Archivos del proyecto

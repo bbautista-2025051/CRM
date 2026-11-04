@@ -11,6 +11,7 @@ import {
   Phone,
   Plus,
   Trash2,
+  X,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -25,7 +26,7 @@ import { projectsApi, unwrap } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
 import { isAdmin } from '@/lib/permissions';
 import { cn } from '@/lib/cn';
-import { formatBytes, formatDate, formatDateTime, formatMoney, formatNumber } from '@/lib/format';
+import { formatBytes, formatDate, formatDateTime, formatMoney } from '@/lib/format';
 import type { ProjectComment, ProjectFile, ProjectStatus } from '@/types';
 
 const extFromName = (name: string): string => {
@@ -60,7 +61,7 @@ const fileStyle = (file: ProjectFile) =>
 export const projectNumberLabel = (number?: number | null): string =>
   number ? `PRJ-${String(number).padStart(3, '0')}` : '—';
 
-/** Encabezado centrado del wireframe: TITULO / EMPRESA / MONTO con líneas bajo cada texto. */
+/** Encabezado centrado del wireframe: TITULO / EMPRESA / MONTO, sin líneas. */
 const SheetHeader = ({
   title,
   company,
@@ -69,35 +70,17 @@ const SheetHeader = ({
   title: string;
   company: string;
   amount: string;
-}) => {
-  const rule = (width: string) => (
-    <div className="mt-1.5 flex justify-center">
-      <span className={cn('h-px bg-line', width)} />
-      <span className={cn('mt-[3px] h-px bg-line', width)} />
-    </div>
-  );
-
-  return (
-    <header className="px-4 text-center">
-      <h2 className="font-display text-[22px] font-bold tracking-[-0.02em] text-ink">{title}</h2>
-      {rule('w-72')}
-      <p className="mt-2.5 font-display text-[17px] font-semibold tracking-[-0.01em] text-ink">
-        {company}
-      </p>
-      {rule('w-64')}
-      <p className="mt-2.5 metric text-[15px] font-semibold text-ink">{amount}</p>
-      {rule('w-56')}
-    </header>
-  );
-};
-
-const Row = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
 }) => (
+  <header className="px-4 text-center">
+    <h2 className="font-display text-[22px] font-bold tracking-[-0.02em] text-ink">{title}</h2>
+    <p className="mt-2.5 font-display text-[17px] font-semibold tracking-[-0.01em] text-ink">
+      {company}
+    </p>
+    <p className="mt-2 metric text-[15px] font-semibold text-ink">{amount}</p>
+  </header>
+);
+
+const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="px-4 py-3">
     <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
     <div className="mt-1 text-sm text-ink">{children}</div>
@@ -122,6 +105,51 @@ const RowInline = ({
   </div>
 );
 
+/** Adjunto en línea, a la par del comentario que lo envió. */
+const AttachmentRow = ({
+  file,
+  onDelete,
+}: {
+  file: ProjectFile;
+  onDelete?: (file: ProjectFile) => void;
+}) => {
+  const style = fileStyle(file);
+  const Icon = style.icon;
+  return (
+    <div className="mt-2 flex w-fit items-center gap-3 rounded-[10px] border border-line bg-surface px-2.5 py-2">
+      <span
+        className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', style.tone)}
+      >
+        <Icon className="h-4 w-4" />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-[13px] font-medium text-ink" title={file.originalName}>
+          {file.originalName}
+        </p>
+        <p className="mt-0.5 text-[11px] text-muted">{formatBytes(file.size)}</p>
+      </div>
+      <a
+        href={`/uploads/projects/${file.storedName}`}
+        download={file.originalName}
+        className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
+        aria-label={`Descargar ${file.originalName}`}
+      >
+        <Download className="h-4 w-4" />
+      </a>
+      {onDelete ? (
+        <button
+          type="button"
+          onClick={() => onDelete(file)}
+          className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-rose-500/10 hover:text-rose-500"
+          aria-label={`Eliminar ${file.originalName}`}
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      ) : null}
+    </div>
+  );
+};
+
 export const ProjectDetailModal = ({
   open,
   onClose,
@@ -139,16 +167,12 @@ export const ProjectDetailModal = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingCount, setUploadingCount] = useState(0);
   const [commentDraft, setCommentDraft] = useState('');
+  // Archivos subidos que aún no pertenecen a un comentario (pendientes de "Comentar").
+  const [stagedFiles, setStagedFiles] = useState<ProjectFile[]>([]);
 
   const query = useQuery({
     queryKey: ['projects', 'detail', projectId],
     queryFn: async () => unwrap(await projectsApi.get(projectId as string)),
-    enabled: open && Boolean(projectId),
-  });
-
-  const filesQuery = useQuery({
-    queryKey: ['projects', 'files', projectId],
-    queryFn: async () => unwrap(await projectsApi.listFiles(projectId as string)),
     enabled: open && Boolean(projectId),
   });
 
@@ -158,13 +182,24 @@ export const ProjectDetailModal = ({
     enabled: open && Boolean(projectId),
   });
 
+  const removeFile = useMutation({
+    mutationFn: (fileId: string) => projectsApi.removeFile(projectId as string, fileId),
+    onError: (error) => {
+      toastError(
+        'No se pudo eliminar',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
+      );
+    },
+  });
+
   const uploadFile = useMutation({
     mutationFn: async (file: File) => {
       setUploadingCount((count) => count + 1);
       return projectsApi.uploadFile(projectId as string, file);
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['projects', 'files', projectId] });
+    onSuccess: (response) => {
+      const created = response.data as ProjectFile;
+      setStagedFiles((current) => [...current, created]);
     },
     onError: (error) => {
       toastError(
@@ -177,25 +212,13 @@ export const ProjectDetailModal = ({
     },
   });
 
-  const removeFile = useMutation({
-    mutationFn: (fileId: string) => projectsApi.removeFile(projectId as string, fileId),
-    onSuccess: () => {
-      success('Archivo eliminado', 'El archivo se quitó del proyecto.');
-      void queryClient.invalidateQueries({ queryKey: ['projects', 'files', projectId] });
-    },
-    onError: (error) => {
-      toastError(
-        'No se pudo eliminar',
-        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
-      );
-    },
-  });
-
   const createComment = useMutation({
-    mutationFn: (body: string) => projectsApi.createComment(projectId as string, body),
-    onSuccess: () => {
-      success('Comentario agregado');
+    mutationFn: (body: string) =>
+      projectsApi.createComment(projectId as string, body, stagedFiles.map((file) => file.id)),
+    onSuccess: (response) => {
+      success('Comentario agregado', response.data.files?.length ? `${response.data.files.length} archivo(s) adjunto(s).` : undefined);
       setCommentDraft('');
+      setStagedFiles([]);
       void queryClient.invalidateQueries({ queryKey: ['projects', 'comments', projectId] });
     },
     onError: (error) => {
@@ -206,9 +229,9 @@ export const ProjectDetailModal = ({
     },
   });
 
-  const onPickFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
-    for (const file of Array.from(files)) {
+  const onPickFiles = async (picked: FileList | null) => {
+    if (!picked?.length) return;
+    for (const file of Array.from(picked)) {
       // Cada archivo se sube de forma secuencial para no saturar la API.
       await uploadFile.mutateAsync(file).catch(() => undefined);
     }
@@ -217,11 +240,31 @@ export const ProjectDetailModal = ({
   const onDeleteFile = async (file: ProjectFile) => {
     const accepted = await confirm({
       title: `Eliminar ${file.originalName}`,
-      description: 'El archivo se eliminará del proyecto. Esta acción no se puede deshacer.',
+      description: 'El archivo se eliminará del comentario. Esta acción no se puede deshacer.',
       confirmLabel: 'Eliminar archivo',
       variant: 'danger',
     });
-    if (accepted) removeFile.mutate(file.id);
+    if (accepted) {
+      await removeFile.mutateAsync(file.id).catch(() => undefined);
+      setStagedFiles((current) => current.filter((item) => item.id !== file.id));
+      void queryClient.invalidateQueries({ queryKey: ['projects', 'comments', projectId] });
+    }
+  };
+
+  const removeStagedFile = async (file: ProjectFile) => {
+    await removeFile.mutateAsync(file.id).catch(() => undefined);
+    setStagedFiles((current) => current.filter((item) => item.id !== file.id));
+  };
+
+  const canManageFile = (file: ProjectFile) => admin || file.uploadedById === user?.id;
+
+  const onCloseInternal = () => {
+    // Un archivo subido pero no comentado se descarta para dejar registros limpios.
+    stagedFiles.forEach((file) => {
+      void projectsApi.removeFile(projectId as string, file.id).catch(() => undefined);
+    });
+    setStagedFiles([]);
+    onClose();
   };
 
   const onSubmitComment = () => {
@@ -231,19 +274,18 @@ export const ProjectDetailModal = ({
   };
 
   const project = query.data;
-  const files = filesQuery.data ?? [];
   const comments = commentsQuery.data ?? [];
 
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={onCloseInternal}
       size="xl"
       fullWindow
       title="Detalle del proyecto"
       description="Ficha comercial y seguimiento del proyecto."
       footer={
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="secondary" onClick={onCloseInternal}>
           Cerrar
         </Button>
       }
@@ -267,7 +309,7 @@ export const ProjectDetailModal = ({
             {/* Columna izquierda: ficha */}
             <div className="h-fit rounded-xl border border-line bg-elevated/20">
               <div className="divide-y divide-line">
-                <RowInline label="Vendedor" icon={undefined}>
+                <RowInline label="Vendedor">
                   {project.manager ? (
                     <span className="mt-0.5 flex items-center gap-2">
                       <Avatar
@@ -308,76 +350,9 @@ export const ProjectDetailModal = ({
                   {formatDate(project.dueDate)}
                 </RowInline>
               </div>
-
-              {/* Archivos adjuntos del proyecto */}
-              <div className="border-t border-line">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">
-                    Archivos adjuntos
-                  </p>
-                  <span className="text-xs text-muted">{formatNumber(files.length)}</span>
-                </div>
-                {files.length === 0 ? (
-                  <p className="px-4 pb-4 text-[13px] leading-5 text-muted">
-                    Aún no hay archivos. Usa el botón “+” del recuadro de comentarios para agregarlos.
-                  </p>
-                ) : (
-                  <ul className="max-h-64 space-y-1 overflow-y-auto px-3 pb-3">
-                    {files.map((file) => {
-                      const style = fileStyle(file);
-                      const Icon = style.icon;
-                      const canDelete = admin || file.uploadedById === user?.id;
-                      return (
-                        <li
-                          key={file.id}
-                          className="flex items-center gap-3 rounded-[10px] p-2 transition-colors hover:bg-elevated"
-                        >
-                          <span
-                            className={cn(
-                              'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                              style.tone,
-                            )}
-                          >
-                            <Icon className="h-4 w-4" />
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p
-                              className="truncate text-[13px] font-medium text-ink"
-                              title={file.originalName}
-                            >
-                              {file.originalName}
-                            </p>
-                            <p className="mt-0.5 text-[11px] text-muted">
-                              {formatBytes(file.size)}
-                            </p>
-                          </div>
-                          <a
-                            href={`/uploads/projects/${file.storedName}`}
-                            download={file.originalName}
-                            className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
-                            aria-label={`Descargar ${file.originalName}`}
-                          >
-                            <Download className="h-4 w-4" />
-                          </a>
-                          {canDelete ? (
-                            <button
-                              type="button"
-                              onClick={() => void onDeleteFile(file)}
-                              className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-rose-500/10 hover:text-rose-500"
-                              aria-label={`Eliminar ${file.originalName}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          ) : null}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
             </div>
 
-            {/* Columna derecha: comentario nuevo + historial */}
+            {/* Columna derecha: comentario nuevo + historial con adjuntos en línea */}
             <div className="space-y-5">
               <div className="rounded-xl border border-line bg-elevated/20 p-4">
                 <div className="flex items-start gap-3">
@@ -404,6 +379,32 @@ export const ProjectDetailModal = ({
                       placeholder="Comentario para agregar…"
                       className="mt-2 w-full resize-none rounded-[10px] border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/15"
                     />
+
+                    {/* Archivos pendientes, a la par del comentario */}
+                    {stagedFiles.length > 0 ? (
+                      <ul className="mt-2 flex flex-wrap gap-1.5">
+                        {stagedFiles.map((file) => (
+                          <li
+                            key={file.id}
+                            className="flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[12px] text-ink"
+                          >
+                            <span className="max-w-[160px] truncate" title={file.originalName}>
+                              {file.originalName}
+                            </span>
+                            <span className="text-[11px] text-muted">{formatBytes(file.size)}</span>
+                            <button
+                              type="button"
+                              onClick={() => void removeStagedFile(file)}
+                              className="focus-ring -mr-1 rounded-full p-1 text-muted transition hover:bg-rose-500/10 hover:text-rose-500"
+                              aria-label={`Quitar ${file.originalName}`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+
                     <div className="mt-2 flex items-center justify-end gap-1.5">
                       {uploadingCount > 0 ? (
                         <span className="mr-auto inline-flex items-center gap-2 text-xs text-muted">
@@ -448,7 +449,7 @@ export const ProjectDetailModal = ({
                   <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">
                     Historial de comentarios
                   </p>
-                  <span className="text-xs text-muted">{formatNumber(comments.length)}</span>
+                  <span className="text-xs text-muted">{comments.length}</span>
                 </div>
                 {comments.length === 0 ? (
                   <p className="px-4 py-6 text-center text-[13px] leading-5 text-muted">
@@ -477,6 +478,17 @@ export const ProjectDetailModal = ({
                           <p className="mt-1 whitespace-pre-line text-[13px] leading-5 text-ink">
                             {comment.body}
                           </p>
+                          {comment.files?.length ? (
+                            <div>
+                              {comment.files.map((file) => (
+                                <AttachmentRow
+                                  key={file.id}
+                                  file={file}
+                                  onDelete={canManageFile(file) ? (selected) => void onDeleteFile(selected) : undefined}
+                                />
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
                       </li>
                     ))}

@@ -263,6 +263,7 @@ export interface ProjectComment {
   createdAt: string;
   updatedAt: string;
   author?: { id: string; name: string; avatarUrl: string | null } | null;
+  files?: ProjectFile[];
 }
 
 export interface ProjectListResponse {
@@ -274,6 +275,7 @@ export interface ProjectListResponse {
 export interface ProjectFile {
   id: string;
   projectId: string;
+  commentId?: string | null;
   originalName: string;
   storedName: string;
   mimeType: string;
