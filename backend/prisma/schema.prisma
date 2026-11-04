@@ -266,11 +266,12 @@ model Project {
   status      ProjectStatus @default(ACTIVE)
   startDate   DateTime?     @map("start_date") @db.Date
   dueDate     DateTime?     @map("due_date") @db.Date
+  completedAt DateTime?     @map("completed_at")
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
-  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  manager User?    @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+  company Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  manager User?          @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
   tasks   ProjectTask[]
   files   ProjectFile[]
 
@@ -291,8 +292,8 @@ model ProjectTask {
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignee  User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([assigneeId])
@@ -307,11 +308,11 @@ model ProjectFile {
   storedName   String   @map("stored_name") @db.VarChar(255)
   mimeType     String   @map("mime_type") @db.VarChar(120)
   size         Int
-  uploadedById String   @map("uploaded_by_id") @db.Uuid
+  uploadedById String?  @map("uploaded_by_id") @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at")
 
   project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  uploader   User    @relation("FileUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  uploadedBy User?    @relation("FileUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([uploadedById])
