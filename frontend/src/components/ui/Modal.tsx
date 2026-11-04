@@ -175,7 +175,7 @@ export const Modal = ({
           className={cn(
             'px-5 py-5 sm:px-6',
             fullWindow
-              ? 'mx-auto w-full max-w-6xl min-h-0 flex-1 overflow-y-auto px-6 py-7 sm:px-8'
+              ? 'mx-auto w-full max-w-6xl min-h-0 flex-1 overflow-y-auto px-6 py-5 sm:px-8'
               : 'max-h-[calc(100vh-16rem)] overflow-y-auto',
           )}
         >

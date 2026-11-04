@@ -73,15 +73,15 @@ const SheetHeader = ({
 }) => (
   <header className="px-4 text-center">
     <h2 className="font-display text-[22px] font-bold tracking-[-0.02em] text-ink">{title}</h2>
-    <p className="mt-2.5 font-display text-[17px] font-semibold tracking-[-0.01em] text-ink">
+    <p className="mt-1 font-display text-[16px] font-semibold tracking-[-0.01em] text-ink">
       {company}
     </p>
-    <p className="mt-2 metric text-[15px] font-semibold text-ink">{amount}</p>
+    <p className="mt-1 metric text-[15px] font-semibold text-ink">{amount}</p>
   </header>
 );
 
 const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="px-4 py-3">
+  <div className="px-4 py-2.5">
     <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
     <div className="mt-1 text-sm text-ink">{children}</div>
   </div>
@@ -96,7 +96,7 @@ const RowInline = ({
   icon?: typeof CalendarDays;
   children: React.ReactNode;
 }) => (
-  <div className="flex items-center gap-3 px-4 py-3">
+  <div className="flex items-center gap-3 px-4 py-2.5">
     {Icon ? <Icon className="h-4 w-4 shrink-0 text-muted" /> : null}
     <div className="min-w-0 flex-1">
       <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
@@ -297,7 +297,7 @@ export const ProjectDetailModal = ({
       ) : query.isError ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       ) : project ? (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Encabezado del wireframe: TITULO / EMPRESA / MONTO */}
           <SheetHeader
             title={project.name}
@@ -305,7 +305,7 @@ export const ProjectDetailModal = ({
             amount={project.amount ? formatMoney(project.amount) : 'Sin monto'}
           />
 
-          <div className="grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             {/* Columna izquierda: ficha */}
             <div className="h-fit rounded-xl border border-line bg-elevated/20">
               <div className="divide-y divide-line">
