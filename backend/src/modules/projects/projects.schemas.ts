@@ -43,7 +43,15 @@ export const updateTaskSchema = taskBodySchema
   });
 
 export const projectTaskParamsSchema = z.object({
-  id: z.string().uuid('El identificador del proyecto no es válido'),
+  projectId: z.string().uuid('El identificador del proyecto no es válido'),
+  taskId: z.string().uuid('El identificador de la tarea no es válido'),
+});
+
+export const projectIdParamsSchema = z.object({
+  projectId: z.string().uuid('El identificador del proyecto no es válido'),
+});
+
+export const taskIdParamsSchema = z.object({
   taskId: z.string().uuid('El identificador de la tarea no es válido'),
 });
 

@@ -177,6 +177,21 @@ export const projectsApi = {
 export const teamApi = {
   overview: (params: { projectId?: string; status?: string; search?: string } = {}) =>
     api.get<DataEnvelope<TeamOverview>>(`/api/team/overview${buildQuery(params)}`),
+
+  createTask: (projectId: string, payload: Record<string, unknown>) =>
+    api.post<DataEnvelope<ProjectTask>>(`/api/team/${projectId}/tasks`, payload),
+
+  updateTask: (projectId: string, taskId: string, payload: Record<string, unknown>) =>
+    api.patch<DataEnvelope<ProjectTask>>(
+      `/api/team/${projectId}/tasks/${taskId}`,
+      payload,
+    ),
+
+  deleteTask: (projectId: string, taskId: string) =>
+    api.delete<void>(`/api/team/${projectId}/tasks/${taskId}`),
+
+  getTask: (taskId: string) =>
+    api.get<DataEnvelope<ProjectTask>>(`/api/team/tasks/${taskId}`),
 };
 
 export const usersApi = {

@@ -57,6 +57,9 @@ const ProjectsPage = lazy(() =>
 const TeamPage = lazy(() =>
   import('@/pages/TeamPage').then((module) => ({ default: module.TeamPage })),
 );
+const TaskDetailPage = lazy(() =>
+  import('@/pages/TaskDetailPage').then((module) => ({ default: module.TaskDetailPage })),
+);
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage })),
 );
@@ -90,14 +93,8 @@ export const App = () => (
           <Route path="opportunities" element={<OpportunitiesPage />} />
           <Route path="sales" element={<SalesPage />} />
           <Route path="projects" element={<ProjectsPage />} />
-          <Route
-            path="team"
-            element={
-              <AdminRoute>
-                <TeamPage />
-              </AdminRoute>
-            }
-          />
+          <Route path="team" element={<TeamPage />} />
+          <Route path="team/task/:taskId" element={<TaskDetailPage />} />
           <Route
             path="users"
             element={
