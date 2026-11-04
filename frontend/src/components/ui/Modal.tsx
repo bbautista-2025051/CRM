@@ -50,6 +50,14 @@ export const Modal = ({
 }: ModalProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  // Ref para usar el onClose vigente sin re-ejecutar el efecto de apertura
+  // cuando el padre pasa una función nueva en cada render (p. ej. al teclear).
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   const titleId = useId();
   const descriptionId = useId();
 
@@ -68,7 +76,7 @@ export const Modal = ({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
       }
     };
     document.addEventListener('keydown', onKeyDown);
@@ -79,7 +87,9 @@ export const Modal = ({
       document.body.style.overflow = originalOverflow;
       previouslyFocused.current?.focus?.();
     };
-  }, [open, onClose]);
+    // Solo reacciona a `open`: los cambios de identidad de onClose no deben
+    // reenfocar el modal mientras el usuario escribe dentro de él.
+  }, [open]);
 
   const handlePanelKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Tab' || !panelRef.current) return;
