@@ -60,8 +60,9 @@ export const Modal = ({
     document.body.style.overflow = 'hidden';
 
     const timer = window.setTimeout(() => {
-      const first = panelRef.current?.querySelector<HTMLElement>(focusable);
-      (first ?? panelRef.current)?.focus();
+      // Se enfoca el panel (tabIndex -1) para no resaltar el botón de cerrar
+      // al abrir; el ciclo con Tab lo maneja el focus-trap del panel.
+      panelRef.current?.focus();
     }, 30);
 
     const onKeyDown = (event: KeyboardEvent) => {
