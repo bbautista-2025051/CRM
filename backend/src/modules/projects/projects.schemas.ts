@@ -15,6 +15,7 @@ export const projectListQuerySchema = paginationQuerySchema.extend({
 export const projectBodySchema = z.object({
   name: z.string().trim().min(2, 'El nombre es obligatorio').max(180),
   description: optionalText(4000, 'La descripción'),
+  phone: optionalText(40, 'El número de teléfono'),
   companyId: optionalId(),
   managerId: optionalId(),
   status: z.nativeEnum(ProjectStatus).optional().default(ProjectStatus.ACTIVE),
@@ -51,4 +52,9 @@ export const teamQuerySchema = z.object({
   projectId: z.string().uuid().optional(),
   status: z.nativeEnum(ProjectStatus).optional(),
   search: z.string().trim().max(120).optional(),
+});
+
+export const projectFileParamsSchema = z.object({
+  id: z.string().uuid('El identificador del proyecto no es válido'),
+  fileId: z.string().uuid('El identificador del archivo no es válido'),
 });

@@ -21,6 +21,7 @@ import type { Project } from '@/types';
 const defaults = (project?: Project | null): ProjectFormValues => ({
   name: project?.name ?? '',
   description: project?.description ?? '',
+  phone: project?.phone ?? '',
   companyId: project?.companyId ?? '',
   managerId: project?.managerId ?? '',
   status: project?.status ?? 'ACTIVE',
@@ -67,6 +68,7 @@ export const ProjectFormModal = ({
       const payload = {
         name: values.name.trim(),
         description: emptyToNull(values.description),
+        phone: emptyToNull(values.phone),
         companyId: emptyToNull(values.companyId),
         managerId: emptyToNull(values.managerId),
         status: values.status,
@@ -144,6 +146,15 @@ export const ProjectFormModal = ({
             rows={3}
             placeholder="Objetivo, alcance y entregables principales…"
             {...register('description')}
+          />
+        </Field>
+
+        <Field label="Teléfono" htmlFor="project-phone" error={errors.phone?.message}>
+          <Input
+            id="project-phone"
+            type="tel"
+            placeholder="+502 5555 5555"
+            {...register('phone')}
           />
         </Field>
 

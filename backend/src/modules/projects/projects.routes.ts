@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import { requireAdmin, requireAuth } from '../../middlewares/auth';
 import { csrfProtection } from '../../middlewares/csrf';
+import { projectFileUpload } from '../../middlewares/upload';
 import { validate } from '../../middlewares/validate';
 import { idParamSchema } from '../../utils/zod';
 import * as controller from './projects.controller';
 import {
   projectBodySchema,
+  projectFileParamsSchema,
   projectListQuerySchema,
   projectTaskParamsSchema,
   taskBodySchema,
@@ -62,4 +64,19 @@ projectsRouter.delete(
   csrfProtection,
   validate({ params: projectTaskParamsSchema }),
   controller.removeTask,
+);
+
+projectsRouter.get('/:id/files', validate({ params: idParamSchema }), controller.listFiles);
+projectsRouter.post(
+  '/:id/files',
+  csrfProtection,
+  validate({ params: idParamSchema }),
+  projectFileUpload.single('file'),
+  controller.uploadFile,
+);
+projectsRouter.delete(
+  '/:id/files/:fileId',
+  csrfProtection,
+  validate({ params: projectFileParamsSchema }),
+  controller.removeFile,
 );

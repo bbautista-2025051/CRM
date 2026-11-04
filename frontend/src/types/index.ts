@@ -248,6 +248,7 @@ export interface Project {
   id: string;
   name: string;
   description: string | null;
+  phone: string | null;
   companyId: string | null;
   managerId: string | null;
   status: ProjectStatus;
@@ -278,6 +279,18 @@ export interface ProjectTask {
     avatarUrl: string | null;
     role?: Role;
   };
+}
+
+export interface ProjectFile {
+  id: string;
+  projectId: string;
+  originalName: string;
+  storedName: string;
+  mimeType: string;
+  size: number;
+  uploadedById: string | null;
+  createdAt: string;
+  uploadedBy?: { id: string; name: string; avatarUrl: string | null } | null;
 }
 
 export interface ProjectDetail extends Project {

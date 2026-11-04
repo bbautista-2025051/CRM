@@ -138,3 +138,11 @@ export const formatPercent = (value: number | null | undefined): string =>
 
 export const truncate = (value: string, max = 48): string =>
   value.length > max ? `${value.slice(0, max - 1)}…` : value;
+
+export const formatBytes = (bytes: number): string => {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'] as const;
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / 1024 ** i;
+  return `${formatNumber(value, value >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+};

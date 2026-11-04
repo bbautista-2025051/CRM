@@ -13,6 +13,7 @@ import type {
   Opportunity,
   ProfileResponse,
   ProjectDetail,
+  ProjectFile,
   ProjectListResponse,
   ProjectTask,
   PublicUser,
@@ -172,6 +173,15 @@ export const projectsApi = {
     api.patch<DataEnvelope<ProjectTask>>(`/api/projects/${projectId}/tasks/${taskId}`, payload),
   removeTask: (projectId: string, taskId: string) =>
     api.delete<void>(`/api/projects/${projectId}/tasks/${taskId}`),
+  listFiles: (projectId: string) =>
+    api.get<DataEnvelope<ProjectFile[]>>(`/api/projects/${projectId}/files`),
+  uploadFile: (projectId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<DataEnvelope<ProjectFile>>(`/api/projects/${projectId}/files`, form);
+  },
+  removeFile: (projectId: string, fileId: string) =>
+    api.delete<void>(`/api/projects/${projectId}/files/${fileId}`),
 };
 
 export const teamApi = {

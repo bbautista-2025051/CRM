@@ -5,6 +5,45 @@ import multer from 'multer';
 import { env } from '../config/env';
 import { BadRequestError } from '../utils/errors';
 
+const projectFilesDir = path.join(env.uploadDir, 'projects');
+const PROJECT_FILE_LIMIT_BYTES = 10 * 1024 * 1024;
+const WINDOWS_RESERVED = /[<>:"/\\|?*\x00-\x1f]/g;
+
+const extFromName = (name: string): string => {
+  const ext = path.extname(name ?? '').toLowerCase();
+  return ext && ext.length <= 12 ? ext : '.bin';
+};
+
+const sanitizeFileName = (name: string): string =>
+  (name.replace(WINDOWS_RESERVED, '_').trim() || 'archivo').slice(0, 180);
+
+const projectStorage = multer.diskStorage({
+  destination: (_req, _file, callback) => {
+    fs.mkdirSync(projectFilesDir, { recursive: true });
+    callback(null, projectFilesDir);
+  },
+  filename: (_req, file, callback) => {
+    const extension = extFromName(file.originalname);
+    callback(null, `${crypto.randomUUID()}${extension}`);
+  },
+});
+
+/** Subida genérica de archivos de proyecto: cualquier tipo, máximo 10 MB. */
+export const projectFileUpload = multer({
+  storage: projectStorage,
+  limits: { fileSize: PROJECT_FILE_LIMIT_BYTES, files: 1 },
+  fileFilter: (_req, _file, callback) => callback(null, true),
+});
+
+export const projectFileOriginalName = sanitizeFileName;
+
+export const removeProjectFile = (storedName: string): void => {
+  if (!storedName || storedName !== path.basename(storedName)) return;
+  const absolute = path.resolve(projectFilesDir, storedName);
+  if (!absolute.startsWith(path.resolve(projectFilesDir))) return;
+  fs.promises.unlink(absolute).catch(() => undefined);
+};
+
 const avatarDir = path.join(env.uploadDir, 'avatars');
 fs.mkdirSync(avatarDir, { recursive: true });
 

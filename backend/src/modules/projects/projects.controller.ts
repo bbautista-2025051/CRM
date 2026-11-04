@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
+import { BadRequestError } from '../../utils/errors';
+import { projectFileOriginalName } from '../../middlewares/upload';
 import * as projectsService from './projects.service';
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
@@ -59,6 +61,38 @@ export const removeTask = asyncHandler(async (req: Request, res: Response) => {
   await projectsService.deleteTask(
     req.validated.params.id,
     req.validated.params.taskId,
+    req.auth.user,
+  );
+  res.status(204).send();
+});
+
+export const listFiles = asyncHandler(async (req: Request, res: Response) => {
+  const files = await projectsService.listProjectFiles(req.validated.params.id);
+  res.status(200).json({ data: files });
+});
+
+export const uploadFile = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  if (!req.file) throw new BadRequestError('Selecciona un archivo para subir');
+
+  const created = await projectsService.uploadProjectFile(
+    req.validated.params.id,
+    {
+      originalName: projectFileOriginalName(req.file.originalname),
+      storedName: req.file.filename,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+    },
+    req.auth.user,
+  );
+  res.status(201).json({ data: created });
+});
+
+export const removeFile = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  await projectsService.deleteProjectFile(
+    req.validated.params.id,
+    req.validated.params.fileId,
     req.auth.user,
   );
   res.status(204).send();

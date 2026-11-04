@@ -167,6 +167,7 @@ export const projectFormSchema = z
   .object({
     name: requiredText('El nombre', 180, 2),
     description: optionalText('La descripción', 4000),
+    phone: optionalText('El número de teléfono', 40),
     companyId: z.string().trim(),
     managerId: z.string().trim(),
     status: z.enum(['ACTIVE', 'COMPLETED']),

@@ -1,7 +1,8 @@
 import { Prisma, type User } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { logActivity } from '../../utils/activity';
-import { BadRequestError, NotFoundError } from '../../utils/errors';
+import { removeProjectFile } from '../../middlewares/upload';
+import { BadRequestError, ForbiddenError, NotFoundError } from '../../utils/errors';
 import {
   buildOrderBy,
   buildPaginationMeta,
@@ -23,6 +24,7 @@ interface ListParams {
 interface ProjectInput {
   name?: string;
   description?: string | null;
+  phone?: string | null;
   companyId?: string | null;
   managerId?: string | null;
   status?: 'ACTIVE' | 'COMPLETED';
@@ -164,6 +166,7 @@ export const createProject = async (input: ProjectInput, actor: User) => {
     data: {
       name: input.name,
       description: input.description ?? null,
+      phone: input.phone ?? null,
       companyId: input.companyId ?? null,
       managerId: input.managerId ?? null,
       status,
@@ -218,11 +221,15 @@ export const updateProject = async (id: string, input: ProjectInput, actor: User
 export const deleteProject = async (id: string, actor: User) => {
   const existing = await prisma.project.findUnique({
     where: { id },
-    include: { _count: { select: { tasks: true } } },
+    include: { _count: { select: { tasks: true } }, files: true },
   });
   if (!existing) throw new NotFoundError('El proyecto no existe');
 
   await prisma.project.delete({ where: { id } });
+
+  for (const file of existing.files) {
+    removeProjectFile(file.storedName);
+  }
 
   await logActivity({
     userId: actor.id,
@@ -324,5 +331,87 @@ export const deleteTask = async (projectId: string, taskId: string, actor: User)
     entityId: taskId,
     description: `Tarea eliminada: ${existing.title} (${existing.project.name})`,
     metadata: { projectId },
+  });
+};
+
+// ---------------------------------------------------------------------------
+// Archivos del proyecto
+// ---------------------------------------------------------------------------
+
+export const listProjectFiles = async (projectId: string) => {
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) throw new NotFoundError('El proyecto no existe');
+
+  return prisma.projectFile.findMany({
+    where: { projectId },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      uploadedBy: { select: { id: true, name: true, avatarUrl: true } },
+    },
+  });
+};
+
+export const uploadProjectFile = async (
+  projectId: string,
+  file: { originalName: string; storedName: string; mimeType: string; size: number },
+  actor: User,
+) => {
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) {
+    removeProjectFile(file.storedName);
+    throw new NotFoundError('El proyecto no existe');
+  }
+
+  const created = await prisma.projectFile.create({
+    data: {
+      projectId,
+      originalName: file.originalName,
+      storedName: file.storedName,
+      mimeType: file.mimeType || 'application/octet-stream',
+      size: file.size,
+      uploadedById: actor.id,
+    },
+    include: {
+      uploadedBy: { select: { id: true, name: true, avatarUrl: true } },
+    },
+  });
+
+  await logActivity({
+    userId: actor.id,
+    action: 'UPLOAD',
+    entityType: 'PROJECT',
+    entityId: projectId,
+    description: `Archivo subido al proyecto ${project.name}: ${created.originalName}`,
+    metadata: { fileId: created.id, storedName: created.storedName },
+  });
+
+  return created;
+};
+
+export const deleteProjectFile = async (
+  projectId: string,
+  fileId: string,
+  actor: User,
+) => {
+  const file = await prisma.projectFile.findUnique({ where: { id: fileId } });
+  if (!file || file.projectId !== projectId) {
+    throw new NotFoundError('El archivo no existe en este proyecto');
+  }
+
+  const isOwner = file.uploadedById === actor.id;
+  if (actor.role !== 'ADMIN' && !isOwner) {
+    throw new ForbiddenError('Solo puedes eliminar los archivos que subiste tú');
+  }
+
+  await prisma.projectFile.delete({ where: { id: fileId } });
+  removeProjectFile(file.storedName);
+
+  await logActivity({
+    userId: actor.id,
+    action: 'DELETE',
+    entityType: 'PROJECT',
+    entityId: projectId,
+    description: `Archivo eliminado del proyecto: ${file.originalName}`,
+    metadata: { fileId },
   });
 };
