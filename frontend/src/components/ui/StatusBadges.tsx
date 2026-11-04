@@ -19,6 +19,7 @@ import {
   USER_STATUS_LABELS,
 } from '@/lib/labels';
 import { Badge } from './Badge';
+import { cn } from '@/lib/cn';
 
 export const CompanyStatusBadge = ({ status }: { status: CompanyStatus }) => (
   <Badge tone={status === 'ACTIVE' ? 'success' : 'neutral'} dot>
@@ -32,11 +33,21 @@ export const ClientStatusBadge = ({ status }: { status: ClientStatus }) => (
   </Badge>
 );
 
-export const UserStatusBadge = ({ status }: { status: UserStatus }) => (
-  <Badge tone={status === 'ACTIVE' ? 'success' : 'danger'} dot>
-    {USER_STATUS_LABELS[status]}
-  </Badge>
-);
+/** Estado del usuario como punto de color: verde Activo, rojo Inactivo. */
+export const UserStatusBadge = ({ status }: { status: UserStatus }) => {
+  const label = USER_STATUS_LABELS[status];
+  return (
+    <span
+      className={cn(
+        'inline-block h-2.5 w-2.5 shrink-0 rounded-full align-middle',
+        status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-rose-500',
+      )}
+      title={label}
+      role="img"
+      aria-label={label}
+    />
+  );
+};
 
 export const StageBadge = ({ stage }: { stage: OpportunityStage }) => (
   <span

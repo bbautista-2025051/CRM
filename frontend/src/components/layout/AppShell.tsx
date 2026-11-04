@@ -224,12 +224,20 @@ export const AppShell = () => {
   const { user, logout } = useAuth();
   const { preference } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Aviso de contraseña temporal: visible 10 segundos por sesión y desaparece solo.
+  const [passwordNoticeVisible, setPasswordNoticeVisible] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!user?.mustChangePassword) return;
+    const timer = window.setTimeout(() => setPasswordNoticeVisible(false), 10_000);
+    return () => window.clearTimeout(timer);
+  }, [user?.mustChangePassword]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -389,8 +397,13 @@ export const AppShell = () => {
         </header>
 
         <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          {user.mustChangePassword ? (
-            <Alert variant="warning" title="Debes cambiar tu contraseña" className="mb-4 py-2.5">
+          {user.mustChangePassword && passwordNoticeVisible ? (
+            <Alert
+              variant="warning"
+              title="Debes cambiar tu contraseña"
+              className="mb-4 py-2.5"
+              onClose={() => setPasswordNoticeVisible(false)}
+            >
               Estás usando una contraseña temporal. Actualízala desde{' '}
               <Link to="/settings?tab=security" className="font-semibold underline">
                 Seguridad

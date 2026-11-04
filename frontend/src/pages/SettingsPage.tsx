@@ -47,10 +47,11 @@ import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
+import { UserStatusBadge } from '@/components/ui/StatusBadges';
 import { Avatar } from '@/components/ui/Avatar';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
-import type { ThemePreference } from '@/types';
+import type { ThemePreference, UserStatus } from '@/types';
 
 type TabValue = 'profile' | 'security' | 'preferences' | 'sessions' | 'google';
 
@@ -424,9 +425,9 @@ export const SettingsPage = () => {
                       <Badge tone={currentUser?.role === 'ADMIN' ? 'brand' : 'neutral'}>
                         {currentUser ? ROLE_LABELS[currentUser.role] : '—'}
                       </Badge>
-                      <Badge tone={currentUser?.status === 'ACTIVE' ? 'success' : 'danger'} dot>
-                        {currentUser?.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
-                      </Badge>
+                      <UserStatusBadge
+                        status={(currentUser?.status ?? 'INACTIVE') as UserStatus}
+                      />
                       {currentUser?.googleLinked ? (
                         <Badge tone="success">Google vinculado</Badge>
                       ) : null}
