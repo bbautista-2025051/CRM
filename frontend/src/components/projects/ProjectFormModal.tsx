@@ -26,7 +26,7 @@ const defaults = (project?: Project | null): ProjectFormValues => ({
   managerId: project?.managerId ?? '',
   status: project?.status ?? 'ACTIVE',
   amount: project?.amount ?? '',
-  currency: 'GTQ',
+  currency: project?.currency === 'USD' ? 'USD' : 'GTQ',
   preSales: project?.preSales ?? '',
   solution: project?.solution ?? '',
   startDate: project?.startDate?.slice(0, 10) ?? '',
@@ -54,11 +54,13 @@ export const ProjectFormModal = ({
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
     defaultValues: defaults(project),
   });
+  const currency = watch('currency');
 
   useEffect(() => {
     if (open) {
@@ -77,6 +79,7 @@ export const ProjectFormModal = ({
         managerId: emptyToNull(values.managerId),
         status: values.status,
         amount: values.amount.trim() === '' ? '' : Number(values.amount),
+        currency: values.currency,
         preSales: emptyToNull(values.preSales),
         solution: emptyToNull(values.solution),
         startDate: emptyToNull(values.startDate),
@@ -166,7 +169,7 @@ export const ProjectFormModal = ({
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Monto del proyecto (GTQ)" htmlFor="project-amount" error={errors.amount?.message}>
+          <Field label={`Monto del proyecto (${currency})`} htmlFor="project-amount" error={errors.amount?.message}>
             <Input
               id="project-amount"
               type="number"
@@ -175,6 +178,12 @@ export const ProjectFormModal = ({
               placeholder="15000.00"
               {...register('amount')}
             />
+          </Field>
+          <Field label="Moneda" htmlFor="project-currency" error={errors.currency?.message}>
+            <Select id="project-currency" {...register('currency')}>
+              <option value="GTQ">Quetzal (GTQ)</option>
+              <option value="USD">Dólar estadounidense (USD)</option>
+            </Select>
           </Field>
           <Field label="Preventa" htmlFor="project-presales" error={errors.preSales?.message}>
             <Input
