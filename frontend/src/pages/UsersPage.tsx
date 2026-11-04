@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -49,10 +50,19 @@ export const UsersPage = () => {
   const [editing, setEditing] = useState<PublicUser | null>(null);
   const [resetting, setResetting] = useState<PublicUser | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, role, status]);
+
+  useEffect(() => {
+    if (searchParams.get('create') !== '1') return;
+    setCreateOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete('create');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const query = useQuery({
     queryKey: ['users', 'list', { page, search: debouncedSearch, role, status }],

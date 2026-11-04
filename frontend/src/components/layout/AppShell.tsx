@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Plus,
   Settings,
   ShieldCheck,
   Target,
@@ -66,6 +67,25 @@ const sections: Array<{ label: string; items: NavItem[] }> = [
   },
 ];
 
+const contextualAction = (
+  pathname: string,
+  isAdmin: boolean,
+): { to: string; label: string; icon: typeof Plus } | null => {
+  if (pathname.startsWith('/companies'))
+    return { to: '/companies?create=1', label: 'Nueva empresa', icon: Plus };
+  if (pathname.startsWith('/clients'))
+    return { to: '/clients?create=1', label: 'Nuevo cliente', icon: Plus };
+  if (pathname.startsWith('/opportunities'))
+    return { to: '/opportunities?create=1', label: 'Nueva oportunidad', icon: Target };
+  if (pathname.startsWith('/sales'))
+    return { to: '/sales?create=1', label: 'Registrar venta', icon: Handshake };
+  if (pathname.startsWith('/projects'))
+    return { to: '/projects?create=1', label: 'Nuevo proyecto', icon: Plus };
+  if (pathname.startsWith('/users') && isAdmin)
+    return { to: '/users?create=1', label: 'Nuevo usuario', icon: ShieldCheck };
+  return null;
+};
+
 const sectionTitle = (pathname: string): string => {
   if (pathname.startsWith('/companies')) return 'Empresas';
   if (pathname.startsWith('/clients')) return 'Clientes';
@@ -114,7 +134,7 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
                       cn('nav-link', isActive && 'nav-link-active')
                     }
                   >
-                    <item.icon className="h-[18px] w-[18px] shrink-0" />
+                    <item.icon className="h-[17px] w-[17px] shrink-0 opacity-80" />
                     <span className="truncate">{item.label}</span>
                   </NavLink>
                 ))}
@@ -146,7 +166,7 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
             <button
               type="button"
               onClick={toggle}
-              className="flex w-full items-center gap-3 rounded-xl border border-line bg-elevated/50 p-2.5 text-left transition hover:bg-elevated"
+              className="flex w-full items-center gap-3 rounded-[10px] p-2 text-left transition hover:bg-elevated/70"
             >
               <Avatar name={user.name} src={user.avatarUrl} size="sm" />
               <span className="min-w-0 flex-1">
@@ -218,6 +238,8 @@ export const AppShell = () => {
 
   if (!user) return null;
 
+  const headerAction = contextualAction(location.pathname, isAdmin(user.role));
+
   return (
     <div className="min-h-full bg-canvas">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[264px] border-r border-line bg-surface lg:block">
@@ -272,13 +294,15 @@ export const AppShell = () => {
             </div>
 
             <div className="ml-auto flex items-center gap-1 sm:gap-2">
-              <Link
-                to="/opportunities?create=1"
-                className="hidden items-center gap-2 rounded-lg bg-brand px-3 py-2 text-[13px] font-medium text-brand-ink shadow-sm transition hover:bg-brand-strong sm:inline-flex"
-              >
-                <Target className="h-4 w-4" />
-                Nueva oportunidad
-              </Link>
+              {headerAction ? (
+                <Link
+                  to={headerAction.to}
+                  className="hidden items-center gap-2 rounded-[10px] bg-brand px-3 py-2 text-[13px] font-semibold text-brand-ink shadow-sm transition hover:bg-brand-strong sm:inline-flex"
+                >
+                  <headerAction.icon className="h-4 w-4" />
+                  {headerAction.label}
+                </Link>
+              ) : null}
               <ThemeToggle />
               <Link
                 to="/activity"
@@ -362,7 +386,7 @@ export const AppShell = () => {
 
         <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           {user.mustChangePassword ? (
-            <Alert variant="warning" title="Debes cambiar tu contraseña" className="mb-5">
+            <Alert variant="warning" title="Debes cambiar tu contraseña" className="mb-4 py-2.5">
               Estás usando una contraseña temporal. Actualízala desde{' '}
               <Link to="/settings?tab=security" className="font-semibold underline">
                 Seguridad

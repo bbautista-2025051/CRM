@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -57,10 +58,20 @@ export const ProjectsPage = () => {
   const [editing, setEditing] = useState<Project | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, status]);
+
+  useEffect(() => {
+    if (searchParams.get('create') !== '1') return;
+    setEditing(null);
+    setFormOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete('create');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const query = useQuery({
     queryKey: ['projects', 'list', { status, page, search: debouncedSearch }],

@@ -37,13 +37,21 @@ export default {
           'Arial',
           'sans-serif',
         ],
+        display: [
+          'Manrope',
+          'Inter',
+          'ui-sans-serif',
+          'system-ui',
+          '-apple-system',
+          'sans-serif',
+        ],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
       },
       boxShadow: {
-        card: '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06)',
+        card: '0 1px 2px 0 rgb(15 23 42 / 0.05), 0 1px 3px 0 rgb(15 23 42 / 0.07)',
         float:
-          '0 12px 32px -12px rgb(15 23 42 / 0.22), 0 4px 12px -4px rgb(15 23 42 / 0.12)',
-        ring: '0 0 0 1px rgb(15 23 42 / 0.04)',
+          '0 16px 40px -14px rgb(2 6 23 / 0.36), 0 4px 12px -6px rgb(2 6 23 / 0.24)',
+        ring: '0 0 0 1px rgb(2 6 23 / 0.18)',
       },
       borderRadius: {
         xl: '0.875rem',

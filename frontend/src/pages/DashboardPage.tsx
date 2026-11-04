@@ -148,11 +148,13 @@ export const DashboardPage = () => {
         }
       />
 
-      <div className="card p-4">
+      <div className="border-y border-line py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-semibold text-ink">Filtros del panel</p>
-            <p className="text-xs text-muted">Combina vendedor, rol, mes y año.</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
+              Filtros
+            </p>
+            <p className="mt-0.5 text-[13px] text-muted">Vendedor, rol, mes o año.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Select

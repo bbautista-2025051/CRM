@@ -44,11 +44,11 @@ export const PageHeader = ({
           </ol>
         </nav>
       ) : null}
-      <h1 className="truncate text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
+      <h1 className="font-display truncate text-[26px] font-extrabold leading-[1.15] tracking-[-0.03em] text-ink sm:text-[30px]">
         {title}
       </h1>
       {description ? (
-        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted">{description}</p>
+        <p className="mt-1.5 max-w-2xl text-[13px] leading-6 text-muted">{description}</p>
       ) : null}
     </div>
     {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}

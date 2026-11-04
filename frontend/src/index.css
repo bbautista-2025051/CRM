@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --canvas: 247 249 252;
+  --canvas: 248 249 251;
   --surface: 255 255 255;
-  --elevated: 255 255 255;
-  --line: 226 232 240;
-  --ink: 15 23 42;
+  --elevated: 243 245 248;
+  --line: 223 228 236;
+  --ink: 17 24 39;
   --muted: 100 116 139;
   --brand: 37 99 235;
   --brand-strong: 29 78 216;
-  --brand-soft: 239 246 255;
+  --brand-soft: 237 244 255;
   --brand-ink: 255 255 255;
   --accent: 13 148 136;
   --accent-soft: 240 253 250;
@@ -19,16 +19,16 @@
 }
 
 .dark {
-  --canvas: 7 11 20;
-  --surface: 13 20 33;
-  --elevated: 19 28 45;
-  --line: 39 51 71;
-  --ink: 226 232 240;
-  --muted: 148 163 184;
-  --brand: 96 165 250;
-  --brand-strong: 59 130 246;
-  --brand-soft: 21 38 66;
-  --brand-ink: 8 15 30;
+  --canvas: 6 10 18;
+  --surface: 13 19 31;
+  --elevated: 21 28 44;
+  --line: 42 53 73;
+  --ink: 231 236 244;
+  --muted: 139 152 171;
+  --brand: 109 176 252;
+  --brand-strong: 74 144 247;
+  --brand-soft: 20 36 63;
+  --brand-ink: 7 13 24;
   --accent: 45 212 191;
   --accent-soft: 18 68 65;
   color-scheme: dark;
@@ -80,6 +80,12 @@
     @apply transition duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-float;
   }
 
+  .metric {
+    font-family: 'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.025em;
+  }
+
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
   }
@@ -93,7 +99,7 @@
   }
 
   .input-base {
-    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition placeholder:text-muted/70 hover:border-muted/50 focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-elevated disabled:text-muted;
+    @apply w-full rounded-[10px] border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition placeholder:text-muted/70 hover:border-muted/60 focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-elevated disabled:text-muted;
   }
 
   .table-wrap {
@@ -105,7 +111,7 @@
   }
 
   .table-base thead th {
-    @apply whitespace-nowrap border-b border-line bg-elevated/70 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted;
+    @apply whitespace-nowrap border-b border-line bg-transparent px-4 py-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted;
   }
 
   .table-base tbody td {
@@ -113,7 +119,7 @@
   }
 
   .table-base tbody tr {
-    @apply transition-colors hover:bg-elevated/60;
+    @apply transition-colors hover:bg-elevated/50;
   }
 
   .table-base tbody tr:last-child td {
@@ -121,11 +127,17 @@
   }
 
   .nav-link {
-    @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-elevated hover:text-ink;
+    @apply flex items-center gap-3 rounded-[10px] px-3 py-2 text-[13px] font-medium text-muted transition-colors duration-150 hover:bg-elevated/70 hover:text-ink;
   }
 
   .nav-link-active {
-    @apply bg-brand-soft text-brand-strong dark:text-brand;
+    background: rgb(var(--brand) / 0.09);
+    color: rgb(var(--brand));
+    box-shadow: inset 2.5px 0 0 rgb(var(--brand));
+  }
+
+  .nav-link-active svg {
+    opacity: 1;
   }
 
   .brand-gradient {
