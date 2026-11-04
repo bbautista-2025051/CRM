@@ -5,13 +5,15 @@ import {
   ArrowUpRight,
   Building2,
   CalendarDays,
-  Handshake,
   Plus,
-  Target,
-  TrendingUp,
-  UsersRound,
-  Wallet,
 } from 'lucide-react';
+import {
+  ClientsIcon,
+  ConversionIcon,
+  OpportunitiesIcon,
+  SalesIcon,
+  WalletIcon,
+} from '@/components/ui/NexoIcons';
 import { useAuth } from '@/providers/AuthProvider';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { dashboardApi, unwrap, usersApi } from '@/lib/endpoints';
@@ -134,7 +136,7 @@ export const DashboardPage = () => {
               to="/sales?create=1"
               className={buttonStyles({ variant: 'secondary', size: 'md' })}
             >
-              <Handshake className="h-4 w-4" />
+              <SalesIcon className="h-4 w-4" />
               Registrar venta
             </Link>
             <Link
@@ -247,28 +249,28 @@ export const DashboardPage = () => {
                   ) : null}
                 </span>
               }
-              icon={Wallet}
+              icon={WalletIcon}
               tone="emerald"
             />
             <StatCard
               label="Pipeline abierto"
               value={formatMoney(data.totals.openValue, data.defaultCurrency)}
               hint={`${data.totals.openOpportunities} oportunidades abiertas`}
-              icon={Target}
+              icon={OpportunitiesIcon}
               tone="brand"
             />
             <StatCard
               label="Tasa de conversión"
               value={formatPercent(data.totals.conversionRate)}
               hint={`${data.totals.wonOpportunities} ganadas · ${data.totals.lostOpportunities} perdidas`}
-              icon={TrendingUp}
+              icon={ConversionIcon}
               tone="sky"
             />
             <StatCard
               label="Clientes activos"
               value={formatNumber(data.totals.clients)}
               hint={`${data.totals.activeCompanies} de ${data.totals.companies} empresas activas`}
-              icon={UsersRound}
+              icon={ClientsIcon}
               tone="amber"
             />
           </div>
@@ -350,7 +352,7 @@ export const DashboardPage = () => {
               />
               {data.recentOpportunities.length === 0 ? (
                 <EmptyState
-                  icon={Target}
+                  icon={OpportunitiesIcon}
                   title="Todavía no hay oportunidades"
                   description="Registra tu primera oportunidad para empezar a medir el pipeline."
                   action={
@@ -477,7 +479,7 @@ export const DashboardPage = () => {
             />
             {data.recentSales.length === 0 ? (
               <EmptyState
-                icon={Handshake}
+                icon={SalesIcon}
                 title="Aún no hay ventas registradas"
                 description="Cuando registres una venta aparecerá aquí con su estado y responsable."
                 action={

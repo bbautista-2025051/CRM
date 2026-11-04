@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import type { NexoIcon } from './NexoIcons';
 import { cn } from '@/lib/cn';
 
 const tones = {
@@ -23,7 +24,7 @@ export const StatCard = ({
   label: string;
   value: ReactNode;
   hint?: ReactNode;
-  icon: LucideIcon;
+  icon: LucideIcon | NexoIcon;
   tone?: keyof typeof tones;
   loading?: boolean;
   className?: string;

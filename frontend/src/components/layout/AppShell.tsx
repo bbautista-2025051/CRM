@@ -1,23 +1,27 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Activity,
-  Building2,
   ChevronDown,
   CircleUserRound,
-  FolderKanban,
-  Handshake,
-  LayoutDashboard,
   LogOut,
   Menu,
   Plus,
-  Settings,
-  ShieldCheck,
-  Target,
-  Users,
-  UsersRound,
   X,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  ActivityIcon,
+  ClientsIcon,
+  CompaniesIcon,
+  OpportunitiesIcon,
+  PanelIcon,
+  ProjectsIcon,
+  SalesIcon,
+  TeamIcon,
+  UsersAdminIcon,
+  SettingsIcon,
+} from '@/components/ui/NexoIcons';
+import type { NexoIcon } from '@/components/ui/NexoIcons';
 import { useAuth } from '@/providers/AuthProvider';
 import { useTheme } from '@/providers/ThemeProvider';
 import { canManageUsers, isAdmin } from '@/lib/permissions';
@@ -33,36 +37,36 @@ import { Alert } from '@/components/ui/Alert';
 interface NavItem {
   to: string;
   label: string;
-  icon: typeof LayoutDashboard;
+  icon: typeof PanelIcon;
   adminOnly?: boolean;
 }
 
 const sections: Array<{ label: string; items: NavItem[] }> = [
   {
     label: 'Principal',
-    items: [{ to: '/dashboard', label: 'Panel', icon: LayoutDashboard }],
+    items: [{ to: '/dashboard', label: 'Panel', icon: PanelIcon }],
   },
   {
     label: 'Comercial',
     items: [
-      { to: '/companies', label: 'Empresas', icon: Building2 },
-      { to: '/clients', label: 'Clientes', icon: UsersRound },
-      { to: '/opportunities', label: 'Oportunidades', icon: Target },
-      { to: '/sales', label: 'Ventas', icon: Handshake },
+      { to: '/companies', label: 'Empresas', icon: CompaniesIcon },
+      { to: '/clients', label: 'Clientes', icon: ClientsIcon },
+      { to: '/opportunities', label: 'Oportunidades', icon: OpportunitiesIcon },
+      { to: '/sales', label: 'Ventas', icon: SalesIcon },
     ],
   },
   {
     label: 'Trabajo',
     items: [
-      { to: '/projects', label: 'Proyectos', icon: FolderKanban },
-      { to: '/team', label: 'Equipo', icon: Users, adminOnly: true },
+      { to: '/projects', label: 'Proyectos', icon: ProjectsIcon },
+      { to: '/team', label: 'Equipo', icon: TeamIcon, adminOnly: true },
     ],
   },
   {
     label: 'Administración',
     items: [
-      { to: '/users', label: 'Usuarios', icon: ShieldCheck, adminOnly: true },
-      { to: '/activity', label: 'Actividad', icon: Activity },
+      { to: '/users', label: 'Usuarios', icon: UsersAdminIcon, adminOnly: true },
+      { to: '/activity', label: 'Actividad', icon: ActivityIcon },
     ],
   },
 ];
@@ -70,19 +74,19 @@ const sections: Array<{ label: string; items: NavItem[] }> = [
 const contextualAction = (
   pathname: string,
   isAdmin: boolean,
-): { to: string; label: string; icon: typeof Plus } | null => {
+): { to: string; label: string; icon: LucideIcon | NexoIcon } | null => {
   if (pathname.startsWith('/companies'))
     return { to: '/companies?create=1', label: 'Nueva empresa', icon: Plus };
   if (pathname.startsWith('/clients'))
     return { to: '/clients?create=1', label: 'Nuevo cliente', icon: Plus };
   if (pathname.startsWith('/opportunities'))
-    return { to: '/opportunities?create=1', label: 'Nueva oportunidad', icon: Target };
+    return { to: '/opportunities?create=1', label: 'Nueva oportunidad', icon: OpportunitiesIcon };
   if (pathname.startsWith('/sales'))
-    return { to: '/sales?create=1', label: 'Registrar venta', icon: Handshake };
+    return { to: '/sales?create=1', label: 'Registrar venta', icon: SalesIcon };
   if (pathname.startsWith('/projects'))
     return { to: '/projects?create=1', label: 'Nuevo proyecto', icon: Plus };
   if (pathname.startsWith('/users') && isAdmin)
-    return { to: '/users?create=1', label: 'Nuevo usuario', icon: ShieldCheck };
+    return { to: '/users?create=1', label: 'Nuevo usuario', icon: UsersAdminIcon };
   return null;
 };
 
@@ -152,7 +156,7 @@ const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => {
             onClick={onNavigate}
             className={({ isActive }) => cn('nav-link', isActive && 'nav-link-active')}
           >
-            <Settings className="h-[18px] w-[18px] shrink-0" />
+            <SettingsIcon className="h-[17px] w-[17px] shrink-0 opacity-80" />
             Configuración
           </NavLink>
         </div>
@@ -310,7 +314,7 @@ export const AppShell = () => {
                 aria-label="Actividad reciente"
                 title="Actividad"
               >
-                <Activity className="h-[18px] w-[18px]" />
+                <ActivityIcon className="h-[18px] w-[18px]" strokeWidth={1.7} />
               </Link>
 
               <div className="mx-1 hidden h-6 w-px bg-line sm:block" />
@@ -358,7 +362,7 @@ export const AppShell = () => {
                       Mi cuenta
                     </DropdownItem>
                     <DropdownItem
-                      icon={<Settings className="h-4 w-4" />}
+                      icon={<SettingsIcon className="h-4 w-4" />}
                       onClick={() => {
                         close();
                         navigate('/settings?tab=preferences');

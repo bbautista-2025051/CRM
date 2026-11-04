@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import type { NexoIcon } from './NexoIcons';
 import { cn } from '@/lib/cn';
 
 export const EmptyState = ({
@@ -10,7 +11,7 @@ export const EmptyState = ({
   className,
   compact = false,
 }: {
-  icon?: LucideIcon;
+  icon?: LucideIcon | NexoIcon;
   title: string;
   description?: string;
   action?: ReactNode;

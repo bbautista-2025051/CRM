@@ -4,16 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
-  BarChart3,
   CheckCircle2,
   Eye,
   EyeOff,
   LockKeyhole,
   Mail,
-  ShieldCheck,
   Sparkles,
-  Target,
 } from 'lucide-react';
+import { OpportunitiesIcon, ConversionIcon, ShieldIcon } from '@/components/ui/NexoIcons';
 import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { useGoogleStatus } from '@/hooks/queries';
@@ -30,17 +28,17 @@ import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 const benefits = [
   {
-    icon: Target,
+    icon: OpportunitiesIcon,
     title: 'Pipeline siempre visible',
     description: 'Oportunidades, etapas y probabilidades en un solo lugar.',
   },
   {
-    icon: BarChart3,
+    icon: ConversionIcon,
     title: 'Decisiones con datos',
     description: 'Ingresos confirmados, conversión y actividad en tiempo real.',
   },
   {
-    icon: ShieldCheck,
+    icon: ShieldIcon,
     title: 'Acceso seguro',
     description: 'Sesiones del servidor, roles y auditoría de cada cambio.',
   },
@@ -263,7 +261,7 @@ export const LoginPage = () => {
 
             <div className="mt-8 rounded-xl border border-line bg-elevated/50 p-4">
               <div className="flex gap-2.5">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" />
+                <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" />
                 <p className="text-[11px] leading-5 text-muted">
                   ¿No tienes acceso? Solicítalo a un administrador. No permitimos
                   auto-registro y nunca compartimos tus credenciales.
