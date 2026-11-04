@@ -26,6 +26,7 @@ export const projectBodySchema = z.object({
       return value as string;
     })
     .optional(),
+  currency: z.enum(['GTQ', 'USD']).optional().default('GTQ'),
   preSales: optionalText(160, 'La preventa'),
   solution: optionalText(4000, 'La solución'),
   startDate: optionalDateOnly('La fecha de inicio'),
