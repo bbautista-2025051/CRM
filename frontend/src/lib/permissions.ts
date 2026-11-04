@@ -2,6 +2,12 @@ import type { Role, SaleStatus } from '@/types';
 
 export const isAdmin = (role: Role | undefined | null): boolean => role === 'ADMIN';
 
+export const isSupervisor = (role: Role | undefined | null): boolean => role === 'SUPERVISOR';
+
+export const isProgramador = (role: Role | undefined | null): boolean => role === 'PROGRAMADOR';
+
+export const isOperaciones = (role: Role | undefined | null): boolean => role === 'OPERACIONES';
+
 export const canManageUsers = (role: Role | undefined | null): boolean => isAdmin(role);
 
 export const canArchive = (role: Role | undefined | null): boolean => isAdmin(role);

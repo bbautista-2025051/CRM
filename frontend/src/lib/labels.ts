@@ -11,8 +11,11 @@ import type {
 } from '@/types';
 
 export const ROLE_LABELS: Record<Role, string> = {
-  ADMIN: 'Administrador',
+  ADMIN: 'Admin',
+  PROGRAMADOR: 'Programador',
   VENDEDOR: 'Vendedor',
+  SUPERVISOR: 'Supervisor',
+  OPERACIONES: 'Operaciones',
 };
 
 export const USER_STATUS_LABELS: Record<UserStatus, string> = {
