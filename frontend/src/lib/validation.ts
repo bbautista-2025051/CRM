@@ -161,6 +161,7 @@ export const projectFormSchema = z
       .refine((value) => value === '' || (Number.isFinite(Number(value)) && Number(value) > 0), {
         message: 'Ingresa un monto válido mayor que cero',
       }),
+    currency: z.enum(['GTQ', 'USD']),
     preSales: z.string().trim().max(160),
     solution: z.string().trim().max(4000),
     startDate: optionalDate,
