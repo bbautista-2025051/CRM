@@ -28,6 +28,9 @@ interface ProjectInput {
   companyId?: string | null;
   managerId?: string | null;
   status?: 'ACTIVE' | 'COMPLETED';
+  amount?: string | null;
+  preSales?: string | null;
+  solution?: string | null;
   startDate?: Date | null;
   dueDate?: Date | null;
 }
@@ -64,6 +67,17 @@ const validateDates = (startDate?: Date | null, dueDate?: Date | null) => {
   if (startDate && dueDate && startDate.getTime() > dueDate.getTime()) {
     throw new BadRequestError('La fecha de entrega no puede ser anterior a la fecha de inicio');
   }
+};
+
+/**
+ * Asigna el número correlativo del proyecto (PRJ-001, PRJ-002, …).
+ */
+const nextProjectNumber = async (): Promise<number> => {
+  const last = await prisma.project.findFirst({
+    orderBy: { number: 'desc' },
+    select: { number: true },
+  });
+  return (last?.number ?? 0) + 1;
 };
 
 const validateRelations = async (input: ProjectInput) => {
@@ -162,6 +176,7 @@ export const createProject = async (input: ProjectInput, actor: User) => {
   await validateRelations(input);
 
   const status = input.status ?? 'ACTIVE';
+  const number = await nextProjectNumber();
   const project = await prisma.project.create({
     data: {
       name: input.name,
@@ -170,6 +185,10 @@ export const createProject = async (input: ProjectInput, actor: User) => {
       companyId: input.companyId ?? null,
       managerId: input.managerId ?? null,
       status,
+      number,
+      amount: input.amount ?? null,
+      preSales: input.preSales ?? null,
+      solution: input.solution ?? null,
       startDate: input.startDate ?? null,
       dueDate: input.dueDate ?? null,
       completedAt: status === 'COMPLETED' ? new Date() : null,
@@ -332,6 +351,54 @@ export const deleteTask = async (projectId: string, taskId: string, actor: User)
     description: `Tarea eliminada: ${existing.title} (${existing.project.name})`,
     metadata: { projectId },
   });
+};
+
+// ---------------------------------------------------------------------------
+// Comentarios del proyecto
+// ---------------------------------------------------------------------------
+
+export const listProjectComments = async (projectId: string) => {
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) throw new NotFoundError('El proyecto no existe');
+
+  return prisma.projectComment.findMany({
+    where: { projectId },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      author: { select: { id: true, name: true, avatarUrl: true } },
+    },
+  });
+};
+
+export const createProjectComment = async (
+  projectId: string,
+  body: string,
+  actor: User,
+) => {
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) throw new NotFoundError('El proyecto no existe');
+
+  const comment = await prisma.projectComment.create({
+    data: {
+      projectId,
+      authorId: actor.id,
+      body,
+    },
+    include: {
+      author: { select: { id: true, name: true, avatarUrl: true } },
+    },
+  });
+
+  await logActivity({
+    userId: actor.id,
+    action: 'CREATE',
+    entityType: 'PROJECT',
+    entityId: projectId,
+    description: `Comentario agregado al proyecto: ${project.name}`,
+    metadata: { commentId: comment.id },
+  });
+
+  return comment;
 };
 
 // ---------------------------------------------------------------------------

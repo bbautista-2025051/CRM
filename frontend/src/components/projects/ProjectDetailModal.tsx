@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Building2,
   CalendarDays,
   Download,
   File as FileIcon,
@@ -9,17 +8,14 @@ import {
   FileImage,
   FileSpreadsheet,
   FileText,
-  ListChecks,
   Phone,
+  Plus,
   Trash2,
-  UploadCloud,
-  Users,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { Avatar } from '@/components/ui/Avatar';
 import { ProjectStatusBadge } from '@/components/ui/StatusBadges';
 import { useAuth } from '@/providers/AuthProvider';
@@ -29,8 +25,8 @@ import { projectsApi, unwrap } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
 import { isAdmin } from '@/lib/permissions';
 import { cn } from '@/lib/cn';
-import { formatBytes, formatDate, formatDateTime, formatNumber } from '@/lib/format';
-import type { ProjectFile } from '@/types';
+import { formatBytes, formatDate, formatDateTime, formatMoney, formatNumber } from '@/lib/format';
+import type { ProjectComment, ProjectFile, ProjectStatus } from '@/types';
 
 const extFromName = (name: string): string => {
   const index = name.lastIndexOf('.');
@@ -61,6 +57,71 @@ const FILE_STYLES: Record<string, { icon: typeof FileIcon; tone: string }> = {
 const fileStyle = (file: ProjectFile) =>
   FILE_STYLES[extFromName(file.originalName)] ?? { icon: FileIcon, tone: 'bg-elevated text-muted' };
 
+export const projectNumberLabel = (number?: number | null): string =>
+  number ? `PRJ-${String(number).padStart(3, '0')}` : '—';
+
+/** Encabezado centrado del wireframe: TITULO / EMPRESA / MONTO con líneas bajo cada texto. */
+const SheetHeader = ({
+  title,
+  company,
+  amount,
+}: {
+  title: string;
+  company: string;
+  amount: string;
+}) => {
+  const rule = (width: string) => (
+    <div className="mt-1.5 flex justify-center">
+      <span className={cn('h-px bg-line', width)} />
+      <span className={cn('mt-[3px] h-px bg-line', width)} />
+    </div>
+  );
+
+  return (
+    <header className="px-4 text-center">
+      <h2 className="font-display text-[22px] font-bold tracking-[-0.02em] text-ink">{title}</h2>
+      {rule('w-72')}
+      <p className="mt-2.5 font-display text-[17px] font-semibold tracking-[-0.01em] text-ink">
+        {company}
+      </p>
+      {rule('w-64')}
+      <p className="mt-2.5 metric text-[15px] font-semibold text-ink">{amount}</p>
+      {rule('w-56')}
+    </header>
+  );
+};
+
+const Row = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => (
+  <div className="px-4 py-3">
+    <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
+    <div className="mt-1 text-sm text-ink">{children}</div>
+  </div>
+);
+
+const RowInline = ({
+  label,
+  icon: Icon,
+  children,
+}: {
+  label: string;
+  icon?: typeof CalendarDays;
+  children: React.ReactNode;
+}) => (
+  <div className="flex items-center gap-3 px-4 py-3">
+    {Icon ? <Icon className="h-4 w-4 shrink-0 text-muted" /> : null}
+    <div className="min-w-0 flex-1">
+      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
+      <div className="mt-0.5 text-sm text-ink">{children}</div>
+    </div>
+  </div>
+);
+
 export const ProjectDetailModal = ({
   open,
   onClose,
@@ -76,8 +137,8 @@ export const ProjectDetailModal = ({
   const queryClient = useQueryClient();
   const admin = isAdmin(user?.role);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dragging, setDragging] = useState(false);
   const [uploadingCount, setUploadingCount] = useState(0);
+  const [commentDraft, setCommentDraft] = useState('');
 
   const query = useQuery({
     queryKey: ['projects', 'detail', projectId],
@@ -88,6 +149,12 @@ export const ProjectDetailModal = ({
   const filesQuery = useQuery({
     queryKey: ['projects', 'files', projectId],
     queryFn: async () => unwrap(await projectsApi.listFiles(projectId as string)),
+    enabled: open && Boolean(projectId),
+  });
+
+  const commentsQuery = useQuery({
+    queryKey: ['projects', 'comments', projectId],
+    queryFn: async () => unwrap(await projectsApi.listComments(projectId as string)),
     enabled: open && Boolean(projectId),
   });
 
@@ -111,8 +178,7 @@ export const ProjectDetailModal = ({
   });
 
   const removeFile = useMutation({
-    mutationFn: (fileId: string) =>
-      projectsApi.removeFile(projectId as string, fileId),
+    mutationFn: (fileId: string) => projectsApi.removeFile(projectId as string, fileId),
     onSuccess: () => {
       success('Archivo eliminado', 'El archivo se quitó del proyecto.');
       void queryClient.invalidateQueries({ queryKey: ['projects', 'files', projectId] });
@@ -120,6 +186,21 @@ export const ProjectDetailModal = ({
     onError: (error) => {
       toastError(
         'No se pudo eliminar',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
+      );
+    },
+  });
+
+  const createComment = useMutation({
+    mutationFn: (body: string) => projectsApi.createComment(projectId as string, body),
+    onSuccess: () => {
+      success('Comentario agregado');
+      setCommentDraft('');
+      void queryClient.invalidateQueries({ queryKey: ['projects', 'comments', projectId] });
+    },
+    onError: (error) => {
+      toastError(
+        'No se pudo agregar el comentario',
         error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
@@ -133,12 +214,6 @@ export const ProjectDetailModal = ({
     }
   };
 
-  const onDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setDragging(false);
-    void onPickFiles(event.dataTransfer.files);
-  };
-
   const onDeleteFile = async (file: ProjectFile) => {
     const accepted = await confirm({
       title: `Eliminar ${file.originalName}`,
@@ -149,9 +224,15 @@ export const ProjectDetailModal = ({
     if (accepted) removeFile.mutate(file.id);
   };
 
+  const onSubmitComment = () => {
+    const body = commentDraft.trim();
+    if (!body) return;
+    createComment.mutate(body);
+  };
+
   const project = query.data;
   const files = filesQuery.data ?? [];
-  const memberIds = new Set(project?.tasks.map((task) => task.assigneeId) ?? []);
+  const comments = commentsQuery.data ?? [];
 
   return (
     <Modal
@@ -159,8 +240,8 @@ export const ProjectDetailModal = ({
       onClose={onClose}
       size="xl"
       fullWindow
-      title={project?.name ?? 'Detalle del proyecto'}
-      description="Consulta los datos del proyecto y sus archivos."
+      title="Detalle del proyecto"
+      description="Ficha comercial y seguimiento del proyecto."
       footer={
         <Button variant="secondary" onClick={onClose}>
           Cerrar
@@ -174,211 +255,234 @@ export const ProjectDetailModal = ({
       ) : query.isError ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       ) : project ? (
-        <div className="grid gap-5 lg:grid-cols-2">
-          {/* Columna izquierda: datos del proyecto */}
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <ProjectStatusBadge status={project.status} />
-              {project.company ? (
-                <span className="inline-flex items-center gap-1.5 text-xs text-muted">
-                  <Building2 className="h-3.5 w-3.5" />
-                  {project.company.name}
-                </span>
-              ) : (
-                <span className="text-xs text-muted">Sin empresa</span>
-              )}
-              <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted">
-                <Users className="h-3.5 w-3.5" />
-                {formatNumber(memberIds.size)} integrantes
-              </span>
-            </div>
+        <div className="space-y-6">
+          {/* Encabezado del wireframe: TITULO / EMPRESA / MONTO */}
+          <SheetHeader
+            title={project.name}
+            company={project.company?.name ?? 'Sin empresa'}
+            amount={project.amount ? formatMoney(project.amount) : 'Sin monto'}
+          />
 
-              <dl className="divide-y divide-line">
-                <div className="px-1 py-3">
-                  <dt className="text-[11px] uppercase tracking-wide text-muted">Descripción</dt>
-                  <dd className="mt-1 whitespace-pre-line text-sm leading-6 text-ink">
-                    {project.description || 'Sin descripción.'}
-                  </dd>
-                </div>
-
-                <div className="flex items-center gap-3 px-1 py-3">
-                  <Phone className="h-4 w-4 shrink-0 text-muted" />
-                  <div className="min-w-0">
-                    <dt className="text-[11px] uppercase tracking-wide text-muted">Teléfono</dt>
-                    <dd className="mt-0.5 text-sm text-ink">{project.phone || 'Sin teléfono'}</dd>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 px-1 py-3">
-                  <Building2 className="h-4 w-4 shrink-0 text-muted" />
-                  <div className="min-w-0">
-                    <dt className="text-[11px] uppercase tracking-wide text-muted">Empresa</dt>
-                    <dd className="mt-0.5 truncate text-sm text-ink">
-                      {project.company?.name ?? 'Sin empresa'}
-                    </dd>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 px-1 py-3">
+          <div className="grid gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+            {/* Columna izquierda: ficha */}
+            <div className="h-fit rounded-xl border border-line bg-elevated/20">
+              <div className="divide-y divide-line">
+                <RowInline label="Vendedor" icon={undefined}>
                   {project.manager ? (
-                    <Avatar
-                      name={project.manager.name}
-                      src={project.manager.avatarUrl}
-                      size="sm"
-                      className="shrink-0"
-                    />
+                    <span className="mt-0.5 flex items-center gap-2">
+                      <Avatar
+                        name={project.manager.name}
+                        src={project.manager.avatarUrl}
+                        size="xs"
+                      />
+                      <span className="truncate font-medium">{project.manager.name}</span>
+                    </span>
                   ) : (
-                    <Users className="h-4 w-4 shrink-0 text-muted" />
+                    'Sin asignar'
                   )}
-                  <div className="min-w-0">
-                    <dt className="text-[11px] uppercase tracking-wide text-muted">Responsable</dt>
-                    <dd className="mt-0.5 truncate text-sm font-medium text-ink">
-                      {project.manager?.name ?? 'Sin asignar'}
-                    </dd>
-                  </div>
-                </div>
+                </RowInline>
+                <Row label="N.º de proyecto">
+                  <span className="font-mono text-[13px] font-semibold">
+                    {projectNumberLabel(project.number)}
+                  </span>
+                </Row>
+                <Row label="Preventa">{project.preSales || 'Sin preventa'}</Row>
+                <Row label="Solución">
+                  {project.solution ? (
+                    <span className="block whitespace-pre-line leading-6">{project.solution}</span>
+                  ) : (
+                    'Sin solución'
+                  )}
+                </Row>
 
-                <div className="flex items-center gap-3 px-1 py-3">
-                  <CalendarDays className="h-4 w-4 shrink-0 text-muted" />
-                  <div className="min-w-0">
-                    <dt className="text-[11px] uppercase tracking-wide text-muted">Inicio</dt>
-                    <dd className="mt-0.5 text-sm text-ink">{formatDate(project.startDate)}</dd>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 px-1 py-3">
-                  <CalendarDays className="h-4 w-4 shrink-0 text-muted" />
-                  <div className="min-w-0">
-                    <dt className="text-[11px] uppercase tracking-wide text-muted">Entrega</dt>
-                    <dd className="mt-0.5 text-sm text-ink">{formatDate(project.dueDate)}</dd>
-                  </div>
-                </div>
-              </dl>
-            </div>
-
-          {/* Columna derecha: archivos del proyecto */}
-          <div className="space-y-3">
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Subir archivos"
-              onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') fileInputRef.current?.click();
-              }}
-              onDragOver={(event) => {
-                event.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={onDrop}
-              className={cn(
-                'flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-7 text-center transition',
-                dragging
-                  ? 'border-brand bg-brand/5'
-                  : 'border-line bg-elevated/40 hover:border-brand hover:bg-brand/5',
-              )}
-            >
-              <UploadCloud className="h-8 w-8 text-muted" />
-              <p className="mt-3 text-sm font-semibold text-ink">Subir archivos de todo tipo</p>
-              <p className="mt-1 text-xs text-muted">
-                Arrastra y suelta, o haz clic aquí para seleccionar. <br />
-                PDF, Word, Excel, imágenes… hasta 10 MB.
-              </p>
-              {uploadingCount > 0 ? (
-                <span className="mt-3 inline-flex items-center gap-2 text-xs text-muted">
-                  <Spinner className="h-3.5 w-3.5" /> Subiendo {uploadingCount} archivo
-                  {uploadingCount === 1 ? '' : 's'}…
-                </span>
-              ) : null}
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(event) => {
-                  void onPickFiles(event.target.files);
-                  event.target.value = '';
-                }}
-              />
-            </div>
-
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
-                  <FileText className="h-4 w-4 text-muted" /> Archivos subidos
-                </h3>
-                <span className="text-[11px] text-muted">{files.length} archivo{files.length === 1 ? '' : 's'}</span>
+                <RowInline label="Estado">
+                  <ProjectStatusBadge status={project.status as ProjectStatus} />
+                </RowInline>
+                <RowInline label="Teléfono" icon={Phone}>
+                  {project.phone || 'Sin teléfono'}
+                </RowInline>
+                <RowInline label="Inicio" icon={CalendarDays}>
+                  {formatDate(project.startDate)}
+                </RowInline>
+                <RowInline label="Entrega" icon={CalendarDays}>
+                  {formatDate(project.dueDate)}
+                </RowInline>
               </div>
 
-              {filesQuery.isLoading ? (
-                <div className="flex justify-center py-6">
-                  <Spinner className="h-5 w-5" label="Cargando archivos" />
+              {/* Archivos adjuntos del proyecto */}
+              <div className="border-t border-line">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">
+                    Archivos adjuntos
+                  </p>
+                  <span className="text-xs text-muted">{formatNumber(files.length)}</span>
                 </div>
-              ) : files.length === 0 ? (
-                <EmptyState
-                  icon={ListChecks}
-                  title="Aún no hay archivos"
-                  description="Sube el primer archivo del proyecto: documentos, imágenes, hojas de cálculo…"
-                  compact
-                />
-              ) : (
-                <ul className="max-h-72 space-y-2 overflow-y-auto pr-1">
-                  {files.map((file) => {
-                    const style = fileStyle(file);
-                    const Icon = style.icon;
-                    const canDelete = admin || file.uploadedById === user?.id;
-                    return (
-                      <li
-                        key={file.id}
-                        className="flex items-center gap-3 rounded-[10px] p-2.5 transition-colors hover:bg-elevated"
-                      >
-                        <span
-                          className={cn(
-                            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-                            style.tone,
-                          )}
+                {files.length === 0 ? (
+                  <p className="px-4 pb-4 text-[13px] leading-5 text-muted">
+                    Aún no hay archivos. Usa el botón “+” del recuadro de comentarios para agregarlos.
+                  </p>
+                ) : (
+                  <ul className="max-h-64 space-y-1 overflow-y-auto px-3 pb-3">
+                    {files.map((file) => {
+                      const style = fileStyle(file);
+                      const Icon = style.icon;
+                      const canDelete = admin || file.uploadedById === user?.id;
+                      return (
+                        <li
+                          key={file.id}
+                          className="flex items-center gap-3 rounded-[10px] p-2 transition-colors hover:bg-elevated"
                         >
-                          <Icon className="h-4 w-4" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className="truncate text-[13px] font-medium text-ink"
-                            title={file.originalName}
+                          <span
+                            className={cn(
+                              'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                              style.tone,
+                            )}
                           >
-                            {file.originalName}
-                          </p>
-                          <p className="mt-0.5 truncate text-[11px] text-muted">
-                            {formatBytes(file.size)}
-                            {file.uploadedBy ? ` · ${file.uploadedBy.name}` : ''}
-                            {` · ${formatDateTime(file.createdAt)}`}
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className="truncate text-[13px] font-medium text-ink"
+                              title={file.originalName}
+                            >
+                              {file.originalName}
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-muted">
+                              {formatBytes(file.size)}
+                            </p>
+                          </div>
+                          <a
+                            href={`/uploads/projects/${file.storedName}`}
+                            download={file.originalName}
+                            className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
+                            aria-label={`Descargar ${file.originalName}`}
+                          >
+                            <Download className="h-4 w-4" />
+                          </a>
+                          {canDelete ? (
+                            <button
+                              type="button"
+                              onClick={() => void onDeleteFile(file)}
+                              className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-rose-500/10 hover:text-rose-500"
+                              aria-label={`Eliminar ${file.originalName}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* Columna derecha: comentario nuevo + historial */}
+            <div className="space-y-5">
+              <div className="rounded-xl border border-line bg-elevated/20 p-4">
+                <div className="flex items-start gap-3">
+                  <Avatar name={user?.name ?? ''} src={user?.avatarUrl} size="sm" className="mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <label
+                      htmlFor="project-comment"
+                      className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted"
+                    >
+                      Comentario para agregar
+                    </label>
+                    <textarea
+                      id="project-comment"
+                      value={commentDraft}
+                      onChange={(event) => setCommentDraft(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                          event.preventDefault();
+                          onSubmitComment();
+                        }
+                      }}
+                      rows={3}
+                      maxLength={4000}
+                      placeholder="Comentario para agregar…"
+                      className="mt-2 w-full resize-none rounded-[10px] border border-line bg-surface px-3 py-2 text-sm text-ink outline-none transition placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/15"
+                    />
+                    <div className="mt-2 flex items-center justify-end gap-1.5">
+                      {uploadingCount > 0 ? (
+                        <span className="mr-auto inline-flex items-center gap-2 text-xs text-muted">
+                          Subiendo {uploadingCount} archivo{uploadingCount === 1 ? '' : 's'}…
+                        </span>
+                      ) : null}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(event) => {
+                          void onPickFiles(event.target.files);
+                          event.target.value = '';
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingCount > 0}
+                        aria-label="Agregar archivos"
+                        title="Agregar archivos"
+                        className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink shadow-sm transition hover:border-brand/40 hover:text-brand disabled:pointer-events-none disabled:opacity-50"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                      <Button
+                        size="sm"
+                        onClick={onSubmitComment}
+                        disabled={!commentDraft.trim()}
+                        loading={createComment.isPending}
+                      >
+                        Comentar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-line bg-elevated/20">
+                <div className="flex items-center justify-between border-b border-line px-4 py-3">
+                  <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">
+                    Historial de comentarios
+                  </p>
+                  <span className="text-xs text-muted">{formatNumber(comments.length)}</span>
+                </div>
+                {comments.length === 0 ? (
+                  <p className="px-4 py-6 text-center text-[13px] leading-5 text-muted">
+                    Sin comentarios todavía. Escribe el primero arriba para dejar registro del
+                    seguimiento.
+                  </p>
+                ) : (
+                  <ul className="max-h-[420px] divide-y divide-line overflow-y-auto">
+                    {comments.map((comment: ProjectComment) => (
+                      <li key={comment.id} className="flex items-start gap-3 px-4 py-3.5">
+                        <Avatar
+                          name={comment.author?.name ?? 'Usuario'}
+                          src={comment.author?.avatarUrl ?? null}
+                          size="sm"
+                          className="mt-0.5 shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[13px] font-semibold text-ink">
+                              {comment.author?.name ?? 'Usuario'}
+                            </span>
+                            <span className="text-[11px] text-muted">
+                              {formatDateTime(comment.createdAt)}
+                            </span>
+                          </div>
+                          <p className="mt-1 whitespace-pre-line text-[13px] leading-5 text-ink">
+                            {comment.body}
                           </p>
                         </div>
-                        <a
-                          href={`/uploads/projects/${file.storedName}`}
-                          download={file.originalName}
-                          className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
-                          aria-label={`Descargar ${file.originalName}`}
-                          title="Descargar"
-                        >
-                          <Download className="h-4 w-4" />
-                        </a>
-                        {canDelete ? (
-                          <button
-                            type="button"
-                            onClick={() => void onDeleteFile(file)}
-                            className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
-                            aria-label={`Eliminar ${file.originalName}`}
-                            title="Eliminar"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        ) : null}
                       </li>
-                    );
-                  })}
-                </ul>
-              )}
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
         </div>

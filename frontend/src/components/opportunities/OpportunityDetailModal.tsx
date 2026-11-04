@@ -147,7 +147,7 @@ export const OpportunityDetailModal = ({
       ) : query.isError || !opportunity ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} compact />
       ) : (
-        <div className="space-y-5">
+        <div className="mx-auto max-w-4xl space-y-5">
           <div className="flex flex-wrap items-center gap-2">
             <StageBadge stage={opportunity.stage} />
             <Badge

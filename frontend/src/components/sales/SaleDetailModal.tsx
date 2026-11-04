@@ -185,7 +185,7 @@ export const SaleDetailModal = ({
       ) : query.isError || !sale ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} compact />
       ) : (
-        <div className="space-y-5">
+        <div className="mx-auto max-w-4xl space-y-5">
           {sale.status === 'CONFIRMED' ? (
             <Alert variant="success" title="Venta confirmada">
               Este importe se incluye en los ingresos confirmados. Solo un administrador

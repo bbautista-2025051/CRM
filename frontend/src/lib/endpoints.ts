@@ -12,6 +12,7 @@ import type {
   ListResponse,
   Opportunity,
   ProfileResponse,
+  ProjectComment,
   ProjectDetail,
   ProjectFile,
   ProjectListResponse,
@@ -175,6 +176,10 @@ export const projectsApi = {
     api.delete<void>(`/api/projects/${projectId}/tasks/${taskId}`),
   listFiles: (projectId: string) =>
     api.get<DataEnvelope<ProjectFile[]>>(`/api/projects/${projectId}/files`),
+  listComments: (projectId: string) =>
+    api.get<DataEnvelope<ProjectComment[]>>(`/api/projects/${projectId}/comments`),
+  createComment: (projectId: string, body: string) =>
+    api.post<DataEnvelope<ProjectComment>>(`/api/projects/${projectId}/comments`, { body }),
   uploadFile: (projectId: string, file: File) => {
     const form = new FormData();
     form.append('file', file);

@@ -66,6 +66,21 @@ export const removeTask = asyncHandler(async (req: Request, res: Response) => {
   res.status(204).send();
 });
 
+export const listComments = asyncHandler(async (req: Request, res: Response) => {
+  const comments = await projectsService.listProjectComments(req.validated.params.id);
+  res.status(200).json({ data: comments });
+});
+
+export const createComment = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  const comment = await projectsService.createProjectComment(
+    req.validated.params.id,
+    req.validated.body.body,
+    req.auth.user,
+  );
+  res.status(201).json({ data: comment });
+});
+
 export const listFiles = asyncHandler(async (req: Request, res: Response) => {
   const files = await projectsService.listProjectFiles(req.validated.params.id);
   res.status(200).json({ data: files });

@@ -98,6 +98,7 @@ model User {
   managedProjects  Project[]       @relation("ProjectManager")
   assignedTasks    ProjectTask[]   @relation("TaskAssignee")
   uploadedFiles    ProjectFile[]   @relation("FileUploader")
+  projectComments  ProjectComment[] @relation("ProjectCommentAuthor")
   activityLogs     ActivityLog[]
 
   @@index([role])
@@ -264,16 +265,21 @@ model Project {
   managerId   String?       @map("manager_id") @db.Uuid
   phone       String?       @db.VarChar(40)
   status      ProjectStatus @default(ACTIVE)
+  number      Int?          @unique
+  amount      Decimal?      @map("amount") @db.Decimal(14, 2)
+  preSales    String?       @map("pre_sales") @db.VarChar(160)
+  solution    String?       @db.Text
   startDate   DateTime?     @map("start_date") @db.Date
   dueDate     DateTime?     @map("due_date") @db.Date
   completedAt DateTime?     @map("completed_at")
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
-  company Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  manager User?          @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
-  tasks   ProjectTask[]
-  files   ProjectFile[]
+  company  Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  manager  User?           @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+  tasks    ProjectTask[]
+  files    ProjectFile[]
+  comments ProjectComment[]
 
   @@index([companyId])
   @@index([managerId])
@@ -317,4 +323,19 @@ model ProjectFile {
   @@index([projectId])
   @@index([uploadedById])
   @@map("project_files")
+}
+
+model ProjectComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  authorId  String?  @map("author_id") @db.Uuid
+  body      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User?   @relation("ProjectCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
+  @@map("project_comments")
 }

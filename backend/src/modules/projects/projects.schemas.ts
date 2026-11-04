@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ProjectStatus, TaskStatus } from '@prisma/client';
 import { paginationQuerySchema } from '../../utils/pagination';
-import { optionalDateOnly, optionalId, optionalText } from '../../utils/zod';
+import { optionalDateOnly, optionalId, optionalText, moneySchema } from '../../utils/zod';
 
 export const projectListQuerySchema = paginationQuerySchema.extend({
   status: z.nativeEnum(ProjectStatus).optional(),
@@ -19,8 +19,25 @@ export const projectBodySchema = z.object({
   companyId: optionalId(),
   managerId: optionalId(),
   status: z.nativeEnum(ProjectStatus).optional().default(ProjectStatus.ACTIVE),
+  amount: z
+    .union([moneySchema, z.literal(''), z.null()])
+    .transform((value) => {
+      if (value === '' || value === null) return null;
+      return value as string;
+    })
+    .optional(),
+  preSales: optionalText(160, 'La preventa'),
+  solution: optionalText(4000, 'La solución'),
   startDate: optionalDateOnly('La fecha de inicio'),
   dueDate: optionalDateOnly('La fecha de entrega'),
+});
+
+export const commentBodySchema = z.object({
+  body: z
+    .string({ required_error: 'Escribe un comentario' })
+    .trim()
+    .min(1, 'Escribe un comentario')
+    .max(4000, 'El comentario no puede superar 4000 caracteres'),
 });
 
 export const updateProjectSchema = projectBodySchema

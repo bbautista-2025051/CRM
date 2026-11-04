@@ -237,6 +237,10 @@ export interface Project {
   managerId: string | null;
   phone: string | null;
   status: ProjectStatus;
+  number?: number | null;
+  amount?: string | null;
+  preSales?: string | null;
+  solution?: string | null;
   startDate: string | null;
   dueDate: string | null;
   completedAt?: string | null;
@@ -249,6 +253,16 @@ export interface Project {
 
 export interface ProjectDetail extends Project {
   tasks: ProjectTask[];
+}
+
+export interface ProjectComment {
+  id: string;
+  projectId: string;
+  authorId: string | null;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  author?: { id: string; name: string; avatarUrl: string | null } | null;
 }
 
 export interface ProjectListResponse {

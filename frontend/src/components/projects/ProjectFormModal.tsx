@@ -25,6 +25,9 @@ const defaults = (project?: Project | null): ProjectFormValues => ({
   companyId: project?.companyId ?? '',
   managerId: project?.managerId ?? '',
   status: project?.status ?? 'ACTIVE',
+  amount: project?.amount ?? '',
+  preSales: project?.preSales ?? '',
+  solution: project?.solution ?? '',
   startDate: project?.startDate?.slice(0, 10) ?? '',
   dueDate: project?.dueDate?.slice(0, 10) ?? '',
 });
@@ -72,6 +75,9 @@ export const ProjectFormModal = ({
         companyId: emptyToNull(values.companyId),
         managerId: emptyToNull(values.managerId),
         status: values.status,
+        amount: values.amount.trim() === '' ? '' : Number(values.amount),
+        preSales: emptyToNull(values.preSales),
+        solution: emptyToNull(values.solution),
         startDate: emptyToNull(values.startDate),
         dueDate: emptyToNull(values.dueDate),
       };
@@ -155,6 +161,35 @@ export const ProjectFormModal = ({
             type="tel"
             placeholder="+502 5555 5555"
             {...register('phone')}
+          />
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Monto del proyecto (GTQ)" htmlFor="project-amount" error={errors.amount?.message}>
+            <Input
+              id="project-amount"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="15000.00"
+              {...register('amount')}
+            />
+          </Field>
+          <Field label="Preventa" htmlFor="project-presales" error={errors.preSales?.message}>
+            <Input
+              id="project-presales"
+              placeholder="Nombre del responsable de preventa"
+              {...register('preSales')}
+            />
+          </Field>
+        </div>
+
+        <Field label="Solución" htmlFor="project-solution" error={errors.solution?.message}>
+          <Textarea
+            id="project-solution"
+            rows={2}
+            placeholder="Solución que se entrega al cliente…"
+            {...register('solution')}
           />
         </Field>
 

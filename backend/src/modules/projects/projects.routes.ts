@@ -6,6 +6,7 @@ import { validate } from '../../middlewares/validate';
 import { idParamSchema } from '../../utils/zod';
 import * as controller from './projects.controller';
 import {
+  commentBodySchema,
   projectBodySchema,
   projectFileParamsSchema,
   projectListQuerySchema,
@@ -64,6 +65,14 @@ projectsRouter.delete(
   csrfProtection,
   validate({ params: projectTaskParamsSchema }),
   controller.removeTask,
+);
+
+projectsRouter.get('/:id/comments', validate({ params: idParamSchema }), controller.listComments);
+projectsRouter.post(
+  '/:id/comments',
+  csrfProtection,
+  validate({ params: idParamSchema, body: commentBodySchema }),
+  controller.createComment,
 );
 
 projectsRouter.get('/:id/files', validate({ params: idParamSchema }), controller.listFiles);

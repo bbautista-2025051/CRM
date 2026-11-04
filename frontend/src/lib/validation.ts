@@ -154,6 +154,15 @@ export const projectFormSchema = z
     companyId: z.string(),
     managerId: z.string(),
     status: z.enum(['ACTIVE', 'COMPLETED']),
+    amount: z
+      .string()
+      .trim()
+      .max(20)
+      .refine((value) => value === '' || (Number.isFinite(Number(value)) && Number(value) > 0), {
+        message: 'Ingresa un monto válido mayor que cero',
+      }),
+    preSales: z.string().trim().max(160),
+    solution: z.string().trim().max(4000),
     startDate: optionalDate,
     dueDate: optionalDate,
   })
