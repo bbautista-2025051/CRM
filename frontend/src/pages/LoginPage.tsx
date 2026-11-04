@@ -132,7 +132,7 @@ export const LoginPage = () => {
             {benefits.map((benefit) => (
               <div
                 key={benefit.title}
-                className="flex items-start gap-3.5 rounded-xl border border-white/10 bg-white/[0.045] p-4 backdrop-blur-sm"
+                className="flex items-start gap-3.5 rounded-xl border border-white/10 bg-white/[0.045] p-4"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-teal-200">
                   <benefit.icon className="h-[18px] w-[18px]" />

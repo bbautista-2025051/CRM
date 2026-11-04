@@ -96,6 +96,7 @@ export const OpportunityDetailModal = ({
       open={Boolean(opportunityId)}
       onClose={onClose}
       size="lg"
+      fullWindow
       title={opportunity?.name ?? 'Oportunidad'}
       description={
         opportunity

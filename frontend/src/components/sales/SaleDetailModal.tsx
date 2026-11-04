@@ -126,6 +126,7 @@ export const SaleDetailModal = ({
       open={Boolean(saleId)}
       onClose={onClose}
       size="lg"
+      fullWindow
       title={
         <span className="flex flex-wrap items-center gap-2">
           Venta {sale?.saleNumber ?? ''}

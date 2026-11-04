@@ -158,6 +158,7 @@ export const ProjectDetailModal = ({
       open={open}
       onClose={onClose}
       size="xl"
+      fullWindow
       title={project?.name ?? 'Detalle del proyecto'}
       description="Consulta los datos del proyecto y sus archivos."
       footer={

@@ -254,7 +254,7 @@ export const AppShell = () => {
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-slate-950/60"
             onClick={() => setMobileOpen(false)}
             aria-label="Cerrar menú"
           />
@@ -273,7 +273,7 @@ export const AppShell = () => {
       ) : null}
 
       <div className="lg:pl-[264px]">
-        <header className="sticky top-0 z-30 border-b border-line bg-surface/85 backdrop-blur-md">
+        <header className="sticky top-0 z-30 border-b border-line bg-surface">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
             <button
               type="button"

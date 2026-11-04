@@ -28,6 +28,8 @@ interface ModalProps {
   footer?: ReactNode;
   size?: ModalSize;
   closeOnBackdrop?: boolean;
+  /** Ventana completa: ocupa todo el viewport, sin marco flotante. */
+  fullWindow?: boolean;
   className?: string;
 }
 
@@ -43,6 +45,7 @@ export const Modal = ({
   footer,
   size = 'md',
   closeOnBackdrop = true,
+  fullWindow = false,
   className,
 }: ModalProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -98,7 +101,12 @@ export const Modal = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-[2px] sm:items-center"
+      className={cn(
+        'fixed inset-0 z-[90] overflow-y-auto bg-slate-950/60',
+        fullWindow
+          ? 'flex flex-col'
+          : 'flex items-start justify-center p-4 sm:items-center',
+      )}
       onMouseDown={(event) => {
         if (closeOnBackdrop && event.target === event.currentTarget) onClose();
       }}
@@ -113,14 +121,27 @@ export const Modal = ({
         tabIndex={-1}
         onKeyDown={handlePanelKeyDown}
         className={cn(
-          'my-auto w-full animate-slide-up rounded-2xl border border-line bg-surface shadow-float outline-none',
-          sizes[size],
+          fullWindow
+            ? 'flex h-screen w-full max-w-none flex-col border-0 bg-surface outline-none'
+            : 'my-auto w-full animate-slide-up rounded-2xl border border-line bg-surface shadow-float outline-none',
+          !fullWindow && sizes[size],
           className,
         )}
       >
-        <div className="flex items-start gap-4 border-b border-line px-5 py-4 sm:px-6">
+        <div
+          className={cn(
+            'flex items-start gap-4 border-b border-line bg-surface px-5 py-4 sm:px-6',
+            fullWindow && 'shrink-0 px-6',
+          )}
+        >
           <div className="min-w-0 flex-1">
-            <h2 id={titleId} className="text-base font-semibold text-ink">
+            <h2
+              id={titleId}
+              className={cn(
+                'text-base font-semibold text-ink',
+                fullWindow && 'font-display text-[16px] font-bold tracking-[-0.01em]',
+              )}
+            >
               {title}
             </h2>
             {description ? (
@@ -139,12 +160,24 @@ export const Modal = ({
           </button>
         </div>
 
-        <div className="max-h-[calc(100vh-16rem)] overflow-y-auto px-5 py-5 sm:px-6">
+        <div
+          className={cn(
+            'px-5 py-5 sm:px-6',
+            fullWindow
+              ? 'min-h-0 flex-1 overflow-y-auto px-6'
+              : 'max-h-[calc(100vh-16rem)] overflow-y-auto',
+          )}
+        >
           {children}
         </div>
 
         {footer ? (
-          <div className="flex flex-col-reverse gap-2 border-t border-line bg-elevated/40 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+          <div
+            className={cn(
+              'flex flex-col-reverse gap-2 border-t border-line bg-elevated/40 px-5 py-4 sm:flex-row sm:justify-end sm:px-6',
+              fullWindow && 'mt-auto shrink-0 px-6',
+            )}
+          >
             {footer}
           </div>
         ) : null}
