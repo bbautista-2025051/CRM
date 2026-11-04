@@ -10,10 +10,16 @@ import { Alert } from '@/components/ui/Alert';
 import { useToast } from '@/providers/ToastProvider';
 import { usersApi } from '@/lib/endpoints';
 import { ApiError, getFieldErrors } from '@/lib/api';
-import {
-  userCreateSchema,
-  type UserCreateValues,
-} from '@/lib/validation';
+import { userCreateSchema, type UserCreateValues } from '@/lib/validation';
+import type { Role } from '@/types';
+
+const ROLE_OPTIONS: Array<{ value: Role; label: string }> = [
+  { value: 'ADMIN', label: 'Administrador' },
+  { value: 'PROGRAMADOR', label: 'Programador' },
+  { value: 'VENDEDOR', label: 'Vendedor' },
+  { value: 'SUPERVISOR', label: 'Supervisor' },
+  { value: 'OPERACIONES', label: 'Operaciones' },
+];
 
 const defaults: UserCreateValues = {
   name: '',
@@ -174,8 +180,9 @@ export const UserCreateModal = ({
           </Field>
           <Field label="Rol" htmlFor="user-role" error={errors.role?.message} required>
             <Select id="user-role" invalid={Boolean(errors.role)} {...register('role')}>
-              <option value="VENDEDOR">Vendedor</option>
-              <option value="ADMIN">Administrador</option>
+              {ROLE_OPTIONS.map((role) => (
+                <option key={role.value} value={role.value}>{role.label}</option>
+              ))}
             </Select>
           </Field>
           <Field label="Estado" htmlFor="user-status" error={errors.status?.message} required>

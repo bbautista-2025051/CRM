@@ -34,7 +34,9 @@ import {
   DropdownItem,
   DropdownSeparator,
 } from '@/components/ui/Dropdown';
-import type { PublicUser } from '@/types';
+import type { PublicUser, Role } from '@/types';
+
+const ROLE_OPTIONS: Role[] = ['ADMIN', 'PROGRAMADOR', 'VENDEDOR', 'SUPERVISOR', 'OPERACIONES'];
 
 export const UsersPage = () => {
   usePageTitle('Usuarios');
@@ -144,8 +146,11 @@ export const UsersPage = () => {
               className="w-auto min-w-[150px]"
             >
               <option value="">Todos los roles</option>
-              <option value="ADMIN">Administradores</option>
-              <option value="VENDEDOR">Vendedores</option>
+              {ROLE_OPTIONS.map((roleOption) => (
+                <option key={roleOption} value={roleOption}>
+                  {ROLE_LABELS[roleOption]}
+                </option>
+              ))}
             </Select>
             <Select
               aria-label="Filtrar por estado"

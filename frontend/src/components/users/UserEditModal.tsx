@@ -12,7 +12,10 @@ import { useToast } from '@/providers/ToastProvider';
 import { usersApi } from '@/lib/endpoints';
 import { ApiError, getFieldErrors } from '@/lib/api';
 import { userEditSchema, type UserEditValues } from '@/lib/validation';
-import type { PublicUser } from '@/types';
+import { ROLE_LABELS } from '@/lib/labels';
+import type { PublicUser, Role } from '@/types';
+
+const ROLE_OPTIONS: Role[] = ['ADMIN', 'PROGRAMADOR', 'VENDEDOR', 'SUPERVISOR', 'OPERACIONES'];
 
 const defaults = (user?: PublicUser | null): UserEditValues => ({
   name: user?.name ?? '',
@@ -158,8 +161,9 @@ export const UserEditModal = ({
               invalid={Boolean(errors.role)}
               {...register('role')}
             >
-              <option value="VENDEDOR">Vendedor</option>
-              <option value="ADMIN">Administrador</option>
+              {ROLE_OPTIONS.map((role) => (
+                <option key={role} value={role}>{ROLE_LABELS[role]}</option>
+              ))}
             </Select>
             {isSelf ? <p className="hint">No puedes cambiar tu propio rol.</p> : null}
           </Field>
