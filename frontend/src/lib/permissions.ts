@@ -54,3 +54,7 @@ export const canCancelSale = (
   if (isAdmin(role)) return true;
   return canManageSale(role, userId, ownerId) && status === 'PENDING';
 };
+
+/** ADMIN y OPERACIONES pueden crear, asignar y gestionar tareas de equipo. */
+export const canManageTeamTasks = (role: Role | undefined | null): boolean =>
+  isAdmin(role) || isOperaciones(role);

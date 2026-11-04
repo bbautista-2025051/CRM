@@ -78,3 +78,6 @@ export const requireRole = (...roles: Array<User['role']>) => {
 };
 
 export const requireAdmin = requireRole('ADMIN');
+
+/** Roles que pueden crear, asignar y gestionar tareas de equipo: ADMIN y OPERACIONES. */
+export const requireTeamTaskManager = requireRole('ADMIN', 'OPERACIONES');

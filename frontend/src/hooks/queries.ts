@@ -48,7 +48,7 @@ export const useUserOptions = (enabled = true) => {
     queryKey: ['users', 'options'],
     queryFn: async () =>
       usersApi.list({ pageSize: 100, status: 'ACTIVE', sortBy: 'name', sortOrder: 'asc' }),
-    enabled: enabled && user?.role === 'ADMIN',
+    enabled: enabled && (user?.role === 'ADMIN' || user?.role === 'OPERACIONES'),
     staleTime: 60_000,
   });
 };
