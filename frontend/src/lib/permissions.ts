@@ -1,3 +1,5 @@
+import type { Role, SaleStatus } from '@/types';
+
 export const isAdmin = (role: Role | undefined | null): boolean => role === 'ADMIN';
 
 export const isGerente = (role: Role | undefined | null): boolean => role === 'GERENTE';
