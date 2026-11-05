@@ -11,6 +11,7 @@ import { openApiDocument } from './docs/openapi';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 import { originCheck } from './middlewares/origin';
 import { globalLimiter } from './middlewares/rateLimit';
+import { requireAuth } from './middlewares/auth';
 import { apiRouter } from './routes';
 
 const allowedOrigins = new Set([...env.allowedOrigins, env.appUrl]);
@@ -68,6 +69,23 @@ export const createApp = () => {
   app.use(express.urlencoded({ extended: false, limit: '100kb' }));
   app.use(cookieParser());
   app.use(originCheck);
+
+  // Project files are private business documents: require a valid session and
+  // force downloads so uploaded HTML/SVG cannot execute inline on this origin.
+  app.use(
+    '/uploads/projects',
+    requireAuth,
+    express.static(path.join(env.uploadDir, 'projects'), {
+      index: false,
+      dotfiles: 'deny',
+      setHeaders: (res) => {
+        res.setHeader('Content-Disposition', 'attachment');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Content-Security-Policy', 'sandbox');
+        res.setHeader('Cache-Control', 'private, no-store');
+      },
+    }),
+  );
 
   app.use(
     '/uploads',
