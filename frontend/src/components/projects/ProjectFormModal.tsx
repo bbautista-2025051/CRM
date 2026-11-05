@@ -26,7 +26,7 @@ const defaults = (project?: Project | null): ProjectFormValues => ({
   managerId: project?.managerId ?? '',
   status: project?.status ?? 'ACTIVE',
   amount: project?.amount ?? '',
-  currency: 'GTQ',
+  currency: project?.currency === 'USD' ? 'USD' : 'GTQ',
   preSales: project?.preSales ?? '',
   solution: project?.solution ?? '',
   startDate: project?.startDate?.slice(0, 10) ?? '',
