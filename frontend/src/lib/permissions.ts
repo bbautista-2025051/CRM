@@ -1,6 +1,8 @@
-import type { Role, SaleStatus } from '@/types';
-
 export const isAdmin = (role: Role | undefined | null): boolean => role === 'ADMIN';
+
+export const isGerente = (role: Role | undefined | null): boolean => role === 'GERENTE';
+
+export const isPreventa = (role: Role | undefined | null): boolean => role === 'PREVENTA';
 
 export const isSupervisor = (role: Role | undefined | null): boolean => role === 'SUPERVISOR';
 
@@ -12,13 +14,14 @@ export const canManageUsers = (role: Role | undefined | null): boolean => isAdmi
 
 export const canArchive = (role: Role | undefined | null): boolean => isAdmin(role);
 
-export const canConfirmSales = (role: Role | undefined | null): boolean => isAdmin(role);
+export const canConfirmSales = (role: Role | undefined | null): boolean =>
+  isAdmin(role) || isGerente(role);
 
 export const canManageOpportunity = (
   role: Role | undefined | null,
   userId: string | undefined | null,
   ownerId: string,
-): boolean => isAdmin(role) || (Boolean(userId) && userId === ownerId);
+): boolean => isAdmin(role) || isGerente(role) || (Boolean(userId) && userId === ownerId);
 
 export const canDeleteOpportunity = (
   role: Role | undefined | null,
@@ -31,7 +34,7 @@ export const canManageSale = (
   role: Role | undefined | null,
   userId: string | undefined | null,
   ownerId: string,
-): boolean => isAdmin(role) || (Boolean(userId) && userId === ownerId);
+): boolean => isAdmin(role) || isGerente(role) || (Boolean(userId) && userId === ownerId);
 
 export const canEditSale = (
   role: Role | undefined | null,
@@ -40,7 +43,7 @@ export const canEditSale = (
   status: SaleStatus,
 ): boolean => {
   if (status === 'CANCELLED') return false;
-  if (isAdmin(role)) return true;
+  if (isAdmin(role) || isGerente(role)) return true;
   return canManageSale(role, userId, ownerId) && status === 'PENDING';
 };
 
@@ -51,10 +54,10 @@ export const canCancelSale = (
   status: SaleStatus,
 ): boolean => {
   if (status === 'CANCELLED') return false;
-  if (isAdmin(role)) return true;
+  if (isAdmin(role) || isGerente(role)) return true;
   return canManageSale(role, userId, ownerId) && status === 'PENDING';
 };
 
-/** ADMIN y OPERACIONES pueden crear, asignar y gestionar tareas de equipo. */
+/** ADMIN, GERENTE y OPERACIONES pueden crear, asignar y gestionar tareas de equipo. */
 export const canManageTeamTasks = (role: Role | undefined | null): boolean =>
-  isAdmin(role) || isOperaciones(role);
+  isAdmin(role) || isGerente(role) || isOperaciones(role);
