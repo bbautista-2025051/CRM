@@ -375,6 +375,7 @@ export const SaleFormModal = ({
               {...register('currency')}
             >
               <option value="GTQ">Quetzal (GTQ)</option>
+              <option value="USD">Dólar estadounidense (USD)</option>
             </Select>
           </Field>
           {editing && admin ? (
