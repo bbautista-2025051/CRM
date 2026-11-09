@@ -1,19 +1,5 @@
-<<<<<<< HEAD
 const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 
-/**
- * Convierte una ruta del backend (p. ej. `/api/avatars/<id>`) en una URL
- * utilizable por <img>. En Render el frontend y la API viven en dominios
- * distintos, así que una ruta relativa apuntaría al sitio estático.
- */
-export const resolveAssetUrl = (url?: string | null): string | undefined => {
-  if (!url) return undefined;
-  if (/^(https?:)?\/\/|^data:|^blob:/i.test(url)) return url;
-  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`;
-};
-
-=======
->>>>>>> e133b5873af9374cf4afc581efe9c8c03ca11c57
 let csrfToken: string | null = null;
 
 export const setCsrfToken = (token: string | null): void => {
@@ -52,6 +38,8 @@ interface ErrorBody {
 const isFormData = (value: unknown): value is FormData =>
   typeof FormData !== 'undefined' && value instanceof FormData;
 
+const apiUrl = (path: string): string => `${API_BASE}${path}`;
+
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, skipAuthEvent, headers: rawHeaders, ...rest } = options;
   const method = (rest.method ?? 'GET').toUpperCase();
@@ -67,9 +55,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   let response: Response;
   try {
-    // Keep API calls same-origin so session cookies are first-party in browsers
-    // that restrict third-party cookies (including private browsing).
-    response = await fetch(path, {
+    // Leave VITE_API_URL empty when the web host proxies /api to the backend.
+    // Set it to the API base URL only when the deployment requires a separate origin.
+    response = await fetch(apiUrl(path), {
       ...rest,
       method,
       headers,
@@ -130,7 +118,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 export async function download(path: string): Promise<Blob> {
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(apiUrl(path), {
       method: 'GET',
       credentials: 'include',
       headers: { Accept: '*/*' },
