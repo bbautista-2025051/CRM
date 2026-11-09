@@ -515,7 +515,9 @@ export const getProjectFileForDownload = async (projectId: string, fileId: strin
 
   const data = file.data ?? (await readProjectFile(file.storedName));
   if (!data) {
-    throw new NotFoundError('El archivo no está disponible');
+    throw new NotFoundError(
+      'Este archivo se subió antes de habilitar el almacenamiento en la base de datos y ya no está disponible. Vuelve a subirlo.',
+    );
   }
 
   return { ...file, data };

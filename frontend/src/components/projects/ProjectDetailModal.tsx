@@ -250,7 +250,9 @@ export const ProjectDetailModal = ({
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      // El navegador lee el blob de forma asíncrona: revocarlo de inmediato
+      // puede cancelar la descarga ("archivo no disponible en el sitio").
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (error) {
       toastError(
         'No se pudo descargar el archivo',
