@@ -1,5 +1,8 @@
 const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 
+const resolveApiUrl = (path: string): string =>
+  API_BASE ? `${API_BASE}${path.startsWith('/') ? path : `/${path}`}` : path;
+
 /**
  * Resuelve la ruta de un recurso servido por la API (por ejemplo un avatar)
  * cuando frontend y backend están publicados en dominios distintos.
@@ -63,8 +66,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   let response: Response;
   try {
-    // API fetch remains same-origin so its session cookie is first-party.
-    response = await fetch(path, {
+    response = await fetch(resolveApiUrl(path), {
       ...rest,
       method,
       headers,
@@ -118,12 +120,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 }
 
 /**
- * Descarga un recurso binario autenticado usando la ruta same-origin de la API.
+ * Descarga un recurso binario autenticado usando la ruta de la API configurada.
  */
 export async function download(path: string): Promise<Blob> {
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(resolveApiUrl(path), {
       method: 'GET',
       credentials: 'include',
       headers: { Accept: '*/*' },
