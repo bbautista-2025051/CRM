@@ -38,7 +38,21 @@ interface ErrorBody {
 const isFormData = (value: unknown): value is FormData =>
   typeof FormData !== 'undefined' && value instanceof FormData;
 
-const apiUrl = (path: string): string => `${API_BASE}${path}`;
+const parseJson = (text: string): unknown => {
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
+  }
+};
+
+const invalidApiResponse = (status: number): ApiError =>
+  new ApiError(
+    status,
+    'INVALID_API_RESPONSE',
+    'El servidor no respondió como API. Verifica que /api esté conectado al backend en Render.',
+  );
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, skipAuthEvent, headers: rawHeaders, ...rest } = options;
@@ -55,9 +69,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   let response: Response;
   try {
-    // Leave VITE_API_URL empty when the web host proxies /api to the backend.
-    // Set it to the API base URL only when the deployment requires a separate origin.
-    response = await fetch(apiUrl(path), {
+    response = await fetch(`${API_BASE}${path}`, {
       ...rest,
       method,
       headers,
@@ -82,22 +94,25 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   const text = await response.text();
-  let payload: unknown = null;
-  if (text) {
-    try {
-      payload = JSON.parse(text) as unknown;
-    } catch {
-      payload = null;
+  const payload = parseJson(text);
+  const contentType = response.headers.get('content-type') ?? '';
+  const isJson = contentType.toLowerCase().includes('application/json');
+
+  if (!isJson || payload === null) {
+    const error = invalidApiResponse(response.status);
+    if (response.status === 401 && !skipAuthEvent) {
+      window.dispatchEvent(new CustomEvent('nexo:unauthorized'));
     }
+    throw error;
   }
 
   if (!response.ok) {
-    const errorBody = payload as ErrorBody | null;
+    const errorBody = payload as ErrorBody;
     const error = new ApiError(
       response.status,
-      errorBody?.error?.code ?? 'UNKNOWN_ERROR',
-      errorBody?.error?.message ?? 'Ocurrió un error inesperado. Inténtalo de nuevo.',
-      errorBody?.error?.details,
+      errorBody.error?.code ?? 'UNKNOWN_ERROR',
+      errorBody.error?.message ?? 'Ocurrió un error inesperado. Inténtalo de nuevo.',
+      errorBody.error?.details,
     );
 
     if (response.status === 401 && !skipAuthEvent) {
@@ -118,7 +133,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 export async function download(path: string): Promise<Blob> {
   let response: Response;
   try {
-    response = await fetch(apiUrl(path), {
+    response = await fetch(`${API_BASE}${path}`, {
       method: 'GET',
       credentials: 'include',
       headers: { Accept: '*/*' },
@@ -133,20 +148,22 @@ export async function download(path: string): Promise<Blob> {
 
   if (!response.ok) {
     const text = await response.text();
-    let payload: unknown = null;
-    if (text) {
-      try {
-        payload = JSON.parse(text) as unknown;
-      } catch {
-        payload = null;
+    const payload = parseJson(text);
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.toLowerCase().includes('application/json') || payload === null) {
+      const error = invalidApiResponse(response.status);
+      if (response.status === 401) {
+        window.dispatchEvent(new CustomEvent('nexo:unauthorized'));
       }
+      throw error;
     }
-    const errorBody = payload as ErrorBody | null;
+
+    const errorBody = payload as ErrorBody;
     const error = new ApiError(
       response.status,
-      errorBody?.error?.code ?? 'UNKNOWN_ERROR',
-      errorBody?.error?.message ?? 'No se pudo descargar el archivo.',
-      errorBody?.error?.details,
+      errorBody.error?.code ?? 'UNKNOWN_ERROR',
+      errorBody.error?.message ?? 'No se pudo descargar el archivo.',
+      errorBody.error?.details,
     );
     if (response.status === 401) {
       window.dispatchEvent(new CustomEvent('nexo:unauthorized'));
