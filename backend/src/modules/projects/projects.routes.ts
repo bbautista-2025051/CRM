@@ -76,6 +76,11 @@ projectsRouter.post(
 );
 
 projectsRouter.get('/:id/files', validate({ params: idParamSchema }), controller.listFiles);
+projectsRouter.get(
+  '/:id/files/:fileId/download',
+  validate({ params: projectFileParamsSchema }),
+  controller.downloadFile,
+);
 projectsRouter.post(
   '/:id/files',
   csrfProtection,

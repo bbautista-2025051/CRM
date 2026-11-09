@@ -108,9 +108,11 @@ const RowInline = ({
 /** Adjunto en línea, a la par del comentario que lo envió. */
 const AttachmentRow = ({
   file,
+  onDownload,
   onDelete,
 }: {
   file: ProjectFile;
+  onDownload?: (file: ProjectFile) => void;
   onDelete?: (file: ProjectFile) => void;
 }) => {
   const style = fileStyle(file);
@@ -128,14 +130,14 @@ const AttachmentRow = ({
         </p>
         <p className="mt-0.5 text-[11px] text-muted">{formatBytes(file.size)}</p>
       </div>
-      <a
-        href={`/uploads/projects/${file.storedName}`}
-        download={file.originalName}
+      <button
+        type="button"
+        onClick={() => onDownload?.(file)}
         className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
         aria-label={`Descargar ${file.originalName}`}
       >
         <Download className="h-4 w-4" />
-      </a>
+      </button>
       {onDelete ? (
         <button
           type="button"
@@ -234,6 +236,26 @@ export const ProjectDetailModal = ({
     for (const file of Array.from(picked)) {
       // Cada archivo se sube de forma secuencial para no saturar la API.
       await uploadFile.mutateAsync(file).catch(() => undefined);
+    }
+  };
+
+  const onDownloadFile = async (file: ProjectFile) => {
+    if (!projectId) return;
+    try {
+      const blob = await projectsApi.downloadFile(projectId, file.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.originalName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toastError(
+        'No se pudo descargar el archivo',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
+      );
     }
   };
 
@@ -484,6 +506,7 @@ export const ProjectDetailModal = ({
                                 <AttachmentRow
                                   key={file.id}
                                   file={file}
+                                  onDownload={(selected) => void onDownloadFile(selected)}
                                   onDelete={canManageFile(file) ? (selected) => void onDeleteFile(selected) : undefined}
                                 />
                               ))}

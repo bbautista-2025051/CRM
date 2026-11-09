@@ -1,7 +1,7 @@
 import { Prisma, type User } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { logActivity } from '../../utils/activity';
-import { removeProjectFile } from '../../middlewares/upload';
+import { readProjectFile, removeProjectFile } from '../../middlewares/upload';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../utils/errors';
 import {
   buildOrderBy,
@@ -44,6 +44,23 @@ interface TaskInput {
 }
 
 const SORTABLE = ['name', 'status', 'startDate', 'dueDate', 'createdAt', 'updatedAt'] as const;
+
+/**
+ * Campos públicos de un archivo de proyecto. Excluye deliberadamente `data`
+ * (el binario) para no enviarlo en los listados JSON.
+ */
+const projectFileSelect = {
+  id: true,
+  projectId: true,
+  commentId: true,
+  originalName: true,
+  storedName: true,
+  mimeType: true,
+  size: true,
+  uploadedById: true,
+  createdAt: true,
+  uploadedBy: { select: { id: true, name: true, avatarUrl: true } },
+} satisfies Prisma.ProjectFileSelect;
 
 const taskCounts = (tasks: Array<{ status: string }>) => {
   const counts = {
@@ -240,7 +257,7 @@ export const updateProject = async (id: string, input: ProjectInput, actor: User
 export const deleteProject = async (id: string, actor: User) => {
   const existing = await prisma.project.findUnique({
     where: { id },
-    include: { _count: { select: { tasks: true } }, files: true },
+    include: { _count: { select: { tasks: true } }, files: { select: { storedName: true } } },
   });
   if (!existing) throw new NotFoundError('El proyecto no existe');
 
@@ -366,7 +383,7 @@ export const listProjectComments = async (projectId: string) => {
     orderBy: { createdAt: 'desc' },
     include: {
       author: { select: { id: true, name: true, avatarUrl: true } },
-      files: true,
+      files: { select: projectFileSelect },
     },
   });
 };
@@ -415,7 +432,7 @@ const getProjectComment = (id: string) =>
     where: { id },
     include: {
       author: { select: { id: true, name: true, avatarUrl: true } },
-      files: true,
+      files: { select: projectFileSelect },
     },
   });
 
@@ -430,20 +447,23 @@ export const listProjectFiles = async (projectId: string) => {
   return prisma.projectFile.findMany({
     where: { projectId },
     orderBy: { createdAt: 'desc' },
-    include: {
-      uploadedBy: { select: { id: true, name: true, avatarUrl: true } },
-    },
+    select: projectFileSelect,
   });
 };
 
 export const uploadProjectFile = async (
   projectId: string,
-  file: { originalName: string; storedName: string; mimeType: string; size: number },
+  file: {
+    originalName: string;
+    storedName: string;
+    mimeType: string;
+    size: number;
+    data: Buffer;
+  },
   actor: User,
 ) => {
   const project = await prisma.project.findUnique({ where: { id: projectId } });
   if (!project) {
-    removeProjectFile(file.storedName);
     throw new NotFoundError('El proyecto no existe');
   }
 
@@ -454,11 +474,10 @@ export const uploadProjectFile = async (
       storedName: file.storedName,
       mimeType: file.mimeType || 'application/octet-stream',
       size: file.size,
+      data: new Uint8Array(file.data),
       uploadedById: actor.id,
     },
-    include: {
-      uploadedBy: { select: { id: true, name: true, avatarUrl: true } },
-    },
+    select: projectFileSelect,
   });
 
   await logActivity({
@@ -473,12 +492,50 @@ export const uploadProjectFile = async (
   return created;
 };
 
+/**
+ * Recupera el contenido de un archivo para descargarlo. Prioriza el binario
+ * guardado en la base de datos y, si es un registro antiguo sin `data`, intenta
+ * leerlo del disco.
+ */
+export const getProjectFileForDownload = async (projectId: string, fileId: string) => {
+  const file = await prisma.projectFile.findFirst({
+    where: { id: fileId, projectId },
+    select: {
+      id: true,
+      originalName: true,
+      mimeType: true,
+      size: true,
+      storedName: true,
+      data: true,
+    },
+  });
+  if (!file) {
+    throw new NotFoundError('El archivo no existe en este proyecto');
+  }
+
+  const data = file.data ?? (await readProjectFile(file.storedName));
+  if (!data) {
+    throw new NotFoundError('El archivo no está disponible');
+  }
+
+  return { ...file, data };
+};
+
 export const deleteProjectFile = async (
   projectId: string,
   fileId: string,
   actor: User,
 ) => {
-  const file = await prisma.projectFile.findUnique({ where: { id: fileId } });
+  const file = await prisma.projectFile.findUnique({
+    where: { id: fileId },
+    select: {
+      id: true,
+      projectId: true,
+      uploadedById: true,
+      storedName: true,
+      originalName: true,
+    },
+  });
   if (!file || file.projectId !== projectId) {
     throw new NotFoundError('El archivo no existe en este proyecto');
   }

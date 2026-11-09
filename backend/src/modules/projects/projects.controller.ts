@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { BadRequestError } from '../../utils/errors';
-import { projectFileOriginalName } from '../../middlewares/upload';
+import { projectFileOriginalName, projectFileStoredName } from '../../middlewares/upload';
 import * as projectsService from './projects.service';
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
@@ -91,17 +91,40 @@ export const uploadFile = asyncHandler(async (req: Request, res: Response) => {
   if (!req.auth) return;
   if (!req.file) throw new BadRequestError('Selecciona un archivo para subir');
 
+  const originalName = projectFileOriginalName(req.file.originalname);
   const created = await projectsService.uploadProjectFile(
     req.validated.params.id,
     {
-      originalName: projectFileOriginalName(req.file.originalname),
-      storedName: req.file.filename,
+      originalName,
+      storedName: projectFileStoredName(originalName),
       mimeType: req.file.mimetype,
       size: req.file.size,
+      data: req.file.buffer,
     },
     req.auth.user,
   );
   res.status(201).json({ data: created });
+});
+
+export const downloadFile = asyncHandler(async (req: Request, res: Response) => {
+  const file = await projectsService.getProjectFileForDownload(
+    req.validated.params.id,
+    req.validated.params.fileId,
+  );
+
+  // Nombre de descarga seguro para cabeceras HTTP (RFC 5987).
+  const encodedName = encodeURIComponent(file.originalName).replace(
+    /['()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+
+  res.setHeader('Content-Type', file.mimeType || 'application/octet-stream');
+  res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedName}`);
+  res.setHeader('Content-Length', file.data.length);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Security-Policy', 'sandbox');
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.status(200).end(file.data);
 });
 
 export const removeFile = asyncHandler(async (req: Request, res: Response) => {

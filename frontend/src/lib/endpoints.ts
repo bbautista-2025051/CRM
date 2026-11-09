@@ -1,4 +1,4 @@
-import { api, buildQuery } from './api';
+import { api, buildQuery, download } from './api';
 import type {
   ActivityLog,
   Client,
@@ -190,6 +190,8 @@ export const projectsApi = {
   },
   removeFile: (projectId: string, fileId: string) =>
     api.delete<void>(`/api/projects/${projectId}/files/${fileId}`),
+  downloadFile: (projectId: string, fileId: string) =>
+    download(`/api/projects/${projectId}/files/${fileId}/download`),
 };
 
 export const teamApi = {

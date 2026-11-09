@@ -106,6 +106,53 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   return payload as T;
 }
 
+/**
+ * Descarga un recurso binario autenticado. Usa `fetch` con credenciales para
+ * que la cookie de sesión viaje en la petición, y devuelve el blob para que el
+ * llamador pueda guardarlo con el nombre original.
+ */
+export async function download(path: string): Promise<Blob> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: { Accept: '*/*' },
+    });
+  } catch {
+    throw new ApiError(
+      0,
+      'NETWORK_ERROR',
+      'No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.',
+    );
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    let payload: unknown = null;
+    if (text) {
+      try {
+        payload = JSON.parse(text) as unknown;
+      } catch {
+        payload = null;
+      }
+    }
+    const errorBody = payload as ErrorBody | null;
+    const error = new ApiError(
+      response.status,
+      errorBody?.error?.code ?? 'UNKNOWN_ERROR',
+      errorBody?.error?.message ?? 'No se pudo descargar el archivo.',
+      errorBody?.error?.details,
+    );
+    if (response.status === 401) {
+      window.dispatchEvent(new CustomEvent('nexo:unauthorized'));
+    }
+    throw error;
+  }
+
+  return response.blob();
+}
+
 export const buildQuery = (
   params: Record<string, string | number | boolean | null | undefined>,
 ): string => {

@@ -277,6 +277,9 @@ Comandos: `pnpm test:backend`, `pnpm test:frontend`.
 ## 11. Limitaciones conocidas
 
 - **Google OIDC** implementado pero no verificado en vivo (faltan credenciales OAuth).
+- Los archivos de proyecto (incluidas imágenes) se guardan en PostgreSQL
+  (`project_files.data`) para sobrevivir a reinicios y a discos efímeros como el de
+  Render. La descarga se hace por API autenticada (`/api/projects/:id/files/:fileId/download`).
 - Los avatares se guardan en disco local (`UPLOAD_DIR`); en un despliegue multi-instancia
   conviene sustituirlo por almacenamiento de objetos.
 - La aplicación no incluye envío de correos (recuperación de contraseña se resuelve con

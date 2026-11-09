@@ -17,16 +17,10 @@ const extFromName = (name: string): string => {
 const sanitizeFileName = (name: string): string =>
   (name.replace(WINDOWS_RESERVED, '_').trim() || 'archivo').slice(0, 180);
 
-const projectStorage = multer.diskStorage({
-  destination: (_req, _file, callback) => {
-    fs.mkdirSync(projectFilesDir, { recursive: true });
-    callback(null, projectFilesDir);
-  },
-  filename: (_req, file, callback) => {
-    const extension = extFromName(file.originalname);
-    callback(null, `${crypto.randomUUID()}${extension}`);
-  },
-});
+// Los archivos de proyecto se mantienen en memoria y se persisten en la base
+// de datos (columna project_files.data). Así sobreviven a reinicios y a
+// despliegues con sistema de archivos efímero.
+const projectStorage = multer.memoryStorage();
 
 /** Subida genérica de archivos de proyecto: cualquier tipo, máximo 10 MB. */
 export const projectFileUpload = multer({
@@ -35,6 +29,9 @@ export const projectFileUpload = multer({
   fileFilter: (_req, _file, callback) => callback(null, true),
 });
 
+export const projectFileStoredName = (originalName: string): string =>
+  `${crypto.randomUUID()}${extFromName(originalName)}`;
+
 export const projectFileOriginalName = sanitizeFileName;
 
 export const removeProjectFile = (storedName: string): void => {
@@ -42,6 +39,21 @@ export const removeProjectFile = (storedName: string): void => {
   const absolute = path.resolve(projectFilesDir, storedName);
   if (!absolute.startsWith(path.resolve(projectFilesDir))) return;
   fs.promises.unlink(absolute).catch(() => undefined);
+};
+
+/**
+ * Lee del disco un archivo subido antes de que su contenido se guardara en la
+ * base de datos. Devuelve `null` si el archivo ya no existe.
+ */
+export const readProjectFile = async (storedName: string): Promise<Buffer | null> => {
+  if (!storedName || storedName !== path.basename(storedName)) return null;
+  const absolute = path.resolve(projectFilesDir, storedName);
+  if (!absolute.startsWith(path.resolve(projectFilesDir))) return null;
+  try {
+    return await fs.promises.readFile(absolute);
+  } catch {
+    return null;
+  }
 };
 
 const avatarDir = path.join(env.uploadDir, 'avatars');

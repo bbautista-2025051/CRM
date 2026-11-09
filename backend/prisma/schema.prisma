@@ -317,6 +317,9 @@ model ProjectFile {
   storedName   String   @map("stored_name") @db.VarChar(255)
   mimeType     String   @map("mime_type") @db.VarChar(120)
   size         Int
+  /// Contenido binario del archivo. Se guarda en la base de datos para que
+  /// sobreviva a reinicios/despliegues en hosting con disco efímero (Render).
+  data         Bytes?   @db.ByteA
   uploadedById String?  @map("uploaded_by_id") @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at")
 
