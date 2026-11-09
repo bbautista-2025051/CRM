@@ -1,5 +1,3 @@
-const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
-
 let csrfToken: string | null = null;
 
 export const setCsrfToken = (token: string | null): void => {
@@ -38,7 +36,7 @@ interface ErrorBody {
 const isFormData = (value: unknown): value is FormData =>
   typeof FormData !== 'undefined' && value instanceof FormData;
 
-const parseJson = (text: string): unknown => {
+const jsonOrNull = (text: string): unknown => {
   if (!text) return null;
   try {
     return JSON.parse(text) as unknown;
@@ -46,13 +44,6 @@ const parseJson = (text: string): unknown => {
     return null;
   }
 };
-
-const invalidApiResponse = (status: number): ApiError =>
-  new ApiError(
-    status,
-    'INVALID_API_RESPONSE',
-    'El servidor no respondió como API. Verifica que /api esté conectado al backend en Render.',
-  );
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, skipAuthEvent, headers: rawHeaders, ...rest } = options;
@@ -69,7 +60,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    // Always use a same-origin request unless the app is explicitly served behind
+    // a configured reverse proxy. This keeps the session cookie first-party so
+    // Chrome/Edge do not reject it in private browsing.
+    response = await fetch(path, {
       ...rest,
       method,
       headers,
@@ -94,25 +88,14 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   const text = await response.text();
-  const payload = parseJson(text);
-  const contentType = response.headers.get('content-type') ?? '';
-  const isJson = contentType.toLowerCase().includes('application/json');
-
-  if (!isJson || payload === null) {
-    const error = invalidApiResponse(response.status);
-    if (response.status === 401 && !skipAuthEvent) {
-      window.dispatchEvent(new CustomEvent('nexo:unauthorized'));
-    }
-    throw error;
-  }
-
+  const payload = jsonOrNull(text);
   if (!response.ok) {
-    const errorBody = payload as ErrorBody;
+    const errorBody = payload as ErrorBody | null;
     const error = new ApiError(
       response.status,
-      errorBody.error?.code ?? 'UNKNOWN_ERROR',
-      errorBody.error?.message ?? 'Ocurrió un error inesperado. Inténtalo de nuevo.',
-      errorBody.error?.details,
+      errorBody?.error?.code ?? 'UNKNOWN_ERROR',
+      errorBody?.error?.message ?? 'Ocurrió un error inesperado. Inténtalo de nuevo.',
+      errorBody?.error?.details,
     );
 
     if (response.status === 401 && !skipAuthEvent) {
@@ -125,15 +108,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   return payload as T;
 }
 
-/**
- * Descarga un recurso binario autenticado. Usa `fetch` con credenciales para
- * que la cookie de sesión viaje en la petición, y devuelve el blob para que el
- * llamador pueda guardarlo con el nombre original.
- */
 export async function download(path: string): Promise<Blob> {
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await fetch(path, {
       method: 'GET',
       credentials: 'include',
       headers: { Accept: '*/*' },
@@ -148,22 +126,13 @@ export async function download(path: string): Promise<Blob> {
 
   if (!response.ok) {
     const text = await response.text();
-    const payload = parseJson(text);
-    const contentType = response.headers.get('content-type') ?? '';
-    if (!contentType.toLowerCase().includes('application/json') || payload === null) {
-      const error = invalidApiResponse(response.status);
-      if (response.status === 401) {
-        window.dispatchEvent(new CustomEvent('nexo:unauthorized'));
-      }
-      throw error;
-    }
-
-    const errorBody = payload as ErrorBody;
+    const payload = jsonOrNull(text);
+    const errorBody = payload as ErrorBody | null;
     const error = new ApiError(
       response.status,
-      errorBody.error?.code ?? 'UNKNOWN_ERROR',
-      errorBody.error?.message ?? 'No se pudo descargar el archivo.',
-      errorBody.error?.details,
+      errorBody?.error?.code ?? 'UNKNOWN_ERROR',
+      errorBody?.error?.message ?? 'No se pudo descargar el archivo.',
+      errorBody?.error?.details,
     );
     if (response.status === 401) {
       window.dispatchEvent(new CustomEvent('nexo:unauthorized'));
