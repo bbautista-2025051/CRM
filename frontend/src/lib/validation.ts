@@ -148,7 +148,7 @@ export type SaleFormValues = z.infer<typeof saleFormSchema>;
 
 export const projectFormSchema = z
   .object({
-    name: requiredText('El nombre', 160, 2),
+    name: requiredText('El nombre', 180, 2),
     description: z.string().trim().max(10000),
     phone: z.string().trim().max(40),
     companyId: z.string(),

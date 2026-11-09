@@ -36,10 +36,14 @@ describe('Proyectos y equipo', () => {
         name: 'Implementación CRM',
         description: 'Puesta en marcha',
         managerId: vendorUser?.id,
+        amount: 1200,
+        currency: 'USD',
         dueDate: futureDate(20),
       });
     expect(project.status).toBe(201);
     expect(project.body.data.status).toBe('ACTIVE');
+    expect(project.body.data.amount).toBe('1200');
+    expect(project.body.data.currency).toBe('USD');
     expect(project.body.data.taskCounts.progress).toBe(0);
 
     const projectId = project.body.data.id as string;

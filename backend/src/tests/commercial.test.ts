@@ -162,6 +162,7 @@ describe('Operaciones comerciales', () => {
         firstName: 'Carlos',
         lastName: 'Ríos',
         email: 'carlos@test.local',
+        phone: '+502 5555 1212',
         companyId: company.body.data.id,
       });
 
@@ -181,6 +182,8 @@ describe('Operaciones comerciales', () => {
     expect(opportunity.status).toBe(201);
     expect(opportunity.body.data.status).toBe('OPEN');
     expect(opportunity.body.data.value).toBe('1500.5');
+    expect(await prisma.sale.count()).toBe(0);
+    expect(await prisma.project.count()).toBe(0);
 
     const won = await admin.agent
       .patch(`/api/opportunities/${opportunity.body.data.id}`)
@@ -189,23 +192,26 @@ describe('Operaciones comerciales', () => {
     expect(won.status).toBe(200);
     expect(won.body.data.status).toBe('WON');
     expect(won.body.data.wonAt).toBeTruthy();
+    expect(won.body.data.sale.saleNumber).toMatch(/^V-\d{4}-\d{5}$/);
+    expect(won.body.data.sale.status).toBe('PENDING');
+    expect(won.body.data.sale.amount).toBe('1500.5');
+    expect(won.body.data.project).toBeTruthy();
+    expect(await prisma.sale.count()).toBe(1);
+    expect(await prisma.project.count()).toBe(1);
 
-    const sale = await admin.agent
-      .post('/api/sales')
-      .set('X-CSRF-Token', admin.csrfToken)
-      .send({
-        opportunityId: opportunity.body.data.id,
-        saleDate: today(),
-        amount: 1500.5,
-        currency: 'GTQ',
-        status: 'PENDING',
-      });
-
-    expect(sale.status).toBe(201);
-    expect(sale.body.data.saleNumber).toMatch(/^V-\d{4}-\d{5}$/);
-    expect(sale.body.data.status).toBe('PENDING');
-    expect(sale.body.data.clientId).toBe(client.body.data.id);
-    expect(sale.body.data.companyId).toBe(company.body.data.id);
+    const sale = await prisma.sale.findUnique({
+      where: { opportunityId: opportunity.body.data.id },
+    });
+    const project = await prisma.project.findUnique({
+      where: { opportunityId: opportunity.body.data.id },
+    });
+    expect(sale?.clientId).toBe(client.body.data.id);
+    expect(sale?.companyId).toBe(company.body.data.id);
+    expect(project?.companyId).toBe(company.body.data.id);
+    expect(project?.managerId).toBe(opportunity.body.data.ownerId);
+    expect(project?.phone).toBe('+502 5555 1212');
+    expect(project?.amount?.toString()).toBe('1500.5');
+    expect(project?.currency).toBe('GTQ');
 
     const duplicateSale = await admin.agent
       .post('/api/sales')
@@ -317,33 +323,31 @@ describe('Operaciones comerciales', () => {
         stage: 'GANADA',
       });
     expect(vendorOpportunity.status).toBe(201);
-
-    const vendorSale = await vendor.agent
-      .post('/api/sales')
-      .set('X-CSRF-Token', vendor.csrfToken)
-      .send({
-        opportunityId: vendorOpportunity.body.data.id,
-        saleDate: today(),
-        amount: 2500,
-        currency: 'GTQ',
-      });
-    expect(vendorSale.status).toBe(201);
-    expect(vendorSale.body.data.status).toBe('PENDING');
+    const vendorSale = await prisma.sale.findUnique({
+      where: { opportunityId: vendorOpportunity.body.data.id },
+    });
+    const vendorProject = await prisma.project.findUnique({
+      where: { opportunityId: vendorOpportunity.body.data.id },
+    });
+    expect(vendorSale).toBeTruthy();
+    expect(vendorSale?.status).toBe('PENDING');
+    expect(vendorProject).toBeTruthy();
+    expect(vendorProject?.managerId).toBe(vendorOpportunity.body.data.ownerId);
 
     const vendorConfirm = await vendor.agent
-      .patch(`/api/sales/${vendorSale.body.data.id}`)
+      .patch(`/api/sales/${vendorSale!.id}`)
       .set('X-CSRF-Token', vendor.csrfToken)
       .send({ status: 'CONFIRMED' });
     expect(vendorConfirm.status).toBe(403);
 
     const adminConfirm = await admin.agent
-      .patch(`/api/sales/${vendorSale.body.data.id}`)
+      .patch(`/api/sales/${vendorSale!.id}`)
       .set('X-CSRF-Token', admin.csrfToken)
       .send({ status: 'CONFIRMED' });
     expect(adminConfirm.status).toBe(200);
 
     const vendorCancelConfirmed = await vendor.agent
-      .post(`/api/sales/${vendorSale.body.data.id}/cancel`)
+      .post(`/api/sales/${vendorSale!.id}/cancel`)
       .set('X-CSRF-Token', vendor.csrfToken);
     expect(vendorCancelConfirmed.status).toBe(403);
 

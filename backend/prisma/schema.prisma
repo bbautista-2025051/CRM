@@ -221,6 +221,7 @@ model Opportunity {
   client  Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
   owner   User     @relation("OpportunityOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   sale    Sale?
+  project Project?
 
   @@index([companyId])
   @@index([clientId])
@@ -260,28 +261,31 @@ model Sale {
 }
 
 model Project {
-  id          String        @id @default(uuid()) @db.Uuid
-  name        String        @db.VarChar(160)
-  description String?       @db.Text
-  companyId   String?       @map("company_id") @db.Uuid
-  managerId   String?       @map("manager_id") @db.Uuid
-  phone       String?       @db.VarChar(40)
-  status      ProjectStatus @default(ACTIVE)
-  number      Int?          @unique
-  amount      Decimal?      @map("amount") @db.Decimal(14, 2)
-  preSales    String?       @map("pre_sales") @db.VarChar(160)
-  solution    String?       @db.Text
-  startDate   DateTime?     @map("start_date") @db.Date
-  dueDate     DateTime?     @map("due_date") @db.Date
-  completedAt DateTime?     @map("completed_at")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  id            String        @id @default(uuid()) @db.Uuid
+  name          String        @db.VarChar(180)
+  description   String?       @db.Text
+  opportunityId String?       @unique @map("opportunity_id") @db.Uuid
+  companyId     String?       @map("company_id") @db.Uuid
+  managerId     String?       @map("manager_id") @db.Uuid
+  phone         String?       @db.VarChar(40)
+  status        ProjectStatus @default(ACTIVE)
+  number        Int?          @unique
+  amount        Decimal?      @map("amount") @db.Decimal(14, 2)
+  currency      String        @default("GTQ") @db.VarChar(3)
+  preSales      String?       @map("pre_sales") @db.VarChar(160)
+  solution      String?       @db.Text
+  startDate     DateTime?     @map("start_date") @db.Date
+  dueDate       DateTime?     @map("due_date") @db.Date
+  completedAt   DateTime?     @map("completed_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
 
-  company  Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  manager  User?           @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
-  tasks    ProjectTask[]
-  files    ProjectFile[]
-  comments ProjectComment[]
+  opportunity Opportunity?   @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  company     Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  manager     User?           @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+  tasks       ProjectTask[]
+  files       ProjectFile[]
+  comments    ProjectComment[]
 
   @@index([companyId])
   @@index([managerId])

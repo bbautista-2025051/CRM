@@ -6,6 +6,8 @@ import {
 } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { logActivity } from '../../utils/activity';
+import { generateProjectNumber } from '../projects/projects.service';
+import { generateSaleNumber } from '../sales/sales.service';
 import {
   BadRequestError,
   ConflictError,
@@ -157,6 +159,7 @@ export const listOpportunities = async (params: ListParams) => {
         client: { select: { id: true, firstName: true, lastName: true, email: true } },
         owner: { select: { id: true, name: true, email: true } },
         sale: { select: { id: true, saleNumber: true, status: true, amount: true } },
+        project: { select: { id: true, number: true } },
       },
     }),
   ]);
@@ -175,6 +178,7 @@ export const getOpportunity = async (id: string) => {
       client: true,
       owner: { select: { id: true, name: true, email: true, avatarUrl: true } },
       sale: true,
+      project: true,
     },
   });
   if (!opportunity) throw new NotFoundError('La oportunidad no existe');
@@ -193,6 +197,61 @@ interface OpportunityInput {
   stage: OpportunityStage;
 }
 
+const createWonRecords = async (
+  tx: Prisma.TransactionClient,
+  opportunity: {
+    id: string;
+    name: string;
+    description: string | null;
+    companyId: string | null;
+    clientId: string | null;
+    ownerId: string;
+    value: Prisma.Decimal;
+    expectedCloseDate: Date | null;
+  },
+) => {
+  const client = opportunity.clientId
+    ? await tx.client.findUnique({
+        where: { id: opportunity.clientId },
+        select: { phone: true },
+      })
+    : null;
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
+  await tx.sale.create({
+    data: {
+      saleNumber: await generateSaleNumber(tx),
+      companyId: opportunity.companyId,
+      clientId: opportunity.clientId,
+      opportunityId: opportunity.id,
+      ownerId: opportunity.ownerId,
+      saleDate: opportunity.expectedCloseDate ?? today,
+      amount: opportunity.value,
+      currency: 'GTQ',
+      status: 'PENDING',
+      notes: opportunity.description,
+    },
+  });
+
+  await tx.project.create({
+    data: {
+      name: opportunity.name,
+      description: opportunity.description,
+      opportunityId: opportunity.id,
+      companyId: opportunity.companyId,
+      managerId: opportunity.ownerId,
+      phone: client?.phone ?? null,
+      status: 'ACTIVE',
+      number: await generateProjectNumber(tx),
+      amount: opportunity.value,
+      currency: 'GTQ',
+      startDate: today,
+      dueDate: opportunity.expectedCloseDate,
+    },
+  });
+};
+
 export const createOpportunity = async (input: OpportunityInput, actor: User) => {
   const ownerId = input.ownerId ?? actor.id;
 
@@ -203,25 +262,37 @@ export const createOpportunity = async (input: OpportunityInput, actor: User) =>
   await validateOwner(ownerId);
   const relations = await validateRelations(input.companyId, input.clientId);
 
-  const opportunity = await prisma.opportunity.create({
-    data: {
-      name: input.name,
-      description: input.description,
-      companyId: relations.companyId,
-      clientId: relations.clientId,
-      ownerId,
-      value: input.value,
-      probability: input.probability,
-      expectedCloseDate: input.expectedCloseDate,
-      stage: input.stage,
-      status: statusForStage(input.stage),
-      ...datesForStage(input.stage),
-    },
-    include: {
-      company: { select: { id: true, name: true } },
-      client: { select: { id: true, firstName: true, lastName: true } },
-      owner: { select: { id: true, name: true } },
-    },
+  const opportunity = await prisma.$transaction(async (tx) => {
+    const created = await tx.opportunity.create({
+      data: {
+        name: input.name,
+        description: input.description,
+        companyId: relations.companyId,
+        clientId: relations.clientId,
+        ownerId,
+        value: input.value,
+        probability: input.probability,
+        expectedCloseDate: input.expectedCloseDate,
+        stage: input.stage,
+        status: statusForStage(input.stage),
+        ...datesForStage(input.stage),
+      },
+    });
+
+    if (created.stage === 'GANADA') {
+      await createWonRecords(tx, created);
+    }
+
+    return tx.opportunity.findUniqueOrThrow({
+      where: { id: created.id },
+      include: {
+        company: { select: { id: true, name: true } },
+        client: { select: { id: true, firstName: true, lastName: true } },
+        owner: { select: { id: true, name: true } },
+        sale: { select: { id: true, saleNumber: true, status: true, amount: true } },
+        project: { select: { id: true, number: true } },
+      },
+    });
   });
 
   await logActivity({
@@ -243,7 +314,10 @@ export const updateOpportunity = async (
 ) => {
   const existing = await prisma.opportunity.findUnique({
     where: { id },
-    include: { sale: { select: { id: true, saleNumber: true } } },
+    include: {
+      sale: { select: { id: true, saleNumber: true } },
+      project: { select: { id: true } },
+    },
   });
   if (!existing) throw new NotFoundError('La oportunidad no existe');
 
@@ -270,33 +344,44 @@ export const updateOpportunity = async (
 
   const stageChanged = input.stage !== undefined && input.stage !== existing.stage;
 
-  const opportunity = await prisma.opportunity.update({
-    where: { id },
-    data: {
-      ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(input.description !== undefined ? { description: input.description } : {}),
-      ...(input.ownerId !== undefined ? { ownerId: input.ownerId } : {}),
-      ...(input.value !== undefined ? { value: input.value } : {}),
-      ...(input.probability !== undefined ? { probability: input.probability } : {}),
-      ...(input.expectedCloseDate !== undefined
-        ? { expectedCloseDate: input.expectedCloseDate }
-        : {}),
-      companyId: relations.companyId,
-      clientId: relations.clientId,
-      ...(stageChanged
-        ? {
-            stage: nextStage,
-            status: statusForStage(nextStage),
-            ...datesForStage(nextStage),
-          }
-        : {}),
-    },
-    include: {
-      company: { select: { id: true, name: true } },
-      client: { select: { id: true, firstName: true, lastName: true } },
-      owner: { select: { id: true, name: true } },
-      sale: { select: { id: true, saleNumber: true, status: true } },
-    },
+  const opportunity = await prisma.$transaction(async (tx) => {
+    const updated = await tx.opportunity.update({
+      where: { id },
+      data: {
+        ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.description !== undefined ? { description: input.description } : {}),
+        ...(input.ownerId !== undefined ? { ownerId: input.ownerId } : {}),
+        ...(input.value !== undefined ? { value: input.value } : {}),
+        ...(input.probability !== undefined ? { probability: input.probability } : {}),
+        ...(input.expectedCloseDate !== undefined
+          ? { expectedCloseDate: input.expectedCloseDate }
+          : {}),
+        companyId: relations.companyId,
+        clientId: relations.clientId,
+        ...(stageChanged
+          ? {
+              stage: nextStage,
+              status: statusForStage(nextStage),
+              ...datesForStage(nextStage),
+            }
+          : {}),
+      },
+    });
+
+    if (stageChanged && nextStage === 'GANADA') {
+      await createWonRecords(tx, updated);
+    }
+
+    return tx.opportunity.findUniqueOrThrow({
+      where: { id },
+      include: {
+        company: { select: { id: true, name: true } },
+        client: { select: { id: true, firstName: true, lastName: true } },
+        owner: { select: { id: true, name: true } },
+        sale: { select: { id: true, saleNumber: true, status: true, amount: true } },
+        project: { select: { id: true, number: true } },
+      },
+    });
   });
 
   await logActivity({

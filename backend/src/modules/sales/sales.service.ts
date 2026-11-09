@@ -177,7 +177,7 @@ export const getSalesSummary = async (dateFrom?: string, dateTo?: string) => {
   };
 };
 
-const generateSaleNumber = async (tx: Prisma.TransactionClient): Promise<string> => {
+export const generateSaleNumber = async (tx: Prisma.TransactionClient): Promise<string> => {
   const rows = await tx.$queryRaw<Array<{ seq: number }>>`
     SELECT nextval('sale_number_seq')::int AS seq
   `;

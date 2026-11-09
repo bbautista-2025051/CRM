@@ -326,7 +326,11 @@ export const ProjectDetailModal = ({
           <SheetHeader
             title={project.name}
             company={project.company?.name ?? 'Sin empresa'}
-            amount={project.amount ? formatMoney(project.amount) : 'Sin monto'}
+            amount={
+              project.amount
+                ? formatMoney(project.amount, project.currency)
+                : 'Sin monto'
+            }
           />
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">

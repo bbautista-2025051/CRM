@@ -141,6 +141,8 @@ export const OpportunityFormModal = ({
         `${saved.name} se guardó correctamente.`,
       );
       void queryClient.invalidateQueries({ queryKey: ['opportunities'] });
+      void queryClient.invalidateQueries({ queryKey: ['sales'] });
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       void queryClient.invalidateQueries({ queryKey: ['companies'] });
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
