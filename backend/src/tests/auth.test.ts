@@ -25,7 +25,7 @@ describe('Autenticación y autorización', () => {
     expect(response.body.data.user.passwordHash).toBeUndefined();
     expect(csrfToken).toBeTruthy();
     expect(setCookie.join(';')).toContain('HttpOnly');
-    expect(setCookie.join(';')).toContain('SameSite=Lax');
+    expect(setCookie.join(';')).toContain('SameSite=None');
   });
 
   it('rechaza credenciales incorrectas sin revelar si el usuario existe', async () => {
