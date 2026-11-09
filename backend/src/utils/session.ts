@@ -16,6 +16,11 @@ export const generateCsrfToken = (): string =>
 export const getSessionExpiry = (rememberMe: boolean): Date =>
   new Date(Date.now() + (rememberMe ? env.sessionRememberMs : env.sessionTtlMs));
 
+// SameSite=None is needed when the frontend and API are on separate sites.
+// It must always be paired with Secure; production enforces HTTPS cookies.
+// Local development uses Lax so localhost cookies work over HTTP.
+const sessionCookieSameSite = env.cookieSecure ? 'none' : 'lax';
+
 export const setSessionCookie = (
   res: Response,
   token: string,
@@ -24,9 +29,7 @@ export const setSessionCookie = (
   res.cookie(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: env.cookieSecure,
-    // The frontend accesses the API through its same-origin /api proxy. Lax
-    // avoids relying on third-party cookies, which browsers may block in private mode.
-    sameSite: 'lax',
+    sameSite: sessionCookieSameSite,
     path: '/',
     // Sin "Recuérdame" la cookie es de sesión del navegador; el servidor
     // además impone una expiración corta (SESSION_TTL_HOURS).
@@ -38,7 +41,7 @@ export const clearSessionCookie = (res: Response): void => {
   res.clearCookie(SESSION_COOKIE, {
     httpOnly: true,
     secure: env.cookieSecure,
-    sameSite: 'lax',
+    sameSite: sessionCookieSameSite,
     path: '/',
   });
 };

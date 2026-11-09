@@ -1,10 +1,9 @@
 # Sesiones y cookies: arquitectura de mismo origen
 
-La opción recomendada es servir el frontend y la API bajo el mismo origen. El
+La configuración recomendada es servir frontend y API bajo el mismo origen. El
 frontend usa rutas relativas (`/api` y `/uploads`) cuando `VITE_API_URL` está vacío;
 el hosting debe reenviar esas rutas al backend. Así la cookie HttpOnly no depende
-de cookies de terceros y funciona con las políticas de Chrome/Edge en ventanas
-privadas.
+de cookies de terceros y es la opción más compatible con Chrome/Edge en privado.
 
 ## Desarrollo
 
@@ -18,17 +17,15 @@ distintos para las cookies.
 El hosting que sirve `frontend/dist` debe reenviar `/api` y `/uploads` al backend,
 conservando el host público del frontend. En ese caso deja `VITE_API_URL` vacío.
 Configura en el backend `APP_URL` y `CORS_ORIGINS` con el origen público exacto y
-usa HTTPS (`NODE_ENV=production` fuerza `Secure`). La cookie de sesión tiene
-`HttpOnly`, `SameSite=Lax` y `Secure` en producción.
+usa HTTPS (`NODE_ENV=production` fuerza `Secure`).
 
 Si la plataforma no permite proxy del mismo origen, se puede definir
 `VITE_API_URL` con la URL base de la API y reconstruir/redeployar el frontend. El
 backend debe permitir el origen exacto del frontend en `CORS_ORIGINS` y CORS con
-credenciales. La cookie `SameSite=Lax` solo funciona si frontend y API son del
-mismo sitio (por ejemplo, subdominios del mismo dominio registrable). Si están en
-dominios distintos, el navegador puede bloquear la cookie como third-party; la
-solución fiable es configurar un proxy de mismo origen, no depender de cookies de
-terceros en modo incógnito.
+credenciales. En producción, el backend emite la cookie `SameSite=None; Secure`
+para permitir peticiones cross-site. Aun así, el navegador puede bloquear cookies
+de terceros, especialmente en incógnito; por ello la solución fiable es un proxy
+de mismo origen.
 
 Después de desplegar frontend y backend, reinicia ambos servicios y elimina las
 cookies antiguas del dominio del CRM antes de probar de nuevo.
