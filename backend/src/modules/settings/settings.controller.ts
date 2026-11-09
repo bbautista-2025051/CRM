@@ -1,11 +1,10 @@
-import fs from 'node:fs';
 import type { Request, Response } from 'express';
 import { env } from '../../config/env';
 import { prisma } from '../../config/prisma';
 import { logActivity } from '../../utils/activity';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { BadRequestError, NotFoundError } from '../../utils/errors';
-import { removeUploadedFile, validateImageSignature } from '../../middlewares/upload';
+import { detectImageMime, removeUploadedFile } from '../../middlewares/upload';
 import { toPublicUser } from '../../utils/serializers';
 import * as authService from '../auth/auth.service';
 import * as settingsService from './settings.service';
@@ -52,58 +51,56 @@ export const uploadAvatar = asyncHandler(async (req: Request, res: Response) => 
   if (!req.auth) return;
   if (!req.file) throw new BadRequestError('Selecciona una imagen para subir');
 
-  try {
-    validateImageSignature(req.file.path);
-  } catch (error) {
-    fs.promises.unlink(req.file.path).catch(() => undefined);
-    throw error;
-  }
+  const userId = req.auth.user.id;
+  const mimeType = detectImageMime(req.file.buffer);
+  const data = new Uint8Array(req.file.buffer);
 
-  const publicUrl = `/uploads/avatars/${req.file.filename}`;
+  const previous = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { avatarUrl: true },
+  });
 
-  try {
-    const previous = await prisma.user.findUnique({
-      where: { id: req.auth.user.id },
-      select: { avatarUrl: true },
-    });
+  await prisma.userAvatar.upsert({
+    where: { userId },
+    create: { userId, mimeType, data },
+    update: { mimeType, data },
+  });
 
-    const user = await prisma.user.update({
-      where: { id: req.auth.user.id },
-      data: { avatarUrl: publicUrl },
-    });
+  // `v` cambia en cada subida para que el navegador no reutilice la imagen anterior.
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { avatarUrl: `/api/avatars/${userId}?v=${Date.now()}` },
+  });
 
-    if (previous?.avatarUrl && previous.avatarUrl !== publicUrl) {
-      removeUploadedFile(previous.avatarUrl);
-    }
+  // Si venía de una versión anterior que guardaba en disco, limpia ese archivo.
+  removeUploadedFile(previous?.avatarUrl);
 
-    await logActivity({
-      userId: user.id,
-      action: 'AVATAR_UPDATE',
-      entityType: 'USER',
-      entityId: user.id,
-      description: 'Foto de perfil actualizada',
-    });
+  await logActivity({
+    userId: user.id,
+    action: 'AVATAR_UPDATE',
+    entityType: 'USER',
+    entityId: user.id,
+    description: 'Foto de perfil actualizada',
+  });
 
-    res.status(200).json({
-      data: { user: toPublicUser(user) },
-      message: 'Foto de perfil actualizada',
-    });
-  } catch (error) {
-    fs.promises.unlink(req.file.path).catch(() => undefined);
-    throw error;
-  }
+  res.status(200).json({
+    data: { user: toPublicUser(user) },
+    message: 'Foto de perfil actualizada',
+  });
 });
 
 export const deleteAvatar = asyncHandler(async (req: Request, res: Response) => {
   if (!req.auth) return;
 
+  const userId = req.auth.user.id;
   const previous = await prisma.user.findUnique({
-    where: { id: req.auth.user.id },
+    where: { id: userId },
     select: { avatarUrl: true },
   });
 
+  await prisma.userAvatar.deleteMany({ where: { userId } });
   const user = await prisma.user.update({
-    where: { id: req.auth.user.id },
+    where: { id: userId },
     data: { avatarUrl: null },
   });
 

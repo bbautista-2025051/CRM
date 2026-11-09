@@ -102,10 +102,24 @@ model User {
   uploadedFiles    ProjectFile[]   @relation("FileUploader")
   projectComments  ProjectComment[] @relation("ProjectCommentAuthor")
   activityLogs     ActivityLog[]
+  avatar           UserAvatar?
 
   @@index([role])
   @@index([status])
   @@map("users")
+}
+
+/// Imagen de perfil guardada en PostgreSQL (el disco de Render es efímero).
+/// Va en su propia tabla para no cargar el binario en cada consulta de User.
+model UserAvatar {
+  userId    String   @id @map("user_id") @db.Uuid
+  mimeType  String   @map("mime_type") @db.VarChar(50)
+  data      Bytes    @db.ByteA
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_avatars")
 }
 
 model Session {

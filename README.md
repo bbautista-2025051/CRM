@@ -280,8 +280,8 @@ Comandos: `pnpm test:backend`, `pnpm test:frontend`.
 - Los archivos de proyecto (incluidas imágenes) se guardan en PostgreSQL
   (`project_files.data`) para sobrevivir a reinicios y a discos efímeros como el de
   Render. La descarga se hace por API autenticada (`/api/projects/:id/files/:fileId/download`).
-- Los avatares se guardan en disco local (`UPLOAD_DIR`); en un despliegue multi-instancia
-  conviene sustituirlo por almacenamiento de objetos.
+- Los avatares también se guardan en PostgreSQL (`user_avatars.data`) y se sirven desde
+  `/api/avatars/:userId`, por lo que sobreviven a reinicios y despliegues en Render.
 - La aplicación no incluye envío de correos (recuperación de contraseña se resuelve con
   reseteo por parte de un administrador).
 - El límite de tasa es en memoria: con varias instancias se debe usar un almacén

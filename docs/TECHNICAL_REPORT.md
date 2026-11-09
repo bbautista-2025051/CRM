@@ -295,8 +295,8 @@ Defectos encontrados y corregidos durante esta verificación:
 
 ### Avatares
 
-- Subida, reemplazo y borrado verificados en local con almacenamiento en disco. En
-  producción conviene migrar a un almacén de objetos; el contrato de la API no cambiaría.
+- Se guardan en PostgreSQL (`user_avatars`) y se sirven por `/api/avatars/:userId`, sin
+  depender del disco efímero del hosting.
 
 ## 10. Despliegue
 

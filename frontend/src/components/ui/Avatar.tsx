@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { resolveAssetUrl } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { initials } from '@/lib/format';
 
@@ -55,7 +56,7 @@ export const Avatar = ({
     >
       {showImage ? (
         <img
-          src={src ?? undefined}
+          src={resolveAssetUrl(src)}
           alt={name}
           className="h-full w-full object-cover"
           onError={() => setFailed(true)}

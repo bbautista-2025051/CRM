@@ -1,5 +1,16 @@
 const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 
+/**
+ * Convierte una ruta del backend (p. ej. `/api/avatars/<id>`) en una URL
+ * utilizable por <img>. En Render el frontend y la API viven en dominios
+ * distintos, así que una ruta relativa apuntaría al sitio estático.
+ */
+export const resolveAssetUrl = (url?: string | null): string | undefined => {
+  if (!url) return undefined;
+  if (/^(https?:)?\/\/|^data:|^blob:/i.test(url)) return url;
+  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`;
+};
+
 let csrfToken: string | null = null;
 
 export const setCsrfToken = (token: string | null): void => {
