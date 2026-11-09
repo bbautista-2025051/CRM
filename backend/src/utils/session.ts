@@ -24,7 +24,9 @@ export const setSessionCookie = (
   res.cookie(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: env.cookieSecure,
-    sameSite: 'none',
+    // The frontend accesses the API through its same-origin /api proxy. Lax
+    // avoids relying on third-party cookies, which browsers may block in private mode.
+    sameSite: 'lax',
     path: '/',
     // Sin "Recuérdame" la cookie es de sesión del navegador; el servidor
     // además impone una expiración corta (SESSION_TTL_HOURS).
@@ -36,7 +38,7 @@ export const clearSessionCookie = (res: Response): void => {
   res.clearCookie(SESSION_COOKIE, {
     httpOnly: true,
     secure: env.cookieSecure,
-    sameSite: 'none',
+    sameSite: 'lax',
     path: '/',
   });
 };

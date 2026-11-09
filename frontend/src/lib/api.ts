@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 
 /**
@@ -11,6 +12,8 @@ export const resolveAssetUrl = (url?: string | null): string | undefined => {
   return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`;
 };
 
+=======
+>>>>>>> e133b5873af9374cf4afc581efe9c8c03ca11c57
 let csrfToken: string | null = null;
 
 export const setCsrfToken = (token: string | null): void => {
@@ -64,7 +67,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    // Keep API calls same-origin so session cookies are first-party in browsers
+    // that restrict third-party cookies (including private browsing).
+    response = await fetch(path, {
       ...rest,
       method,
       headers,
@@ -125,7 +130,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 export async function download(path: string): Promise<Blob> {
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await fetch(path, {
       method: 'GET',
       credentials: 'include',
       headers: { Accept: '*/*' },
