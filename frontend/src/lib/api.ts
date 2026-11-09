@@ -1,3 +1,15 @@
+const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
+
+/**
+ * Resuelve la ruta de un recurso servido por la API (por ejemplo un avatar)
+ * cuando frontend y backend están publicados en dominios distintos.
+ */
+export const resolveAssetUrl = (url?: string | null): string | undefined => {
+  if (!url) return undefined;
+  if (/^(https?:)?\/\/|^data:|^blob:/i.test(url)) return url;
+  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`;
+};
+
 let csrfToken: string | null = null;
 
 export const setCsrfToken = (token: string | null): void => {
@@ -36,15 +48,6 @@ interface ErrorBody {
 const isFormData = (value: unknown): value is FormData =>
   typeof FormData !== 'undefined' && value instanceof FormData;
 
-const jsonOrNull = (text: string): unknown => {
-  if (!text) return null;
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    return null;
-  }
-};
-
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, skipAuthEvent, headers: rawHeaders, ...rest } = options;
   const method = (rest.method ?? 'GET').toUpperCase();
@@ -60,9 +63,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   let response: Response;
   try {
-    // Always use a same-origin request unless the app is explicitly served behind
-    // a configured reverse proxy. This keeps the session cookie first-party so
-    // Chrome/Edge do not reject it in private browsing.
+    // API fetch remains same-origin so its session cookie is first-party.
     response = await fetch(path, {
       ...rest,
       method,
@@ -88,7 +89,15 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   const text = await response.text();
-  const payload = jsonOrNull(text);
+  let payload: unknown = null;
+  if (text) {
+    try {
+      payload = JSON.parse(text) as unknown;
+    } catch {
+      payload = null;
+    }
+  }
+
   if (!response.ok) {
     const errorBody = payload as ErrorBody | null;
     const error = new ApiError(
@@ -108,6 +117,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   return payload as T;
 }
 
+/**
+ * Descarga un recurso binario autenticado usando la ruta same-origin de la API.
+ */
 export async function download(path: string): Promise<Blob> {
   let response: Response;
   try {
@@ -126,7 +138,14 @@ export async function download(path: string): Promise<Blob> {
 
   if (!response.ok) {
     const text = await response.text();
-    const payload = jsonOrNull(text);
+    let payload: unknown = null;
+    if (text) {
+      try {
+        payload = JSON.parse(text) as unknown;
+      } catch {
+        payload = null;
+      }
+    }
     const errorBody = payload as ErrorBody | null;
     const error = new ApiError(
       response.status,
