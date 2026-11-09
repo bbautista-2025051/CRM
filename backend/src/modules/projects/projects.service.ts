@@ -29,6 +29,7 @@ interface ProjectInput {
   managerId?: string | null;
   status?: 'ACTIVE' | 'COMPLETED';
   amount?: string | null;
+  currency?: string;
   preSales?: string | null;
   solution?: string | null;
   startDate?: Date | null;
@@ -89,12 +90,13 @@ const validateDates = (startDate?: Date | null, dueDate?: Date | null) => {
 /**
  * Asigna el número correlativo del proyecto (PRJ-001, PRJ-002, …).
  */
-const nextProjectNumber = async (): Promise<number> => {
-  const last = await prisma.project.findFirst({
-    orderBy: { number: 'desc' },
-    select: { number: true },
-  });
-  return (last?.number ?? 0) + 1;
+export const generateProjectNumber = async (
+  tx: Prisma.TransactionClient,
+): Promise<number> => {
+  const rows = await tx.$queryRaw<Array<{ seq: number }>>`
+    SELECT nextval('project_number_seq')::int AS seq
+  `;
+  return rows[0]?.seq ?? 1;
 };
 
 const validateRelations = async (input: ProjectInput) => {
@@ -189,28 +191,31 @@ export const getProject = async (id: string) => {
 
 export const createProject = async (input: ProjectInput, actor: User) => {
   if (!input.name) throw new BadRequestError('El nombre es obligatorio');
+  const name = input.name;
   validateDates(input.startDate, input.dueDate);
   await validateRelations(input);
 
   const status = input.status ?? 'ACTIVE';
-  const number = await nextProjectNumber();
-  const project = await prisma.project.create({
-    data: {
-      name: input.name,
-      description: input.description ?? null,
-      phone: input.phone ?? null,
-      companyId: input.companyId ?? null,
-      managerId: input.managerId ?? null,
-      status,
-      number,
-      amount: input.amount ?? null,
-      preSales: input.preSales ?? null,
-      solution: input.solution ?? null,
-      startDate: input.startDate ?? null,
-      dueDate: input.dueDate ?? null,
-      completedAt: status === 'COMPLETED' ? new Date() : null,
-    },
-  });
+  const project = await prisma.$transaction(async (tx) =>
+    tx.project.create({
+      data: {
+        name,
+        description: input.description ?? null,
+        phone: input.phone ?? null,
+        companyId: input.companyId ?? null,
+        managerId: input.managerId ?? null,
+        status,
+        number: await generateProjectNumber(tx),
+        amount: input.amount ?? null,
+        currency: input.currency ?? 'GTQ',
+        preSales: input.preSales ?? null,
+        solution: input.solution ?? null,
+        startDate: input.startDate ?? null,
+        dueDate: input.dueDate ?? null,
+        completedAt: status === 'COMPLETED' ? new Date() : null,
+      },
+    }),
+  );
 
   await logActivity({
     userId: actor.id,

@@ -136,6 +136,7 @@ export interface Opportunity {
   client?: { id: string; firstName: string; lastName: string; email?: string } | null;
   owner?: { id: string; name: string; email?: string; avatarUrl?: string | null };
   sale?: { id: string; saleNumber: string; status: SaleStatus; amount?: string } | null;
+  project?: { id: string; number: number | null } | null;
 }
 
 export interface Sale {
@@ -233,12 +234,14 @@ export interface Project {
   id: string;
   name: string;
   description: string | null;
+  opportunityId: string | null;
   companyId: string | null;
   managerId: string | null;
   phone: string | null;
   status: ProjectStatus;
   number?: number | null;
   amount?: string | null;
+  currency: string;
   preSales?: string | null;
   solution?: string | null;
   startDate: string | null;

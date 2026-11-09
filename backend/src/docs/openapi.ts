@@ -505,7 +505,8 @@ export const openApiDocument = {
       },
       post: {
         tags: ['Oportunidades'],
-        summary: 'Crea una oportunidad. Un VENDEDOR solo puede asignársela a sí mismo.',
+        summary:
+          'Crea una oportunidad y, si está GANADA, genera su venta y proyecto asociados. Un VENDEDOR solo puede asignársela a sí mismo.',
         parameters: [csrfHeader],
         requestBody: jsonBody({ $ref: '#/components/schemas/OpportunityInput' }),
         responses: { '201': { description: 'Oportunidad creada' }, '403': errorResponse },
@@ -514,7 +515,7 @@ export const openApiDocument = {
     '/opportunities/{id}': {
       get: {
         tags: ['Oportunidades'],
-        summary: 'Detalle de la oportunidad y su venta',
+        summary: 'Detalle de la oportunidad y sus registros de venta y proyecto asociados',
         parameters: [idParam],
         responses: { '200': { description: 'Oportunidad' }, '404': errorResponse },
       },
