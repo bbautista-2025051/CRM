@@ -2,7 +2,7 @@
   "name": "@nexo/frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "Interfaz web del CRM Nexo",
+  "description": "Interfaz web de Softplus",
   "type": "module",
   "scripts": {
     "dev": "vite",

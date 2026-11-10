@@ -4,8 +4,8 @@ const clean = (value: string | undefined, fallback: string): string => {
 };
 
 export const brand = {
-  company: clean(import.meta.env.VITE_COMPANY_NAME, 'Nexo'),
-  product: clean(import.meta.env.VITE_CRM_NAME, 'Nexo CRM'),
+  company: clean(import.meta.env.VITE_COMPANY_NAME, 'Softplus'),
+  product: clean(import.meta.env.VITE_CRM_NAME, 'Softplus'),
   logoUrl: import.meta.env.VITE_LOGO_URL?.trim() ?? '',
   tagline: 'Gestión comercial sin fricción',
 } as const;

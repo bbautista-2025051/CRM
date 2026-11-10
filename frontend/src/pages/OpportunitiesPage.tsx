@@ -50,7 +50,7 @@ import type { Opportunity, OpportunityStage } from '@/types';
 type ViewMode = 'table' | 'board';
 
 export const OpportunitiesPage = () => {
-  usePageTitle('Oportunidades');
+  usePageTitle('Negocio');
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();

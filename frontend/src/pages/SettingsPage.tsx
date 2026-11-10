@@ -27,6 +27,7 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { brand } from '@/config/brand';
 import { useProfile, useSessions } from '@/hooks/queries';
 import { authApi, settingsApi } from '@/lib/endpoints';
 import { ApiError, getFieldErrors } from '@/lib/api';
@@ -682,7 +683,7 @@ export const SettingsPage = () => {
           <>
             <CardHeader
               title="Preferencias"
-              description="Personaliza la apariencia de Nexo CRM."
+              description={`Personaliza la apariencia de ${brand.product}.`}
             />
             <CardBody className="space-y-6">
               <div>
