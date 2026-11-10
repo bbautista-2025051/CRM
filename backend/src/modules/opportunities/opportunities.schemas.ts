@@ -7,7 +7,6 @@ import { paginationQuerySchema } from '../../utils/pagination';
 import {
   moneySchema,
   optionalDateOnly,
-  optionalId,
   optionalText,
 } from '../../utils/zod';
 
@@ -42,8 +41,18 @@ export const opportunityListQuerySchema = paginationQuerySchema.extend({
 export const opportunityBodySchema = z.object({
   name: z.string().trim().min(2, 'El nombre es obligatorio').max(180),
   description: optionalText(4000, 'La descripción'),
-  companyId: optionalId(),
-  clientId: optionalId(),
+  companyId: z
+    .string({
+      required_error: 'La empresa es obligatoria',
+      invalid_type_error: 'La empresa no es válida',
+    })
+    .uuid('La empresa no es válida'),
+  clientId: z
+    .string({
+      required_error: 'El cliente es obligatorio',
+      invalid_type_error: 'El cliente no es válido',
+    })
+    .uuid('El cliente no es válido'),
   ownerId: z.string().uuid('El responsable no es válido').optional(),
   value: moneySchema,
   probability: z.coerce

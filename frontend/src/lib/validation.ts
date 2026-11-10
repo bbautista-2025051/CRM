@@ -116,8 +116,8 @@ export type ClientFormValues = z.infer<typeof clientFormSchema>;
 export const opportunityFormSchema = z.object({
   name: requiredText('El nombre', 180, 2),
   description: z.string().trim().max(10000),
-  companyId: z.string(),
-  clientId: z.string(),
+  companyId: z.string().min(1, 'La empresa es obligatoria'),
+  clientId: z.string().min(1, 'El cliente es obligatorio'),
   ownerId: z.string(),
   value: amountField,
   probability: z.string().refine(

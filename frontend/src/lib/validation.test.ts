@@ -99,8 +99,8 @@ describe('opportunityFormSchema', () => {
   const base = {
     name: 'Renovación anual',
     description: '',
-    companyId: '',
-    clientId: '',
+    companyId: 'company-id',
+    clientId: 'client-id',
     ownerId: '',
     value: '1000',
     probability: '50',
@@ -110,6 +110,11 @@ describe('opportunityFormSchema', () => {
 
   it('acepta importes positivos y probabilidad entera', () => {
     expect(opportunityFormSchema.safeParse(base).success).toBe(true);
+  });
+
+  it('exige empresa y cliente', () => {
+    expect(opportunityFormSchema.safeParse({ ...base, companyId: '' }).success).toBe(false);
+    expect(opportunityFormSchema.safeParse({ ...base, clientId: '' }).success).toBe(false);
   });
 
   it('rechaza importes no numéricos o no positivos', () => {

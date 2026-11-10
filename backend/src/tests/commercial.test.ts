@@ -166,6 +166,26 @@ describe('Operaciones comerciales', () => {
         companyId: company.body.data.id,
       });
 
+    const missingCompany = await admin.agent
+      .post('/api/opportunities')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({
+        name: 'Oportunidad sin empresa',
+        clientId: client.body.data.id,
+        value: 1500,
+      });
+    expect(missingCompany.status).toBe(400);
+
+    const missingClient = await admin.agent
+      .post('/api/opportunities')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({
+        name: 'Oportunidad sin cliente',
+        companyId: company.body.data.id,
+        value: 1500,
+      });
+    expect(missingClient.status).toBe(400);
+
     const opportunity = await admin.agent
       .post('/api/opportunities')
       .set('X-CSRF-Token', admin.csrfToken)
@@ -291,6 +311,7 @@ describe('Operaciones comerciales', () => {
       .set('X-CSRF-Token', admin.csrfToken)
       .send({
         name: 'Oportunidad del admin',
+        companyId: company.body.data.id,
         clientId: client.body.data.id,
         value: 800,
         stage: 'GANADA',
@@ -307,6 +328,7 @@ describe('Operaciones comerciales', () => {
       .set('X-CSRF-Token', vendor.csrfToken)
       .send({
         name: 'Intento de asignación',
+        companyId: company.body.data.id,
         clientId: client.body.data.id,
         ownerId: adminUser!.id,
         value: 100,
@@ -318,6 +340,7 @@ describe('Operaciones comerciales', () => {
       .set('X-CSRF-Token', vendor.csrfToken)
       .send({
         name: 'Oportunidad del vendedor',
+        companyId: company.body.data.id,
         clientId: client.body.data.id,
         value: 2500,
         stage: 'GANADA',

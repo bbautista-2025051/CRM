@@ -276,16 +276,23 @@ export const OpportunityFormModal = ({
         </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Empresa" htmlFor="opportunity-company" error={errors.companyId?.message}>
+          <Field
+            label="Empresa"
+            htmlFor="opportunity-company"
+            error={errors.companyId?.message}
+            required
+          >
             <div className="flex gap-2">
               <div className="min-w-0 flex-1">
                 <Select
                   id="opportunity-company"
+                  required
+                  invalid={Boolean(errors.companyId)}
                   {...register('companyId', {
                     onChange: () => setValue('clientId', ''),
                   })}
                 >
-                  <option value="">Sin empresa</option>
+                  <option value="">Selecciona una empresa</option>
                   {currentCompanyMissing && opportunity?.company ? (
                     <option value={opportunity.company.id}>
                       {opportunity.company.name} (archivada)
@@ -316,11 +323,14 @@ export const OpportunityFormModal = ({
             htmlFor="opportunity-client"
             error={errors.clientId?.message}
             hint="Al elegir un cliente se completa su empresa."
+            required
           >
             <div className="flex gap-2">
               <div className="min-w-0 flex-1">
                 <Select
                   id="opportunity-client"
+                  required
+                  invalid={Boolean(errors.clientId)}
                   {...register('clientId', {
                     onChange: (event) => {
                       const selected = clientOptions.find(
@@ -332,7 +342,7 @@ export const OpportunityFormModal = ({
                     },
                   })}
                 >
-                  <option value="">Sin cliente</option>
+                  <option value="">Selecciona un cliente</option>
                   {currentClientMissing && opportunity?.client ? (
                     <option value={opportunity.client.id}>
                       {opportunity.client.firstName} {opportunity.client.lastName} (archivado)
