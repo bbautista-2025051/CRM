@@ -85,14 +85,14 @@ export const LoginPage = () => {
   const googleEnabled = Boolean(googleStatus.data?.enabled && googleStatus.data?.clientId);
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-indigo-100 p-4 dark:from-slate-950 dark:via-slate-950 dark:to-indigo-950">
+    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-indigo-100 p-4 dark:from-black dark:via-slate-950 dark:to-indigo-950">
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/10"
+        className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/5"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-indigo-300/20 blur-3xl dark:bg-indigo-500/10"
+        className="pointer-events-none absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-indigo-300/20 blur-3xl dark:bg-indigo-500/5"
       />
 
       <ThemeToggle className="absolute right-4 top-4 z-20 border border-white/60 bg-white/70 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5" />
@@ -100,7 +100,7 @@ export const LoginPage = () => {
       <div className="relative z-10 w-full max-w-4xl animate-login-scale overflow-hidden rounded-2xl bg-white shadow-xl shadow-indigo-200/40 ring-1 ring-black/5 dark:bg-slate-900 dark:shadow-black/40 dark:ring-white/10">
         <div className="flex">
           <section className="relative hidden w-1/2 overflow-hidden border-r border-gray-100 md:block dark:border-white/10">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-indigo-100 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-indigo-100 dark:from-black dark:via-slate-950 dark:to-indigo-950">
               <LoginDotMap />
 
               <GlowCursor
@@ -117,36 +117,13 @@ export const LoginPage = () => {
               />
 
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-10 text-center">
-                <div
-                  className="animate-login-up rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-3 shadow-lg shadow-blue-500/25"
-                  style={{ animationDelay: '120ms' }}
-                >
-                  <ArrowRight className="h-7 w-7 text-white" />
-                </div>
                 <img
                   src="/login-brand.png"
                   alt={brand.product}
-                  className="mt-6 w-full max-w-[300px] animate-login-up select-none drop-shadow-sm"
+                  className="w-full max-w-[300px] animate-login-up select-none drop-shadow-sm"
                   style={{ animationDelay: '220ms' }}
                   draggable={false}
                 />
-                <p
-                  className="mt-3 max-w-xs animate-login-up text-sm leading-6 text-gray-600 dark:text-slate-400"
-                  style={{ animationDelay: '320ms' }}
-                >
-                  Inicia sesión para acceder a tu espacio de trabajo comercial y tener tu
-                  operación bajo control.
-                </p>
-                <div
-                  className="mt-8 inline-flex animate-login-up items-center gap-2 rounded-full border border-white/70 bg-white/60 px-3 py-1.5 text-[11px] font-medium text-gray-600 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
-                  style={{ animationDelay: '420ms' }}
-                >
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                  </span>
-                  {brand.tagline}
-                </div>
               </div>
 
               <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-between px-8 pb-7 text-[11px] text-gray-500 dark:text-slate-500">
