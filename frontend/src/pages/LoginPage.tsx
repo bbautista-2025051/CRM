@@ -16,6 +16,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { LoginDotMap } from '@/components/auth/LoginDotMap';
+import GlowCursor from '@/components/effects/GlowCursor';
+import { useTheme } from '@/providers/ThemeProvider';
 import { cn } from '@/lib/cn';
 
 const fieldClasses =
@@ -31,6 +33,7 @@ export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const googleStatus = useGoogleStatus();
+  const { resolved } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -100,6 +103,19 @@ export const LoginPage = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-indigo-100 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950">
               <LoginDotMap />
 
+              <GlowCursor
+                autoDraw
+                color="#1291F8"
+                intensity={1.15}
+                trailWidth={4}
+                linger={2.6}
+                glow={1.1}
+                clickBurst
+                theme={resolved === 'dark' ? 'dark' : 'light'}
+                className="!absolute inset-0"
+                style={{ position: 'absolute', inset: 0 }}
+              />
+
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-10 text-center">
                 <div
                   className="animate-login-up rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-3 shadow-lg shadow-blue-500/25"
@@ -107,12 +123,13 @@ export const LoginPage = () => {
                 >
                   <ArrowRight className="h-7 w-7 text-white" />
                 </div>
-                <h2
-                  className="mt-6 animate-login-up bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-3xl font-bold text-transparent dark:from-blue-400 dark:to-indigo-400"
+                <img
+                  src="/login-brand.png"
+                  alt={brand.product}
+                  className="mt-6 w-full max-w-[300px] animate-login-up select-none drop-shadow-sm"
                   style={{ animationDelay: '220ms' }}
-                >
-                  {brand.product}
-                </h2>
+                  draggable={false}
+                />
                 <p
                   className="mt-3 max-w-xs animate-login-up text-sm leading-6 text-gray-600 dark:text-slate-400"
                   style={{ animationDelay: '320ms' }}
