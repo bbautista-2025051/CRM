@@ -21,6 +21,19 @@ interface ListParams {
 
 const SORTABLE = ['name', 'sector', 'status', 'createdAt', 'updatedAt'] as const;
 
+const companyFileSelect = {
+  id: true,
+  companyId: true,
+  commentId: true,
+  originalName: true,
+  storedName: true,
+  mimeType: true,
+  size: true,
+  uploadedById: true,
+  createdAt: true,
+  uploadedBy: { select: { id: true, name: true, avatarUrl: true } },
+} satisfies Prisma.CompanyFileSelect;
+
 export const listCompanies = async (params: ListParams) => {
   const where: Prisma.CompanyWhereInput = {
     ...(params.status ? { status: params.status } : {}),
@@ -210,4 +223,185 @@ export const archiveCompany = async (id: string, actorId: string) => {
   });
 
   return { company, alreadyArchived: false };
+};
+
+// ---------------------------------------------------------------------------
+// Comentarios de la empresa
+// ---------------------------------------------------------------------------
+
+export const listCompanyComments = async (companyId: string) => {
+  const company = await prisma.company.findUnique({ where: { id: companyId } });
+  if (!company) throw new NotFoundError('La empresa no existe');
+
+  return prisma.companyComment.findMany({
+    where: { companyId },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      author: { select: { id: true, name: true, avatarUrl: true } },
+      files: { select: companyFileSelect },
+    },
+  });
+};
+
+export const createCompanyComment = async (
+  companyId: string,
+  body: string,
+  fileIds: string[],
+  actor: User,
+) => {
+  const company = await prisma.company.findUnique({ where: { id: companyId } });
+  if (!company) throw new NotFoundError('La empresa no existe');
+
+  const comment = await prisma.companyComment.create({
+    data: {
+      companyId,
+      authorId: actor.id,
+      body,
+    },
+    include: {
+      author: { select: { id: true, name: true, avatarUrl: true } },
+    },
+  });
+
+  if (fileIds.length) {
+    await prisma.companyFile.updateMany({
+      where: { companyId, commentId: null, id: { in: fileIds } },
+      data: { commentId: comment.id },
+    });
+  }
+
+  await logActivity({
+    userId: actor.id,
+    action: 'CREATE',
+    entityType: 'COMPANY',
+    entityId: companyId,
+    description: `Comentario agregado a la empresa: ${company.name}`,
+    metadata: { commentId: comment.id, attachments: fileIds.length },
+  });
+
+  return getCompanyComment(comment.id);
+};
+
+const getCompanyComment = (id: string) =>
+  prisma.companyComment.findUniqueOrThrow({
+    where: { id },
+    include: {
+      author: { select: { id: true, name: true, avatarUrl: true } },
+      files: { select: companyFileSelect },
+    },
+  });
+
+// ---------------------------------------------------------------------------
+// Archivos de la empresa
+// ---------------------------------------------------------------------------
+
+export const listCompanyFiles = async (companyId: string) => {
+  const company = await prisma.company.findUnique({ where: { id: companyId } });
+  if (!company) throw new NotFoundError('La empresa no existe');
+
+  return prisma.companyFile.findMany({
+    where: { companyId },
+    orderBy: { createdAt: 'desc' },
+    select: companyFileSelect,
+  });
+};
+
+export const uploadCompanyFile = async (
+  companyId: string,
+  file: {
+    originalName: string;
+    storedName: string;
+    mimeType: string;
+    size: number;
+    data: Buffer;
+  },
+  actor: User,
+) => {
+  const company = await prisma.company.findUnique({ where: { id: companyId } });
+  if (!company) {
+    throw new NotFoundError('La empresa no existe');
+  }
+
+  const created = await prisma.companyFile.create({
+    data: {
+      companyId,
+      originalName: file.originalName,
+      storedName: file.storedName,
+      mimeType: file.mimeType || 'application/octet-stream',
+      size: file.size,
+      data: new Uint8Array(file.data),
+      uploadedById: actor.id,
+    },
+    select: companyFileSelect,
+  });
+
+  await logActivity({
+    userId: actor.id,
+    action: 'UPLOAD',
+    entityType: 'COMPANY',
+    entityId: companyId,
+    description: `Archivo subido a la empresa ${company.name}: ${created.originalName}`,
+    metadata: { fileId: created.id, storedName: created.storedName },
+  });
+
+  return created;
+};
+
+export const getCompanyFileForDownload = async (companyId: string, fileId: string) => {
+  const file = await prisma.companyFile.findFirst({
+    where: { id: fileId, companyId },
+    select: {
+      id: true,
+      originalName: true,
+      mimeType: true,
+      size: true,
+      storedName: true,
+      data: true,
+    },
+  });
+  if (!file) {
+    throw new NotFoundError('El archivo no existe en esta empresa');
+  }
+
+  if (!file.data) {
+    throw new NotFoundError('El contenido del archivo no está disponible');
+  }
+
+  return { ...file, data: file.data };
+};
+
+export const deleteCompanyFile = async (
+  companyId: string,
+  fileId: string,
+  actor: User,
+) => {
+  const file = await prisma.companyFile.findUnique({
+    where: { id: fileId },
+    select: {
+      id: true,
+      companyId: true,
+      uploadedById: true,
+      storedName: true,
+      originalName: true,
+    },
+  });
+  if (!file || file.companyId !== companyId) {
+    throw new NotFoundError('El archivo no existe en esta empresa');
+  }
+
+  const isOwner = file.uploadedById === actor.id;
+  if (actor.role !== 'ADMIN' && !isOwner) {
+    throw new ForbiddenError('Solo puedes eliminar los archivos que subiste tú');
+  }
+
+  await prisma.companyFile.delete({ where: { id: fileId } });
+
+  await logActivity({
+    userId: actor.id,
+    action: 'DELETE',
+    entityType: 'COMPANY',
+    entityId: companyId,
+    description: `Archivo eliminado de la empresa: ${file.originalName}`,
+    metadata: { fileId },
+  });
 };

@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { requireAdmin, requireAuth } from '../../middlewares/auth';
 import { csrfProtection } from '../../middlewares/csrf';
+import { companyFileUpload } from '../../middlewares/upload';
 import { validate } from '../../middlewares/validate';
 import { idParamSchema } from '../../utils/zod';
 import * as controller from './companies.controller';
 import {
   companyBodySchema,
+  companyCommentBodySchema,
+  companyFileParamsSchema,
   companyListQuerySchema,
   companyOptionsQuerySchema,
   updateCompanySchema,
@@ -42,3 +45,40 @@ companiesRouter.delete(
   validate({ params: idParamSchema }),
   controller.archive,
 );
+
+companiesRouter.get(
+  '/:id/comments',
+  validate({ params: idParamSchema }),
+  controller.listComments,
+);
+companiesRouter.post(
+  '/:id/comments',
+  csrfProtection,
+  validate({ params: idParamSchema, body: companyCommentBodySchema }),
+  controller.createComment,
+);
+
+companiesRouter.get(
+  '/:id/files',
+  validate({ params: idParamSchema }),
+  controller.listFiles,
+);
+companiesRouter.get(
+  '/:id/files/:fileId/download',
+  validate({ params: companyFileParamsSchema }),
+  controller.downloadFile,
+);
+companiesRouter.post(
+  '/:id/files',
+  csrfProtection,
+  validate({ params: idParamSchema }),
+  companyFileUpload.single('file'),
+  controller.uploadFile,
+);
+companiesRouter.delete(
+  '/:id/files/:fileId',
+  csrfProtection,
+  validate({ params: companyFileParamsSchema }),
+  controller.removeFile,
+);
+

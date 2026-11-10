@@ -30,6 +30,7 @@ const businessFileUpload = multer({
 });
 export const projectFileUpload = businessFileUpload;
 export const opportunityFileUpload = businessFileUpload;
+export const companyFileUpload = businessFileUpload;
 
 export const uploadedFileStoredName = (originalName: string): string =>
   `${crypto.randomUUID()}${extFromName(originalName)}`;

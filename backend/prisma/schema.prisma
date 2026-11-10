@@ -103,6 +103,8 @@ model User {
   projectComments  ProjectComment[] @relation("ProjectCommentAuthor")
   opportunityFiles OpportunityFile[] @relation("OpportunityFileUploader")
   opportunityComments OpportunityComment[] @relation("OpportunityCommentAuthor")
+  companyFiles     CompanyFile[]   @relation("CompanyFileUploader")
+  companyComments  CompanyComment[] @relation("CompanyCommentAuthor")
   activityLogs     ActivityLog[]
   avatar           UserAvatar?
 
@@ -186,6 +188,8 @@ model Company {
   opportunities Opportunity[]
   sales         Sale[]
   projects      Project[]
+  files         CompanyFile[]
+  comments      CompanyComment[]
 
   @@index([name])
   @@index([sector])
@@ -408,3 +412,42 @@ model ProjectComment {
   @@index([projectId, createdAt])
   @@map("project_comments")
 }
+
+model CompanyFile {
+  id           String   @id @default(uuid()) @db.Uuid
+  companyId    String   @map("company_id") @db.Uuid
+  commentId    String?  @map("comment_id") @db.Uuid
+  originalName String   @map("original_name") @db.VarChar(255)
+  storedName   String   @map("stored_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(120)
+  size         Int
+  data         Bytes?   @db.ByteA
+  uploadedById String?  @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  company    Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  comment    CompanyComment? @relation("CompanyFileComment", fields: [commentId], references: [id], onDelete: SetNull)
+  uploadedBy User?           @relation("CompanyFileUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([commentId])
+  @@index([uploadedById])
+  @@map("company_files")
+}
+
+model CompanyComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  authorId  String?  @map("author_id") @db.Uuid
+  body      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  author  User?         @relation("CompanyCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  files   CompanyFile[] @relation("CompanyFileComment")
+
+  @@index([companyId, createdAt])
+  @@map("company_comments")
+}
+

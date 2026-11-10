@@ -5,7 +5,9 @@ import type {
   ClientDetail,
   ClientOption,
   Company,
+  CompanyComment,
   CompanyDetail,
+  CompanyFile,
   CompanyOption,
   DashboardData,
   GoogleStatus,
@@ -78,6 +80,24 @@ export const companiesApi = {
     api.patch<DataEnvelope<Company>>(`/api/companies/${id}`, payload),
   archive: (id: string) =>
     api.delete<DataEnvelope<Company> & { message: string }>(`/api/companies/${id}`),
+  listFiles: (companyId: string) =>
+    api.get<DataEnvelope<CompanyFile[]>>(`/api/companies/${companyId}/files`),
+  listComments: (companyId: string) =>
+    api.get<DataEnvelope<CompanyComment[]>>(`/api/companies/${companyId}/comments`),
+  createComment: (companyId: string, body: string, fileIds: string[] = []) =>
+    api.post<DataEnvelope<CompanyComment>>(`/api/companies/${companyId}/comments`, {
+      body,
+      fileIds,
+    }),
+  uploadFile: (companyId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<DataEnvelope<CompanyFile>>(`/api/companies/${companyId}/files`, form);
+  },
+  removeFile: (companyId: string, fileId: string) =>
+    api.delete<void>(`/api/companies/${companyId}/files/${fileId}`),
+  downloadFileUrl: (companyId: string, fileId: string) =>
+    `/api/companies/${companyId}/files/${fileId}/download`,
 };
 
 export const clientsApi = {

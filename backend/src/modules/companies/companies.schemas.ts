@@ -34,3 +34,23 @@ export const companyOptionsQuerySchema = z.object({
   search: z.string().trim().max(120).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
+
+export const companyCommentBodySchema = z.object({
+  body: z
+    .string({ required_error: 'Escribe un comentario' })
+    .trim()
+    .min(1, 'Escribe un comentario')
+    .max(4000, 'El comentario no puede superar 4000 caracteres'),
+  fileIds: z
+    .array(z.string().uuid('El identificador del archivo no es válido'))
+    .max(10, {
+      message: 'Puedes adjuntar hasta 10 archivos por comentario',
+    })
+    .optional(),
+});
+
+export const companyFileParamsSchema = z.object({
+  id: z.string().uuid('El identificador de la empresa no es válido'),
+  fileId: z.string().uuid('El identificador del archivo no es válido'),
+});
+

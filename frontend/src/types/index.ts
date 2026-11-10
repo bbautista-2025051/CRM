@@ -293,6 +293,30 @@ export interface ProjectComment {
   files?: ProjectFile[];
 }
 
+export interface CompanyComment {
+  id: string;
+  companyId: string;
+  authorId: string | null;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  author?: { id: string; name: string; avatarUrl: string | null } | null;
+  files?: CompanyFile[];
+}
+
+export interface CompanyFile {
+  id: string;
+  companyId: string;
+  commentId?: string | null;
+  originalName: string;
+  storedName: string;
+  mimeType: string;
+  size: number;
+  uploadedById: string;
+  createdAt: string;
+  uploadedBy?: { id: string; name: string; avatarUrl: string | null };
+}
+
 export interface ProjectListResponse {
   data: Project[];
   meta: PaginationMeta;
