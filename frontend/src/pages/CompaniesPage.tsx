@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Archive,
@@ -19,6 +19,7 @@ import { companiesApi } from '@/lib/endpoints';
 import { canArchive } from '@/lib/permissions';
 import { formatNumber, initials } from '@/lib/format';
 import { CompanyFormModal } from '@/components/companies/CompanyFormModal';
+import { CompanyDetailModal } from '@/components/companies/CompanyDetailModal';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -43,7 +44,6 @@ export const CompaniesPage = () => {
   const { confirm } = useConfirm();
   const { success, error: toastError } = useToast();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const sectors = useSectors();
 
   const [search, setSearch] = useState('');
@@ -52,6 +52,7 @@ export const CompaniesPage = () => {
   const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Company | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -239,7 +240,11 @@ export const CompaniesPage = () => {
                   {companies.map((company) => (
                     <tr key={company.id}>
                       <td>
-                        <Link to={`/companies/${company.id}`} className="group flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setDetailId(company.id)}
+                          className="group flex items-center gap-3 text-left"
+                        >
                           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-xs font-bold text-brand-strong dark:text-brand">
                             {initials(company.name)}
                           </span>
@@ -251,7 +256,7 @@ export const CompaniesPage = () => {
                               {company.sector ?? 'Sin sector'}
                             </span>
                           </span>
-                        </Link>
+                        </button>
                       </td>
                       <td>
                         <div className="min-w-0 text-xs">
@@ -290,7 +295,7 @@ export const CompaniesPage = () => {
                                 icon={<Eye className="h-4 w-4" />}
                                 onClick={() => {
                                   close();
-                                  navigate(`/companies/${company.id}`);
+                                  setDetailId(company.id);
                                 }}
                               >
                                 Ver detalle
@@ -338,6 +343,16 @@ export const CompaniesPage = () => {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         company={editing}
+      />
+
+      <CompanyDetailModal
+        open={Boolean(detailId)}
+        companyId={detailId}
+        onClose={() => setDetailId(null)}
+        onEdit={(comp) => {
+          setDetailId(null);
+          openEdit(comp);
+        }}
       />
     </div>
   );
