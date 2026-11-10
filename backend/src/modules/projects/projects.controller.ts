@@ -5,11 +5,13 @@ import { projectFileOriginalName, projectFileStoredName } from '../../middleware
 import * as projectsService from './projects.service';
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
-  res.status(200).json(await projectsService.listProjects(req.validated.query));
+  if (!req.auth) return;
+  res.status(200).json(await projectsService.listProjects(req.validated.query, req.auth.user));
 });
 
 export const getById = asyncHandler(async (req: Request, res: Response) => {
-  const project = await projectsService.getProject(req.validated.params.id);
+  if (!req.auth) return;
+  const project = await projectsService.getProject(req.validated.params.id, req.auth.user);
   res.status(200).json({ data: project });
 });
 

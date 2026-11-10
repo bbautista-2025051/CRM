@@ -118,8 +118,19 @@ const validateAssignee = async (assigneeId: string) => {
   }
 };
 
-export const listProjects = async (params: ListParams) => {
+export const listProjects = async (params: ListParams, actor?: User) => {
+  const scopeCondition: Prisma.ProjectWhereInput =
+    actor && actor.role !== 'ADMIN'
+      ? {
+          OR: [
+            { managerId: actor.id },
+            { tasks: { some: { assigneeId: actor.id } } },
+          ],
+        }
+      : {};
+
   const where: Prisma.ProjectWhereInput = {
+    ...scopeCondition,
     ...(params.status ? { status: params.status } : {}),
     ...(params.companyId ? { companyId: params.companyId } : {}),
     ...(params.managerId ? { managerId: params.managerId } : {}),
@@ -146,8 +157,18 @@ export const listProjects = async (params: ListParams) => {
         tasks: { select: { status: true } },
       },
     }),
-    prisma.project.count({ where: { status: 'ACTIVE' } }),
-    prisma.project.count({ where: { status: 'COMPLETED' } }),
+    prisma.project.count({
+      where: {
+        ...scopeCondition,
+        status: 'ACTIVE',
+      },
+    }),
+    prisma.project.count({
+      where: {
+        ...scopeCondition,
+        status: 'COMPLETED',
+      },
+    }),
   ]);
 
   const counts = {
@@ -168,7 +189,7 @@ export const listProjects = async (params: ListParams) => {
   };
 };
 
-export const getProject = async (id: string) => {
+export const getProject = async (id: string, actor?: User) => {
   const project = await prisma.project.findUnique({
     where: { id },
     include: {
@@ -186,6 +207,15 @@ export const getProject = async (id: string) => {
   });
 
   if (!project) throw new NotFoundError('El proyecto no existe');
+
+  if (actor && actor.role !== 'ADMIN') {
+    const isManager = project.managerId === actor.id;
+    const isAssignee = project.tasks.some((task) => task.assignee?.id === actor.id);
+    if (!isManager && !isAssignee) {
+      throw new ForbiddenError('No tienes permiso para ver este proyecto');
+    }
+  }
+
   return { ...project, taskCounts: taskCounts(project.tasks) };
 };
 
