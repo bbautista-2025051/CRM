@@ -8,6 +8,7 @@ import {
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { useOptionalSidebar } from '@/components/ui/app-1-utils/sidebar';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
@@ -64,6 +65,7 @@ export const Modal = ({
   // Ref para usar el onClose vigente sin re-ejecutar el efecto de apertura
   // cuando el padre pasa una función nueva en cada render (p. ej. al teclear).
   const onCloseRef = useRef(onClose);
+  const sidebar = useOptionalSidebar();
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -71,6 +73,12 @@ export const Modal = ({
 
   const titleId = useId();
   const descriptionId = useId();
+  const layoutStyle = sidebar
+    ? {
+        top: '4rem',
+        left: sidebar.isMobile ? '0' : sidebar.open ? '16rem' : '4rem',
+      }
+    : undefined;
 
   useEffect(() => {
     if (!open || inline) return;
@@ -170,6 +178,7 @@ export const Modal = ({
           ? 'inset-0 flex flex-col'
           : 'inset-0 flex items-start justify-center p-4 sm:items-center',
       )}
+      style={layoutStyle}
       onMouseDown={(event) => {
         if (closeOnBackdrop && event.target === event.currentTarget) onClose();
       }}
@@ -185,7 +194,7 @@ export const Modal = ({
         onKeyDown={handlePanelKeyDown}
         className={cn(
           fullWindow
-            ? 'flex h-screen w-full max-w-none flex-col border-0 bg-surface outline-none'
+            ? 'flex h-full w-full max-w-none flex-col border-0 bg-surface outline-none'
             : 'my-auto w-full animate-slide-up rounded-2xl border border-line bg-surface shadow-float outline-none',
           !fullWindow && sizes[size],
           className,
