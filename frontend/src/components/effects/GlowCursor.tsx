@@ -341,7 +341,7 @@ const GlowCursor = ({
   className = '',
   style,
   ...rest
-}) => {
+}: GlowCursorProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const settingsRef = useRef<GlowCursorProps & { enabled: boolean; quality: 'low' | 'medium' | 'high'; theme: 'light' | 'dark'; maxDevicePixelRatio: number; autoDraw: boolean }>({} as any);
