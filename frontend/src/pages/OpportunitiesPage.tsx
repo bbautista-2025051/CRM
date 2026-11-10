@@ -71,9 +71,6 @@ export const OpportunitiesPage = () => {
   const [view, setView] = useState<ViewMode>('table');
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
-  const [defaultCompanyId, setDefaultCompanyId] = useState<string | undefined>();
-  const [defaultClientId, setDefaultClientId] = useState<string | undefined>();
-  const [defaultStage, setDefaultStage] = useState<OpportunityStage | undefined>();
   const [openId, setOpenId] = useState<string | null>(openRequested);
   const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -83,15 +80,14 @@ export const OpportunitiesPage = () => {
 
   useEffect(() => {
     if (!createRequested && !openRequested) return;
-    if (openRequested) setOpenId(openRequested);
     if (createRequested) {
-      setEditing(null);
-      setDefaultCompanyId(companyParam || undefined);
-      setDefaultClientId(clientParam || undefined);
-      setDefaultStage(undefined);
-      if (companyParam) setCompanyId(companyParam);
-      setFormOpen(true);
+      const params = new URLSearchParams({ view: 'opportunities' });
+      if (companyParam) params.set('companyId', companyParam);
+      if (clientParam) params.set('clientId', clientParam);
+      navigate(`/negocio/nuevo?${params.toString()}`, { replace: true });
+      return;
     }
+    if (openRequested) setOpenId(openRequested);
     const next = new URLSearchParams(searchParams);
     next.delete('create');
     next.delete('open');
@@ -123,18 +119,14 @@ export const OpportunitiesPage = () => {
   });
 
   const openCreate = (initialStage?: OpportunityStage) => {
-    setEditing(null);
-    setDefaultCompanyId(companyId || undefined);
-    setDefaultClientId(undefined);
-    setDefaultStage(initialStage);
-    setFormOpen(true);
+    const params = new URLSearchParams({ view: 'opportunities' });
+    if (companyId) params.set('companyId', companyId);
+    if (initialStage) params.set('stage', initialStage);
+    navigate(`/negocio/nuevo?${params.toString()}`);
   };
 
   const openEdit = (opportunity: Opportunity) => {
     setEditing(opportunity);
-    setDefaultCompanyId(undefined);
-    setDefaultClientId(undefined);
-    setDefaultStage(undefined);
     setFormOpen(true);
   };
 
@@ -523,9 +515,6 @@ export const OpportunitiesPage = () => {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         opportunity={editing}
-        defaultCompanyId={defaultCompanyId}
-        defaultClientId={defaultClientId}
-        defaultStage={defaultStage}
       />
 
       <OpportunityDetailModal

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Ban,
@@ -51,6 +51,7 @@ import type { Sale } from '@/types';
 export const SalesPage = () => {
   usePageTitle('Negocio');
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { confirm } = useConfirm();
   const { success, error: toastError } = useToast();
   const queryClient = useQueryClient();
@@ -73,11 +74,6 @@ export const SalesPage = () => {
   const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Sale | null>(null);
-  const [defaultCompanyId, setDefaultCompanyId] = useState<string | undefined>();
-  const [defaultClientId, setDefaultClientId] = useState<string | undefined>();
-  const [defaultOpportunityId, setDefaultOpportunityId] = useState<
-    string | undefined
-  >();
   const [openId, setOpenId] = useState<string | null>(openRequested);
   const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -87,15 +83,15 @@ export const SalesPage = () => {
 
   useEffect(() => {
     if (!createRequested && !openRequested) return;
-    if (openRequested) setOpenId(openRequested);
     if (createRequested) {
-      setEditing(null);
-      setDefaultCompanyId(companyParam || undefined);
-      setDefaultClientId(clientParam || undefined);
-      setDefaultOpportunityId(opportunityParam || undefined);
-      if (companyParam) setCompanyId(companyParam);
-      setFormOpen(true);
+      const params = new URLSearchParams({ view: 'sales' });
+      if (companyParam) params.set('companyId', companyParam);
+      if (clientParam) params.set('clientId', clientParam);
+      if (opportunityParam) params.set('opportunityId', opportunityParam);
+      navigate(`/negocio/nuevo?${params.toString()}`, { replace: true });
+      return;
     }
+    if (openRequested) setOpenId(openRequested);
     const next = new URLSearchParams(searchParams);
     next.delete('create');
     next.delete('open');
@@ -184,19 +180,14 @@ export const SalesPage = () => {
   });
 
   const openCreate = () => {
-    setEditing(null);
-    setDefaultCompanyId(companyId || undefined);
-    setDefaultClientId(undefined);
-    setDefaultOpportunityId(undefined);
-    setFormOpen(true);
+    const params = new URLSearchParams({ view: 'sales' });
+    if (companyId) params.set('companyId', companyId);
+    navigate(`/negocio/nuevo?${params.toString()}`);
   };
 
   const openEdit = (sale: Sale) => {
     setOpenId(null);
     setEditing(sale);
-    setDefaultCompanyId(undefined);
-    setDefaultClientId(undefined);
-    setDefaultOpportunityId(undefined);
     setFormOpen(true);
   };
 
@@ -584,9 +575,6 @@ export const SalesPage = () => {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         sale={editing}
-        defaultCompanyId={defaultCompanyId}
-        defaultClientId={defaultClientId}
-        defaultOpportunityId={defaultOpportunityId}
       />
 
       <SaleDetailModal
