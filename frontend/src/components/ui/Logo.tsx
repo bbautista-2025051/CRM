@@ -2,29 +2,30 @@ import { cn } from '@/lib/cn';
 import { brand } from '@/config/brand';
 
 export const LogoMark = ({ className }: { className?: string }) => {
-  if (brand.logoUrl) {
-    return (
-      <img
-        src={brand.logoUrl}
-        alt={`${brand.company} logo`}
-        className={cn('h-9 w-9 rounded-xl object-contain', className)}
-      />
-    );
-  }
   return (
     <svg
       viewBox="0 0 64 64"
       className={cn('h-9 w-9 shrink-0 rounded-xl shadow-sm', className)}
-      aria-hidden
+      role="img"
+      aria-label={`${brand.company} logo`}
+      focusable="false"
     >
       <defs>
-        <linearGradient id="nexo-logo-gradient" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+        <linearGradient id="softplus-logo-gradient" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
           <stop stopColor="#2563EB" />
-          <stop offset="1" stopColor="#0D9488" />
+          <stop offset="1" stopColor="#1291F8" />
         </linearGradient>
       </defs>
-      <rect width="64" height="64" rx="16" fill="url(#nexo-logo-gradient)" />
-      <path d="M18 46V18h7l14 18V18h7v28h-7L25 28v18h-7Z" fill="white" />
+      <rect width="64" height="64" rx="16" fill="url(#softplus-logo-gradient)" />
+      <path
+        d="M14 39.5a11 11 0 0 1 11-11 13 13 0 0 1 25.2 3.2A8.2 8.2 0 0 1 49 48H25a8.5 8.5 0 0 1-11-8.5Z"
+        fill="none"
+        stroke="white"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="4"
+      />
+      <path d="M34 34v12m-6-6h12" stroke="white" strokeLinecap="round" strokeWidth="3" />
     </svg>
   );
 };
@@ -41,27 +42,18 @@ export const Logo = ({
   dark?: boolean;
 }) => (
   <span className={cn('inline-flex items-center gap-2.5', className)}>
-    <LogoMark />
-    {compact ? null : (
-      <span className={cn('leading-none', wordmarkClassName)}>
-        <span
-          className={cn(
-            'block text-[17px] font-semibold tracking-tight',
-            dark ? 'text-white' : 'text-ink',
-          )}
-        >
-          {brand.company}
-          <span className="text-brand">.</span>
-        </span>
-        <span
-          className={cn(
-            'mt-1 block text-[9px] font-semibold uppercase tracking-[0.22em]',
-            dark ? 'text-white/50' : 'text-muted',
-          )}
-        >
-          CRM
-        </span>
-      </span>
+    {compact ? (
+      <LogoMark />
+    ) : (
+      <img
+        src={brand.logoUrl || '/login-brand.png'}
+        alt={`${brand.company} logo`}
+        className={cn(
+          'h-9 w-auto max-w-[150px] object-contain',
+          dark && 'brightness-0 invert',
+          wordmarkClassName,
+        )}
+      />
     )}
   </span>
 );

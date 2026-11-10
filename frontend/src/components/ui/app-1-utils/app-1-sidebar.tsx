@@ -1,6 +1,6 @@
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import {
-  BarChart3,
+  Briefcase,
   Building2,
   CalendarDays,
   FolderKanban,
@@ -10,7 +10,6 @@ import {
   ShieldCheck,
   UserCheck,
   Users,
-  Wallet,
 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { canManageUsers } from "@/lib/permissions";
@@ -40,8 +39,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Comercial",
     items: [
-      { to: "/opportunities", label: "Oportunidades", icon: BarChart3 },
-      { to: "/sales", label: "Ventas", icon: Wallet },
+      { to: "/negocio", label: "Negocio", icon: Briefcase },
       { to: "/companies", label: "Empresas", icon: Building2 },
       { to: "/clients", label: "Contacto", icon: Users },
     ],

@@ -54,7 +54,7 @@ export const Modal = ({
   footer,
   size = 'md',
   closeOnBackdrop = true,
-  fullWindow = false,
+  fullWindow = true,
   className,
 }: ModalProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -130,7 +130,7 @@ export const Modal = ({
       className={cn(
         'fixed z-[90] overflow-y-auto bg-slate-950/60',
         fullWindow
-          ? 'inset-y-0 right-0 left-0 flex flex-col lg:left-[var(--nexo-sidebar,0px)]'
+          ? 'inset-0 flex flex-col'
           : 'inset-0 flex items-start justify-center p-4 sm:items-center',
       )}
       onMouseDown={(event) => {

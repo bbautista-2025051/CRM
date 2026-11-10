@@ -7,8 +7,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
-  OpportunitiesIcon,
-  SalesIcon,
   UsersAdminIcon,
 } from '@/components/ui/NexoIcons';
 import type { NexoIcon } from '@/components/ui/NexoIcons';
@@ -33,10 +31,6 @@ const contextualAction = (
     return { to: '/companies?create=1', label: 'Nueva empresa', icon: Plus };
   if (pathname.startsWith('/clients'))
     return { to: '/clients?create=1', label: 'Nuevo cliente', icon: Plus };
-  if (pathname.startsWith('/opportunities'))
-    return { to: '/opportunities?create=1', label: 'Nueva oportunidad', icon: OpportunitiesIcon };
-  if (pathname.startsWith('/sales'))
-    return { to: '/sales?create=1', label: 'Registrar venta', icon: SalesIcon };
   if (pathname.startsWith('/projects'))
     return { to: '/projects?create=1', label: 'Nuevo proyecto', icon: Plus };
   if (pathname.startsWith('/users') && isAdminUser)
@@ -47,8 +41,12 @@ const contextualAction = (
 const sectionTitle = (pathname: string): string => {
   if (pathname.startsWith('/companies')) return 'Empresas';
   if (pathname.startsWith('/clients')) return 'Clientes';
-  if (pathname.startsWith('/opportunities')) return 'Oportunidades';
-  if (pathname.startsWith('/sales')) return 'Ventas';
+  if (
+    pathname.startsWith('/negocio') ||
+    pathname.startsWith('/opportunities') ||
+    pathname.startsWith('/sales')
+  )
+    return 'Negocio';
   if (pathname.startsWith('/projects')) return 'Proyectos';
   if (pathname.startsWith('/team')) return 'Equipo';
   if (pathname.startsWith('/users')) return 'Usuarios';
