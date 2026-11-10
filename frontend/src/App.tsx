@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import {
   AdminRoute,
   ProtectedRoute,
@@ -34,13 +34,8 @@ const ClientDetailPage = lazy(() =>
     default: module.ClientDetailPage,
   })),
 );
-const OpportunitiesPage = lazy(() =>
-  import('@/pages/OpportunitiesPage').then((module) => ({
-    default: module.OpportunitiesPage,
-  })),
-);
-const SalesPage = lazy(() =>
-  import('@/pages/SalesPage').then((module) => ({ default: module.SalesPage })),
+const NegocioPage = lazy(() =>
+  import('@/pages/NegocioPage').then((module) => ({ default: module.NegocioPage })),
 );
 const UsersPage = lazy(() =>
   import('@/pages/UsersPage').then((module) => ({ default: module.UsersPage })),
@@ -63,6 +58,24 @@ const TaskDetailPage = lazy(() =>
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage })),
 );
+
+const LegacyBusinessRedirect = ({
+  view,
+}: {
+  view: 'opportunities' | 'sales';
+}) => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  searchParams.set('view', view);
+  const query = searchParams.toString();
+
+  return (
+    <Navigate
+      to={{ pathname: '/negocio', search: query ? `?${query}` : '' }}
+      replace
+    />
+  );
+};
 
 const RouteFallback = () => (
   <div className="flex min-h-[60vh] items-center justify-center">
@@ -90,8 +103,12 @@ export const App = () => (
           <Route path="companies/:id" element={<CompanyDetailPage />} />
           <Route path="clients" element={<ClientsPage />} />
           <Route path="clients/:id" element={<ClientDetailPage />} />
-          <Route path="opportunities" element={<OpportunitiesPage />} />
-          <Route path="sales" element={<SalesPage />} />
+          <Route path="negocio" element={<NegocioPage />} />
+          <Route
+            path="opportunities"
+            element={<LegacyBusinessRedirect view="opportunities" />}
+          />
+          <Route path="sales" element={<LegacyBusinessRedirect view="sales" />} />
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="team" element={<TeamPage />} />
           <Route path="team/task/:taskId" element={<TaskDetailPage />} />

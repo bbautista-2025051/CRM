@@ -2,11 +2,13 @@ import { useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Target } from 'lucide-react';
+import { Target, Plus } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, Select, Textarea } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
+import { CompanyFormModal } from '@/components/companies/CompanyFormModal';
+import { ClientFormModal } from '@/components/clients/ClientFormModal';
 import { useToast } from '@/providers/ToastProvider';
 import { useAuth } from '@/providers/AuthProvider';
 import {
@@ -65,6 +67,12 @@ export const OpportunityFormModal = ({
   const queryClient = useQueryClient();
   const formId = useId().replace(/:/g, '');
   const [formError, setFormError] = useState<string | null>(null);
+  const [companyModalOpen, setCompanyModalOpen] = useState(false);
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  // Elementos creados desde los modales anidados: se seleccionan en el
+  // formulario en cuanto aparecen en las opciones del select correspondiente.
+  const [pendingCompanyId, setPendingCompanyId] = useState<string | null>(null);
+  const [pendingClientId, setPendingClientId] = useState<string | null>(null);
   const editing = Boolean(opportunity);
   const hasSale = Boolean(opportunity?.sale);
 
@@ -162,6 +170,37 @@ export const OpportunityFormModal = ({
   const clientOptions = clients.data ?? [];
   const userOptions = users.data?.data ?? [];
 
+  // Aplica la empresa creada desde el modal anidado cuando el select ya la
+  // incluye (las opciones se recargan tras invalidar la caché de empresas).
+  useEffect(() => {
+    if (!pendingCompanyId) return;
+    if (!companyOptions.some((company) => company.id === pendingCompanyId)) return;
+    setValue('companyId', pendingCompanyId);
+    // El cliente elegido puede pertenecer a otra empresa: se limpia, igual
+    // que al cambiar la empresa manualmente desde el select.
+    setValue('clientId', '');
+    setPendingCompanyId(null);
+  }, [pendingCompanyId, companyOptions, setValue]);
+
+  // Aplica el contacto creado desde el modal anidado cuando el select ya lo
+  // incluye (la lista depende de la empresa seleccionada).
+  useEffect(() => {
+    if (!pendingClientId) return;
+    if (!clientOptions.some((client) => client.id === pendingClientId)) return;
+    setValue('clientId', pendingClientId);
+    setPendingClientId(null);
+  }, [pendingClientId, clientOptions, setValue]);
+
+  // Al cerrar el formulario se descartan los modales anidados y las
+  // selecciones pendientes que no llegaron a aplicarse.
+  useEffect(() => {
+    if (open) return;
+    setCompanyModalOpen(false);
+    setClientModalOpen(false);
+    setPendingCompanyId(null);
+    setPendingClientId(null);
+  }, [open]);
+
   const currentCompanyMissing =
     opportunity?.company &&
     !companyOptions.some((item) => item.id === opportunity.company?.id);
@@ -235,24 +274,39 @@ export const OpportunityFormModal = ({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Empresa" htmlFor="opportunity-company" error={errors.companyId?.message}>
-            <Select
-              id="opportunity-company"
-              {...register('companyId', {
-                onChange: () => setValue('clientId', ''),
-              })}
-            >
-              <option value="">Sin empresa</option>
-              {currentCompanyMissing && opportunity?.company ? (
-                <option value={opportunity.company.id}>
-                  {opportunity.company.name} (archivada)
-                </option>
-              ) : null}
-              {companyOptions.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.name}
-                </option>
-              ))}
-            </Select>
+            <div className="flex gap-2">
+              <div className="min-w-0 flex-1">
+                <Select
+                  id="opportunity-company"
+                  {...register('companyId', {
+                    onChange: () => setValue('clientId', ''),
+                  })}
+                >
+                  <option value="">Sin empresa</option>
+                  {currentCompanyMissing && opportunity?.company ? (
+                    <option value={opportunity.company.id}>
+                      {opportunity.company.name} (archivada)
+                    </option>
+                  ) : null}
+                  {companyOptions.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="h-[38px] w-[38px] shrink-0 rounded-[10px]"
+                onClick={() => setCompanyModalOpen(true)}
+                aria-label="Registrar una empresa nueva"
+                title="Registrar una empresa nueva"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </Field>
           <Field
             label="Cliente"
@@ -260,32 +314,47 @@ export const OpportunityFormModal = ({
             error={errors.clientId?.message}
             hint="Al elegir un cliente se completa su empresa."
           >
-            <Select
-              id="opportunity-client"
-              {...register('clientId', {
-                onChange: (event) => {
-                  const selected = clientOptions.find(
-                    (item) => item.id === event.target.value,
-                  );
-                  if (selected?.companyId) {
-                    setValue('companyId', selected.companyId);
-                  }
-                },
-              })}
-            >
-              <option value="">Sin cliente</option>
-              {currentClientMissing && opportunity?.client ? (
-                <option value={opportunity.client.id}>
-                  {opportunity.client.firstName} {opportunity.client.lastName} (archivado)
-                </option>
-              ) : null}
-              {clientOptions.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.firstName} {client.lastName}
-                  {client.company ? ` · ${client.company.name}` : ''}
-                </option>
-              ))}
-            </Select>
+            <div className="flex gap-2">
+              <div className="min-w-0 flex-1">
+                <Select
+                  id="opportunity-client"
+                  {...register('clientId', {
+                    onChange: (event) => {
+                      const selected = clientOptions.find(
+                        (item) => item.id === event.target.value,
+                      );
+                      if (selected?.companyId) {
+                        setValue('companyId', selected.companyId);
+                      }
+                    },
+                  })}
+                >
+                  <option value="">Sin cliente</option>
+                  {currentClientMissing && opportunity?.client ? (
+                    <option value={opportunity.client.id}>
+                      {opportunity.client.firstName} {opportunity.client.lastName} (archivado)
+                    </option>
+                  ) : null}
+                  {clientOptions.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.firstName} {client.lastName}
+                      {client.company ? ` · ${client.company.name}` : ''}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                className="h-[38px] w-[38px] shrink-0 rounded-[10px]"
+                onClick={() => setClientModalOpen(true)}
+                aria-label="Registrar un cliente nuevo"
+                title="Registrar un cliente nuevo"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </Field>
         </div>
 
@@ -386,6 +455,28 @@ export const OpportunityFormModal = ({
           />
         </Field>
       </form>
+
+      {/*
+        Ventanas emergentes anidadas (se renderizan como portales sobre este
+        modal): permiten registrar una empresa o un cliente sin salir del
+        formulario. Al guardar, el elemento creado queda seleccionado en el
+        select correspondiente.
+      */}
+      <CompanyFormModal
+        open={companyModalOpen}
+        onClose={() => setCompanyModalOpen(false)}
+        onSaved={(saved) => setPendingCompanyId(saved.id)}
+      />
+
+      <ClientFormModal
+        open={clientModalOpen}
+        onClose={() => setClientModalOpen(false)}
+        defaultCompanyId={companyId || undefined}
+        onSaved={(saved) => {
+          if (saved.companyId) setPendingCompanyId(saved.companyId);
+          setPendingClientId(saved.id);
+        }}
+      />
     </Modal>
   );
 };

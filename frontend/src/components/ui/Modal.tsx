@@ -36,6 +36,15 @@ interface ModalProps {
 const focusable =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * Pila de modales abiertos. Cada modal vive en su propio portal con el mismo
+ * z-index, así que cuando hay varios superpuestos (p. ej. crear una empresa
+ * desde el formulario de una oportunidad) solo el último abierto —el de
+ * encima— debe reaccionar a Escape, para no cerrar también al que está detrás.
+ */
+const modalStack: number[] = [];
+let modalSeq = 0;
+
 export const Modal = ({
   open,
   onClose,
@@ -45,7 +54,7 @@ export const Modal = ({
   footer,
   size = 'md',
   closeOnBackdrop = true,
-  fullWindow = false,
+  fullWindow = true,
   className,
 }: ModalProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -63,6 +72,9 @@ export const Modal = ({
 
   useEffect(() => {
     if (!open) return;
+    const id = modalSeq++;
+    modalStack.push(id);
+
     previouslyFocused.current = document.activeElement as HTMLElement | null;
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -75,6 +87,7 @@ export const Modal = ({
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (modalStack[modalStack.length - 1] !== id) return;
         event.preventDefault();
         onCloseRef.current();
       }
@@ -84,6 +97,8 @@ export const Modal = ({
     return () => {
       window.clearTimeout(timer);
       document.removeEventListener('keydown', onKeyDown);
+      const index = modalStack.indexOf(id);
+      if (index !== -1) modalStack.splice(index, 1);
       document.body.style.overflow = originalOverflow;
       previouslyFocused.current?.focus?.();
     };
@@ -115,7 +130,7 @@ export const Modal = ({
       className={cn(
         'fixed z-[90] overflow-y-auto bg-slate-950/60',
         fullWindow
-          ? 'inset-y-0 right-0 left-0 flex flex-col lg:left-[var(--nexo-sidebar,0px)]'
+          ? 'inset-0 flex flex-col'
           : 'inset-0 flex items-start justify-center p-4 sm:items-center',
       )}
       onMouseDown={(event) => {

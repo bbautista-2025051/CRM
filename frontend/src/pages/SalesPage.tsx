@@ -49,7 +49,7 @@ import {
 import type { Sale } from '@/types';
 
 export const SalesPage = () => {
-  usePageTitle('Ventas');
+  usePageTitle('Negocio');
   const { user } = useAuth();
   const { confirm } = useConfirm();
   const { success, error: toastError } = useToast();

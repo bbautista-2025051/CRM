@@ -1,5 +1,18 @@
 const API_BASE = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
 
+const resolveApiUrl = (path: string): string =>
+  API_BASE ? `${API_BASE}${path.startsWith('/') ? path : `/${path}`}` : path;
+
+/**
+ * Resuelve la ruta de un recurso servido por la API (por ejemplo un avatar)
+ * cuando frontend y backend están publicados en dominios distintos.
+ */
+export const resolveAssetUrl = (url?: string | null): string | undefined => {
+  if (!url) return undefined;
+  if (/^(https?:)?\/\/|^data:|^blob:/i.test(url)) return url;
+  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`;
+};
+
 let csrfToken: string | null = null;
 
 export const setCsrfToken = (token: string | null): void => {
@@ -53,7 +66,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await fetch(resolveApiUrl(path), {
       ...rest,
       method,
       headers,
@@ -107,14 +120,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 }
 
 /**
- * Descarga un recurso binario autenticado. Usa `fetch` con credenciales para
- * que la cookie de sesión viaje en la petición, y devuelve el blob para que el
- * llamador pueda guardarlo con el nombre original.
+ * Descarga un recurso binario autenticado usando la ruta de la API configurada.
  */
 export async function download(path: string): Promise<Blob> {
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await fetch(resolveApiUrl(path), {
       method: 'GET',
       credentials: 'include',
       headers: { Accept: '*/*' },

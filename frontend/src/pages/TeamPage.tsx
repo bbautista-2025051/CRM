@@ -156,7 +156,7 @@ export const TeamPage = () => {
             <Select
               aria-label="Filtrar por proyecto"
               value={projectId}
-              onChange={(event) => setProjectId(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setProjectId(event.target.value)}
               className="w-auto min-w-[200px]"
             >
               <option value="">Todos los proyectos</option>
@@ -345,7 +345,7 @@ export const TeamPage = () => {
                           </Button>
                           <Button
                             variant="primary"
-                            onClick={(event) => {
+                            onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
                               event.preventDefault();
                               const form = event.currentTarget
                                 .closest('form') as HTMLFormElement | null;

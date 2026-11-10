@@ -56,25 +56,16 @@ export const readProjectFile = async (storedName: string): Promise<Buffer | null
   }
 };
 
-const avatarDir = path.join(env.uploadDir, 'avatars');
-fs.mkdirSync(avatarDir, { recursive: true });
-
 const EXTENSION_BY_MIME: Record<string, string> = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
   'image/webp': '.webp',
 };
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, callback) => callback(null, avatarDir),
-  filename: (_req, file, callback) => {
-    const extension = EXTENSION_BY_MIME[file.mimetype] ?? '.bin';
-    callback(null, `${crypto.randomUUID()}${extension}`);
-  },
-});
-
+// Los avatares se guardan en memoria y se persisten en la base de datos
+// (tabla user_avatars), igual que los archivos de proyecto.
 export const avatarUpload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: env.maxAvatarBytes, files: 1 },
   fileFilter: (_req, file, callback) => {
     if (!EXTENSION_BY_MIME[file.mimetype]) {
@@ -86,17 +77,11 @@ export const avatarUpload = multer({
 });
 
 /**
- * Verifica la firma binaria real del archivo (no solo el MIME declarado).
- * Si no coincide, elimina el archivo y rechaza la petición.
+ * Verifica la firma binaria real de la imagen (no solo el MIME declarado) y
+ * devuelve el tipo MIME detectado. Lanza si no es JPG, PNG ni WebP.
  */
-export const validateImageSignature = (filePath: string): void => {
-  const descriptor = fs.openSync(filePath, 'r');
-  const header = Buffer.alloc(12);
-  try {
-    fs.readSync(descriptor, header, 0, 12, 0);
-  } finally {
-    fs.closeSync(descriptor);
-  }
+export const detectImageMime = (buffer: Buffer): string => {
+  const header = buffer.subarray(0, 12);
 
   const isJpeg = header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
   const isPng =
@@ -108,12 +93,13 @@ export const validateImageSignature = (filePath: string): void => {
     header.subarray(0, 4).toString('ascii') === 'RIFF' &&
     header.subarray(8, 12).toString('ascii') === 'WEBP';
 
-  if (!isJpeg && !isPng && !isWebp) {
-    fs.unlinkSync(filePath);
-    throw new BadRequestError('El archivo no es una imagen válida');
-  }
+  if (isJpeg) return 'image/jpeg';
+  if (isPng) return 'image/png';
+  if (isWebp) return 'image/webp';
+  throw new BadRequestError('El archivo no es una imagen válida');
 };
 
+/** Borra un avatar antiguo que aún viva en disco (instalaciones previas). */
 export const removeUploadedFile = (publicUrl: string | null | undefined): void => {
   if (!publicUrl || !publicUrl.startsWith('/uploads/')) return;
   const relative = publicUrl.replace('/uploads/', '');

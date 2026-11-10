@@ -1,4 +1,4 @@
-# Nexo CRM
+# Softplus
 
 CRM web full stack para gestionar empresas, clientes, oportunidades y ventas, con
 autenticación por sesión, control de acceso por roles, auditoría de actividad y
@@ -21,8 +21,7 @@ tablero comercial.
 | Panel | KPIs (ingresos confirmados, pipeline abierto, conversión, clientes), gráfico de ingresos de 6 meses, embudo por etapa, oportunidades y actividad recientes. |
 | Empresas | CRUD, filtros por estado/sector, búsqueda, detalle con clientes, oportunidades y ventas, archivado lógico. |
 | Clientes | CRUD, filtros por estado/empresa, búsqueda, detalle con oportunidades y ventas, archivado lógico. |
-| Oportunidades | CRUD, vista tabla y **Kanban** por etapa, filtros, importe, probabilidad, fecha estimada, cierre (ganada/perdida) automático por etapa. |
-| Ventas | Registro manual o desde una oportunidad ganada, numeración `V-AAAA-00001`, confirmación (solo administrador), cancelación con confirmación explícita, resumen por moneda. |
+| Negocio | Oportunidades con vista tabla y **Kanban** por etapa, filtros, importe, probabilidad, fecha estimada y cierre automático por etapa; ventas con registro desde oportunidades ganadas o de forma manual, numeración `V-AAAA-00001`, confirmación (solo administrador), cancelación con confirmación explícita y resumen por moneda. |
 | Usuarios | Exclusivo de administradores: alta, edición, rol, estado, reseteo de contraseña temporal. |
 | Configuración | Perfil, avatar, cambio de contraseña, tema (claro/oscuro/sistema), sesiones activas, vinculación de Google. |
 | Actividad | Auditoría filtrable por entidad de todas las acciones relevantes. |
@@ -280,8 +279,8 @@ Comandos: `pnpm test:backend`, `pnpm test:frontend`.
 - Los archivos de proyecto (incluidas imágenes) se guardan en PostgreSQL
   (`project_files.data`) para sobrevivir a reinicios y a discos efímeros como el de
   Render. La descarga se hace por API autenticada (`/api/projects/:id/files/:fileId/download`).
-- Los avatares se guardan en disco local (`UPLOAD_DIR`); en un despliegue multi-instancia
-  conviene sustituirlo por almacenamiento de objetos.
+- Los avatares también se guardan en PostgreSQL (`user_avatars.data`) y se sirven desde
+  `/api/avatars/:userId`, por lo que sobreviven a reinicios y despliegues en Render.
 - La aplicación no incluye envío de correos (recuperación de contraseña se resuelve con
   reseteo por parte de un administrador).
 - El límite de tasa es en memoria: con varias instancias se debe usar un almacén
