@@ -40,10 +40,10 @@ const navGroups: NavGroup[] = [
   {
     label: "Comercial",
     items: [
-      { to: "/companies", label: "Empresas", icon: Building2 },
-      { to: "/clients", label: "Clientes", icon: Users },
       { to: "/opportunities", label: "Oportunidades", icon: BarChart3 },
       { to: "/sales", label: "Ventas", icon: Wallet },
+      { to: "/companies", label: "Empresas", icon: Building2 },
+      { to: "/clients", label: "Contacto", icon: Users },
     ],
   },
   {
