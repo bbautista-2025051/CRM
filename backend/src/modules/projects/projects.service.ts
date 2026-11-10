@@ -232,6 +232,19 @@ export const updateProject = async (id: string, input: ProjectInput, actor: User
   const existing = await prisma.project.findUnique({ where: { id } });
   if (!existing) throw new NotFoundError('El proyecto no existe');
 
+  if (actor.role !== 'ADMIN') {
+    if (actor.role !== 'VENDEDOR' || existing.managerId !== actor.id) {
+      throw new ForbiddenError('Solo puedes editar los proyectos que tienes asignados');
+    }
+
+    const editableFields = new Set(['phone', 'preSales', 'solution', 'status']);
+    if (Object.keys(input).some((field) => !editableFields.has(field))) {
+      throw new ForbiddenError(
+        'Solo puedes editar la preventa, solución, estado y teléfono del proyecto asignado',
+      );
+    }
+  }
+
   validateDates(
     input.startDate !== undefined ? input.startDate : existing.startDate,
     input.dueDate !== undefined ? input.dueDate : existing.dueDate,

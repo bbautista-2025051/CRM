@@ -5,6 +5,7 @@ import {
   canConfirmSales,
   canDeleteOpportunity,
   canEditSale,
+  canEditProjectFields,
   canManageOpportunity,
   canManageSale,
   canManageUsers,
@@ -53,6 +54,16 @@ describe('ventas', () => {
     expect(canManageSale('VENDEDOR', VENDOR, VENDOR)).toBe(true);
     expect(canManageSale('VENDEDOR', OTHER, VENDOR)).toBe(false);
     expect(canManageSale('ADMIN', OTHER, VENDOR)).toBe(true);
+  });
+
+  describe('proyectos', () => {
+    it('permite editar datos al administrador o al vendedor asignado', () => {
+      expect(canEditProjectFields('ADMIN', OTHER, VENDOR)).toBe(true);
+      expect(canEditProjectFields('VENDEDOR', VENDOR, VENDOR)).toBe(true);
+      expect(canEditProjectFields('VENDEDOR', OTHER, VENDOR)).toBe(false);
+      expect(canEditProjectFields('GERENTE', VENDOR, VENDOR)).toBe(false);
+      expect(canEditProjectFields(undefined, undefined, VENDOR)).toBe(false);
+    });
   });
 
   it('solo deja editar pendientes al vendedor propietario', () => {

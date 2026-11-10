@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CalendarDays,
+  Check,
   Download,
   File as FileIcon,
   FileArchive,
@@ -9,12 +10,14 @@ import {
   FileSpreadsheet,
   FileText,
   Phone,
+  Pencil,
   Plus,
   Trash2,
   X,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { Input, Select, Textarea } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Avatar } from '@/components/ui/Avatar';
@@ -24,7 +27,7 @@ import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { projectsApi, unwrap } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
-import { isAdmin } from '@/lib/permissions';
+import { canEditProjectFields, isAdmin } from '@/lib/permissions';
 import { cn } from '@/lib/cn';
 import { formatBytes, formatDate, formatDateTime, formatMoney } from '@/lib/format';
 import type { ProjectComment, ProjectFile, ProjectStatus } from '@/types';
@@ -57,6 +60,13 @@ const FILE_STYLES: Record<string, { icon: typeof FileIcon; tone: string }> = {
 
 const fileStyle = (file: ProjectFile) =>
   FILE_STYLES[extFromName(file.originalName)] ?? { icon: FileIcon, tone: 'bg-elevated text-muted' };
+
+interface ProjectFieldsDraft {
+  preSales: string;
+  solution: string;
+  status: ProjectStatus;
+  phone: string;
+}
 
 export const projectNumberLabel = (number?: number | null): string =>
   number ? `PRJ-${String(number).padStart(3, '0')}` : '—';
@@ -169,8 +179,13 @@ export const ProjectDetailModal = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingCount, setUploadingCount] = useState(0);
   const [commentDraft, setCommentDraft] = useState('');
+  const [fieldsDraft, setFieldsDraft] = useState<ProjectFieldsDraft | null>(null);
   // Archivos subidos que aún no pertenecen a un comentario (pendientes de "Comentar").
   const [stagedFiles, setStagedFiles] = useState<ProjectFile[]>([]);
+
+  useEffect(() => {
+    setFieldsDraft(null);
+  }, [open, projectId]);
 
   const query = useQuery({
     queryKey: ['projects', 'detail', projectId],
@@ -182,6 +197,34 @@ export const ProjectDetailModal = ({
     queryKey: ['projects', 'comments', projectId],
     queryFn: async () => unwrap(await projectsApi.listComments(projectId as string)),
     enabled: open && Boolean(projectId),
+  });
+
+  const updateProject = useMutation({
+    mutationFn: async (values: ProjectFieldsDraft) => {
+      if (!projectId) throw new Error('No hay un proyecto seleccionado.');
+      return unwrap(
+        await projectsApi.update(projectId, {
+          preSales: values.preSales.trim() || null,
+          solution: values.solution.trim() || null,
+          status: values.status,
+          phone: values.phone.trim() || null,
+        }),
+      );
+    },
+    onSuccess: (saved) => {
+      success('Proyecto actualizado', 'Los datos del proyecto se guardaron correctamente.');
+      setFieldsDraft(null);
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
+      void queryClient.invalidateQueries({ queryKey: ['team'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      void queryClient.invalidateQueries({ queryKey: ['projects', 'detail', saved.id] });
+    },
+    onError: (error) => {
+      toastError(
+        'No se pudieron guardar los cambios',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
+      );
+    },
   });
 
   const removeFile = useMutation({
@@ -299,6 +342,9 @@ export const ProjectDetailModal = ({
 
   const project = query.data;
   const comments = commentsQuery.data ?? [];
+  const canEditFields = project
+    ? canEditProjectFields(user?.role, user?.id, project.managerId)
+    : false;
 
   return (
     <Modal
@@ -336,6 +382,46 @@ export const ProjectDetailModal = ({
           <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             {/* Columna izquierda: ficha */}
             <div className="h-fit rounded-xl border border-line bg-elevated/20">
+              {canEditFields ? (
+                <div className="flex justify-end gap-2 px-4 pt-3">
+                  {fieldsDraft ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setFieldsDraft(null)}
+                        disabled={updateProject.isPending}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        leftIcon={<Check className="h-4 w-4" />}
+                        onClick={() => updateProject.mutate(fieldsDraft)}
+                        loading={updateProject.isPending}
+                      >
+                        Guardar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      leftIcon={<Pencil className="h-4 w-4" />}
+                      onClick={() =>
+                        setFieldsDraft({
+                          preSales: project.preSales ?? '',
+                          solution: project.solution ?? '',
+                          status: project.status,
+                          phone: project.phone ?? '',
+                        })
+                      }
+                    >
+                      Editar datos
+                    </Button>
+                  )}
+                </div>
+              ) : null}
               <div className="divide-y divide-line">
                 <RowInline label="Vendedor">
                   {project.manager ? (
@@ -356,9 +442,34 @@ export const ProjectDetailModal = ({
                     {projectNumberLabel(project.number)}
                   </span>
                 </Row>
-                <Row label="Preventa">{project.preSales || 'Sin preventa'}</Row>
+                <Row label="Preventa">
+                  {fieldsDraft ? (
+                    <Input
+                      aria-label="Preventa"
+                      maxLength={160}
+                      disabled={updateProject.isPending}
+                      value={fieldsDraft.preSales}
+                      onChange={(event) =>
+                        setFieldsDraft({ ...fieldsDraft, preSales: event.target.value })
+                      }
+                    />
+                  ) : (
+                    project.preSales || 'Sin preventa'
+                  )}
+                </Row>
                 <Row label="Solución">
-                  {project.solution ? (
+                  {fieldsDraft ? (
+                    <Textarea
+                      aria-label="Solución"
+                      rows={3}
+                      maxLength={4000}
+                      disabled={updateProject.isPending}
+                      value={fieldsDraft.solution}
+                      onChange={(event) =>
+                        setFieldsDraft({ ...fieldsDraft, solution: event.target.value })
+                      }
+                    />
+                  ) : project.solution ? (
                     <span className="block whitespace-pre-line leading-6">{project.solution}</span>
                   ) : (
                     'Sin solución'
@@ -366,10 +477,40 @@ export const ProjectDetailModal = ({
                 </Row>
 
                 <RowInline label="Estado">
-                  <ProjectStatusBadge status={project.status as ProjectStatus} />
+                  {fieldsDraft ? (
+                    <Select
+                      aria-label="Estado"
+                      disabled={updateProject.isPending}
+                      value={fieldsDraft.status}
+                      onChange={(event) =>
+                        setFieldsDraft({
+                          ...fieldsDraft,
+                          status: event.target.value === 'COMPLETED' ? 'COMPLETED' : 'ACTIVE',
+                        })
+                      }
+                    >
+                      <option value="ACTIVE">Activo</option>
+                      <option value="COMPLETED">Terminado</option>
+                    </Select>
+                  ) : (
+                    <ProjectStatusBadge status={project.status} />
+                  )}
                 </RowInline>
                 <RowInline label="Teléfono" icon={Phone}>
-                  {project.phone || 'Sin teléfono'}
+                  {fieldsDraft ? (
+                    <Input
+                      aria-label="Teléfono"
+                      type="tel"
+                      maxLength={40}
+                      disabled={updateProject.isPending}
+                      value={fieldsDraft.phone}
+                      onChange={(event) =>
+                        setFieldsDraft({ ...fieldsDraft, phone: event.target.value })
+                      }
+                    />
+                  ) : (
+                    project.phone || 'Sin teléfono'
+                  )}
                 </RowInline>
                 <RowInline label="Inicio" icon={CalendarDays}>
                   {formatDate(project.startDate)}

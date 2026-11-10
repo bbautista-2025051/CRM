@@ -38,6 +38,14 @@ export const canManageSale = (
   ownerId: string,
 ): boolean => isAdmin(role) || isGerente(role) || (Boolean(userId) && userId === ownerId);
 
+export const canEditProjectFields = (
+  role: Role | undefined | null,
+  userId: string | undefined | null,
+  managerId: string | null,
+): boolean =>
+  isAdmin(role) ||
+  (role === 'VENDEDOR' && Boolean(userId) && userId === managerId);
+
 export const canEditSale = (
   role: Role | undefined | null,
   userId: string | undefined | null,

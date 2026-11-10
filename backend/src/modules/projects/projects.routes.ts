@@ -32,7 +32,6 @@ projectsRouter.post(
 );
 projectsRouter.patch(
   '/:id',
-  requireAdmin,
   csrfProtection,
   validate({ params: idParamSchema, body: updateProjectSchema }),
   controller.update,

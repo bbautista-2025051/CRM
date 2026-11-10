@@ -90,4 +90,61 @@ describe('Proyectos y equipo', () => {
     const teamForbidden = await vendor.agent.get('/api/team/overview');
     expect(teamForbidden.status).toBe(403);
   });
+
+  it('permite al vendedor editar solo los datos comerciales de sus proyectos', async () => {
+    const admin = await setup('ADMIN', 'admin@test.local');
+    const vendor = await setup('VENDEDOR', 'vendor@test.local');
+    const otherVendor = await setup('VENDEDOR', 'other-vendor@test.local');
+    const vendorUser = await prisma.user.findUnique({ where: { email: 'vendor@test.local' } });
+
+    const project = await admin.agent
+      .post('/api/projects')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({
+        name: 'Proyecto del vendedor',
+        managerId: vendorUser?.id,
+      });
+    expect(project.status).toBe(201);
+    const projectId = project.body.data.id as string;
+
+    const updated = await vendor.agent
+      .patch(`/api/projects/${projectId}`)
+      .set('X-CSRF-Token', vendor.csrfToken)
+      .send({
+        preSales: 'Ana Preventa',
+        solution: 'Implementación y capacitación',
+        status: 'COMPLETED',
+        phone: '+502 5555 1212',
+      });
+    expect(updated.status).toBe(200);
+    expect(updated.body.data.preSales).toBe('Ana Preventa');
+    expect(updated.body.data.solution).toBe('Implementación y capacitación');
+    expect(updated.body.data.status).toBe('COMPLETED');
+    expect(updated.body.data.phone).toBe('+502 5555 1212');
+
+    const forbiddenField = await vendor.agent
+      .patch(`/api/projects/${projectId}`)
+      .set('X-CSRF-Token', vendor.csrfToken)
+      .send({ name: 'Nombre cambiado por vendedor' });
+    expect(forbiddenField.status).toBe(403);
+
+    const otherProject = await admin.agent
+      .post('/api/projects')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ name: 'Proyecto de otro vendedor' });
+    expect(otherProject.status).toBe(201);
+
+    const forbiddenProject = await otherVendor.agent
+      .patch(`/api/projects/${otherProject.body.data.id}`)
+      .set('X-CSRF-Token', otherVendor.csrfToken)
+      .send({ preSales: 'No asignada' });
+    expect(forbiddenProject.status).toBe(403);
+
+    const adminUpdate = await admin.agent
+      .patch(`/api/projects/${otherProject.body.data.id}`)
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ preSales: 'Preventa global' });
+    expect(adminUpdate.status).toBe(200);
+    expect(adminUpdate.body.data.preSales).toBe('Preventa global');
+  });
 });
