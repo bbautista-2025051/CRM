@@ -13,6 +13,7 @@ import type {
   Opportunity,
   OpportunityComment,
   OpportunityFile,
+  OpportunityStageOption,
   ProfileResponse,
   ProjectComment,
   ProjectDetail,
@@ -104,6 +105,10 @@ export const clientsApi = {
 };
 
 export const opportunitiesApi = {
+  stages: () =>
+    api.get<DataEnvelope<OpportunityStageOption[]>>('/api/opportunities/stages'),
+  createStage: (name: string) =>
+    api.post<DataEnvelope<OpportunityStageOption>>('/api/opportunities/stages', { name }),
   list: (params: {
     page?: number;
     pageSize?: number;

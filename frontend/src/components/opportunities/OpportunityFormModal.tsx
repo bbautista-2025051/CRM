@@ -14,12 +14,12 @@ import { useAuth } from '@/providers/AuthProvider';
 import {
   useClientOptions,
   useCompanyOptions,
+  useOpportunityStages,
   useUserOptions,
 } from '@/hooks/queries';
 import { opportunitiesApi, unwrap } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
 import { isAdmin } from '@/lib/permissions';
-import { STAGE_LABELS, STAGE_ORDER } from '@/lib/labels';
 import {
   emptyToNull,
   opportunityFormSchema,
@@ -42,7 +42,7 @@ const defaults = (
   value: opportunity?.value ?? '',
   probability: opportunity ? String(opportunity.probability) : '50',
   expectedCloseDate: opportunity?.expectedCloseDate?.slice(0, 10) ?? '',
-  stage: opportunity?.stage ?? stage ?? 'PROSPECTO',
+  stage: opportunity?.stage ?? stage ?? 'NEGOCIACION',
 });
 
 export const OpportunityFormModal = ({
@@ -104,6 +104,7 @@ export const OpportunityFormModal = ({
     open,
   );
   const users = useUserOptions(isAdmin(user?.role) && open);
+  const stages = useOpportunityStages(open);
 
   useEffect(() => {
     if (open) {
@@ -171,6 +172,11 @@ export const OpportunityFormModal = ({
   const companyOptions = companies.data ?? [];
   const clientOptions = clients.data ?? [];
   const userOptions = users.data?.data ?? [];
+  const stageOptions = stages.data ?? [
+    { value: 'NEGOCIACION', label: 'Negociación', isCustom: false },
+    { value: 'GANADA', label: 'Ganada', isCustom: false },
+    { value: 'PERDIDA', label: 'Perdida', isCustom: false },
+  ];
 
   // Aplica la empresa creada desde el modal anidado cuando el select ya la
   // incluye (las opciones se recargan tras invalidar la caché de empresas).
@@ -412,13 +418,13 @@ export const OpportunityFormModal = ({
             hint={hasSale ? 'Solo puede permanecer en Ganada.' : undefined}
           >
             <Select id="opportunity-stage" disabled={hasSale} {...register('stage')}>
-              {STAGE_ORDER.filter((stage) => !hasSale || stage === 'GANADA').map(
-                (stage) => (
-                  <option key={stage} value={stage}>
-                    {STAGE_LABELS[stage]}
+              {stageOptions
+                .filter((stage) => !hasSale || stage.value === 'GANADA')
+                .map((stage) => (
+                  <option key={stage.value} value={stage.value}>
+                    {stage.label}
                   </option>
-                ),
-              )}
+                ))}
             </Select>
           </Field>
         </div>

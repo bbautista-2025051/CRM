@@ -178,14 +178,8 @@ export const openApiDocument = {
           },
           stage: {
             type: 'string',
-            enum: [
-              'PROSPECTO',
-              'CALIFICACION',
-              'PROPUESTA',
-              'NEGOCIACION',
-              'GANADA',
-              'PERDIDA',
-            ],
+            description:
+              'NEGOCIACION, GANADA, PERDIDA o el identificador de una etapa personalizada.',
           },
         },
       },
@@ -493,7 +487,7 @@ export const openApiDocument = {
             in: 'query',
             schema: {
               type: 'string',
-              enum: ['PROSPECTO', 'CALIFICACION', 'PROPUESTA', 'NEGOCIACION', 'GANADA', 'PERDIDA'],
+              description: 'Etapa integrada o identificador de etapa personalizada.',
             },
           },
           { name: 'ownerId', in: 'query', schema: { type: 'string', format: 'uuid' } },
@@ -510,6 +504,28 @@ export const openApiDocument = {
         parameters: [csrfHeader],
         requestBody: jsonBody({ $ref: '#/components/schemas/OpportunityInput' }),
         responses: { '201': { description: 'Oportunidad creada' }, '403': errorResponse },
+      },
+    },
+    '/opportunities/stages': {
+      get: {
+        tags: ['Oportunidades'],
+        summary: 'Lista las etapas integradas y personalizadas',
+        responses: { '200': { description: 'Lista de etapas' } },
+      },
+      post: {
+        tags: ['Oportunidades'],
+        summary: 'Agrega una etapa personalizada (solo ADMIN)',
+        parameters: [csrfHeader],
+        requestBody: jsonBody({
+          type: 'object',
+          required: ['name'],
+          properties: { name: { type: 'string', minLength: 2, maxLength: 60 } },
+        }),
+        responses: {
+          '201': { description: 'Etapa creada' },
+          '403': errorResponse,
+          '409': errorResponse,
+        },
       },
     },
     '/opportunities/{id}': {

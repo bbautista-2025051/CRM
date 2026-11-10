@@ -3,6 +3,7 @@ import {
   authApi,
   clientsApi,
   companiesApi,
+  opportunitiesApi,
   settingsApi,
   usersApi,
   unwrap,
@@ -29,6 +30,14 @@ export const useSectors = () =>
     queryKey: ['companies', 'sectors'],
     queryFn: async () => unwrap(await companiesApi.sectors()),
     staleTime: 5 * 60_000,
+  });
+
+export const useOpportunityStages = (enabled = true) =>
+  useQuery({
+    queryKey: ['opportunities', 'stages'],
+    queryFn: async () => unwrap(await opportunitiesApi.stages()),
+    enabled,
+    staleTime: 60_000,
   });
 
 export const useClientOptions = (

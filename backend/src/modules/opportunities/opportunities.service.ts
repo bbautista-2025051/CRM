@@ -1,7 +1,6 @@
 import {
   Prisma,
   type Opportunity,
-  type OpportunityStage,
   type User,
 } from '@prisma/client';
 import { prisma } from '../../config/prisma';
@@ -24,7 +23,7 @@ interface ListParams {
   page: number;
   pageSize: number;
   search?: string;
-  stage?: OpportunityStage;
+  stage?: string;
   status?: 'OPEN' | 'WON' | 'LOST';
   ownerId?: string;
   companyId?: string;
@@ -46,13 +45,90 @@ const SORTABLE = [
   'updatedAt',
 ] as const;
 
-const statusForStage = (stage: OpportunityStage): 'OPEN' | 'WON' | 'LOST' => {
+const BUILT_IN_STAGES = [
+  { value: 'NEGOCIACION', label: 'Negociación' },
+  { value: 'GANADA', label: 'Ganada' },
+  { value: 'PERDIDA', label: 'Perdida' },
+] as const;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isBuiltInStage = (stage: string) =>
+  BUILT_IN_STAGES.some((item) => item.value === stage);
+
+export const listOpportunityStages = async () => {
+  const customStages = await prisma.customOpportunityStage.findMany({
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, name: true },
+  });
+  return [
+    ...BUILT_IN_STAGES.map((stage) => ({ ...stage, isCustom: false })),
+    ...customStages.map((stage) => ({
+      value: stage.id,
+      label: stage.name,
+      isCustom: true,
+    })),
+  ];
+};
+
+export const createOpportunityStage = async (name: string, actor: User) => {
+  const normalizedName = name.trim();
+  const normalizedKey = normalizedName.toLowerCase();
+  const builtInExists = BUILT_IN_STAGES.some(
+    (stage) =>
+      stage.label.toLowerCase() === normalizedKey ||
+      stage.value.toLowerCase() === normalizedKey,
+  );
+  const existing = await prisma.customOpportunityStage.findUnique({
+    where: { normalizedName: normalizedKey },
+    select: { id: true },
+  });
+  if (builtInExists || existing) {
+    throw new ConflictError('Ya existe una etapa con ese nombre');
+  }
+
+  try {
+    const stage = await prisma.customOpportunityStage.create({
+      data: { name: normalizedName, normalizedName: normalizedKey },
+      select: { id: true, name: true },
+    });
+    await logActivity({
+      userId: actor.id,
+      action: 'CREATE',
+      entityType: 'OPPORTUNITY',
+      entityId: null,
+      description: `Etapa de oportunidad creada: ${stage.name}`,
+      metadata: { stageId: stage.id },
+    });
+    return { value: stage.id, label: stage.name, isCustom: true };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      throw new ConflictError('Ya existe una etapa con ese nombre');
+    }
+    throw error;
+  }
+};
+
+const validateStage = async (stage: string) => {
+  if (isBuiltInStage(stage)) return;
+  if (!UUID_PATTERN.test(stage)) throw new BadRequestError('La etapa seleccionada no existe');
+  const customStage = await prisma.customOpportunityStage.findUnique({
+    where: { id: stage },
+    select: { id: true },
+  });
+  if (!customStage) throw new BadRequestError('La etapa seleccionada no existe');
+};
+
+const statusForStage = (stage: string): 'OPEN' | 'WON' | 'LOST' => {
   if (stage === 'GANADA') return 'WON';
   if (stage === 'PERDIDA') return 'LOST';
   return 'OPEN';
 };
 
-const datesForStage = (stage: OpportunityStage) => {
+const datesForStage = (stage: string) => {
   if (stage === 'GANADA') return { wonAt: new Date(), lostAt: null };
   if (stage === 'PERDIDA') return { wonAt: null, lostAt: new Date() };
   return { wonAt: null, lostAt: null };
@@ -194,7 +270,7 @@ interface OpportunityInput {
   value: string;
   probability: number;
   expectedCloseDate: Date | null;
-  stage: OpportunityStage;
+  stage: string;
 }
 
 const createWonRecords = async (
@@ -260,6 +336,7 @@ export const createOpportunity = async (input: OpportunityInput, actor: User) =>
   }
 
   await validateOwner(ownerId);
+  await validateStage(input.stage);
   const relations = await validateRelations(input.companyId, input.clientId);
 
   const opportunity = await prisma.$transaction(async (tx) => {
@@ -336,6 +413,7 @@ export const updateOpportunity = async (
   const relations = await validateRelations(companyId, clientId);
 
   const nextStage = input.stage ?? existing.stage;
+  if (input.stage !== undefined) await validateStage(input.stage);
   if (existing.sale && nextStage !== 'GANADA') {
     throw new ConflictError(
       `La oportunidad tiene la venta ${existing.sale.saleNumber} asociada. Cancela la venta antes de cambiar la etapa.`,

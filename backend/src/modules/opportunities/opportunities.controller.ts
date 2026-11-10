@@ -13,6 +13,20 @@ export const list = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json(result);
 });
 
+export const listStages = asyncHandler(async (_req: Request, res: Response) => {
+  const stages = await opportunitiesService.listOpportunityStages();
+  res.status(200).json({ data: stages });
+});
+
+export const createStage = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  const stage = await opportunitiesService.createOpportunityStage(
+    req.validated.body.name,
+    req.auth.user,
+  );
+  res.status(201).json({ data: stage });
+});
+
 export const getById = asyncHandler(async (req: Request, res: Response) => {
   const opportunity = await opportunitiesService.getOpportunity(req.validated.params.id);
   res.status(200).json({ data: opportunity });

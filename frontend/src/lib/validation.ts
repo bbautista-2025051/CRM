@@ -125,7 +125,7 @@ export const opportunityFormSchema = z.object({
     'La probabilidad debe ser un número entero entre 0 y 100',
   ),
   expectedCloseDate: optionalDate,
-  stage: z.enum(['PROSPECTO', 'CALIFICACION', 'PROPUESTA', 'NEGOCIACION', 'GANADA', 'PERDIDA']),
+  stage: z.string().min(1, 'Selecciona una etapa').max(60),
 });
 export type OpportunityFormValues = z.infer<typeof opportunityFormSchema>;
 

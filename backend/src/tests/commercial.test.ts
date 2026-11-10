@@ -176,7 +176,7 @@ describe('Operaciones comerciales', () => {
         value: 1500.5,
         probability: 60,
         expectedCloseDate: futureDate(30),
-        stage: 'PROPUESTA',
+        stage: 'NEGOCIACION',
       });
 
     expect(opportunity.status).toBe(201);
@@ -477,6 +477,68 @@ describe('Operaciones comerciales', () => {
       });
 
     expect(mismatch.status).toBe(400);
+  });
+
+  it('limita las etapas predeterminadas a tres y permite agregar etapas solo al administrador', async () => {
+    const admin = await setupAdmin();
+    const vendor = await setupVendor();
+
+    const initialStages = await vendor.agent.get('/api/opportunities/stages');
+    expect(initialStages.status).toBe(200);
+    expect(initialStages.body.data.map((stage: { value: string }) => stage.value)).toEqual([
+      'NEGOCIACION',
+      'GANADA',
+      'PERDIDA',
+    ]);
+
+    const forbidden = await vendor.agent
+      .post('/api/opportunities/stages')
+      .set('X-CSRF-Token', vendor.csrfToken)
+      .send({ name: 'Revisión legal' });
+    expect(forbidden.status).toBe(403);
+
+    const duplicateBuiltIn = await admin.agent
+      .post('/api/opportunities/stages')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ name: 'Negociación' });
+    expect(duplicateBuiltIn.status).toBe(409);
+
+    const createdStage = await admin.agent
+      .post('/api/opportunities/stages')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ name: 'Revisión legal' });
+    expect(createdStage.status).toBe(201);
+    expect(createdStage.body.data.label).toBe('Revisión legal');
+    expect(createdStage.body.data.isCustom).toBe(true);
+
+    const duplicate = await admin.agent
+      .post('/api/opportunities/stages')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ name: 'revisión LEGAL' });
+    expect(duplicate.status).toBe(409);
+
+    const opportunity = await admin.agent
+      .post('/api/opportunities')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({
+        name: 'Validación jurídica',
+        value: 2500,
+        stage: createdStage.body.data.value,
+      });
+    expect(opportunity.status).toBe(201);
+    expect(opportunity.body.data.stage).toBe(createdStage.body.data.value);
+    expect(opportunity.body.data.status).toBe('OPEN');
+    expect(opportunity.body.data.sale).toBeNull();
+
+    const invalidStage = await admin.agent
+      .post('/api/opportunities')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({
+        name: 'Etapa inexistente',
+        value: 100,
+        stage: 'no-es-una-etapa',
+      });
+    expect(invalidStage.status).toBe(400);
   });
 
   it('permite comentar una oportunidad y adjuntar y descargar archivos ZIP', async () => {

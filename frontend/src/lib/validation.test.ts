@@ -105,7 +105,7 @@ describe('opportunityFormSchema', () => {
     value: '1000',
     probability: '50',
     expectedCloseDate: '',
-    stage: 'PROSPECTO' as const,
+    stage: 'NEGOCIACION' as const,
   };
 
   it('acepta importes positivos y probabilidad entera', () => {

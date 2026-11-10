@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth } from '../../middlewares/auth';
+import { requireAdmin, requireAuth } from '../../middlewares/auth';
 import { csrfProtection } from '../../middlewares/csrf';
 import { opportunityFileUpload } from '../../middlewares/upload';
 import { validate } from '../../middlewares/validate';
@@ -10,6 +10,7 @@ import {
   opportunityCommentBodySchema,
   opportunityFileParamsSchema,
   opportunityListQuerySchema,
+  opportunityStageBodySchema,
   updateOpportunitySchema,
 } from './opportunities.schemas';
 
@@ -21,6 +22,14 @@ opportunitiesRouter.get(
   '/',
   validate({ query: opportunityListQuerySchema }),
   controller.list,
+);
+opportunitiesRouter.get('/stages', controller.listStages);
+opportunitiesRouter.post(
+  '/stages',
+  requireAdmin,
+  csrfProtection,
+  validate({ body: opportunityStageBodySchema }),
+  controller.createStage,
 );
 opportunitiesRouter.get('/:id', validate({ params: idParamSchema }), controller.getById);
 opportunitiesRouter.post(

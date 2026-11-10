@@ -18,6 +18,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useOpportunityStages } from '@/hooks/queries';
 import { clientsApi, unwrap } from '@/lib/endpoints';
 import { canArchive } from '@/lib/permissions';
 import { formatDate, formatDateTime, formatMoney, formatNumber } from '@/lib/format';
@@ -48,6 +49,7 @@ export const ClientDetailPage = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabValue>('opportunities');
   const [editOpen, setEditOpen] = useState(false);
+  const stages = useOpportunityStages();
 
   const query = useQuery({
     queryKey: ['clients', 'detail', id],
@@ -390,7 +392,10 @@ export const ClientDetailPage = () => {
                       </td>
                       <td className="text-xs text-muted">{opportunity.owner?.name ?? '—'}</td>
                       <td>
-                        <StageBadge stage={opportunity.stage} />
+                        <StageBadge
+                          stage={opportunity.stage}
+                          label={stages.data?.find((item) => item.value === opportunity.stage)?.label}
+                        />
                       </td>
                       <td className="whitespace-nowrap text-right font-medium text-ink">
                         {formatMoney(opportunity.value)}

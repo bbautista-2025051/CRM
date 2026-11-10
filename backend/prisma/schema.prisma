@@ -42,15 +42,6 @@ enum ClientStatus {
   ARCHIVED
 }
 
-enum OpportunityStage {
-  PROSPECTO
-  CALIFICACION
-  PROPUESTA
-  NEGOCIACION
-  GANADA
-  PERDIDA
-}
-
 enum OpportunityStatus {
   OPEN
   WON
@@ -226,7 +217,7 @@ model Opportunity {
   value             Decimal           @db.Decimal(14, 2)
   probability       Int               @default(50)
   expectedCloseDate DateTime?         @map("expected_close_date") @db.Date
-  stage             OpportunityStage  @default(PROSPECTO)
+  stage             String            @default("NEGOCIACION") @db.VarChar(60)
   status            OpportunityStatus @default(OPEN)
   wonAt             DateTime?         @map("won_at")
   lostAt            DateTime?         @map("lost_at")
@@ -248,6 +239,15 @@ model Opportunity {
   @@index([status])
   @@index([expectedCloseDate])
   @@map("opportunities")
+}
+
+model CustomOpportunityStage {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String   @db.VarChar(60)
+  normalizedName String   @unique @map("normalized_name") @db.VarChar(60)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("custom_opportunity_stages")
 }
 
 model OpportunityFile {

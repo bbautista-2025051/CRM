@@ -1,7 +1,6 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { OpportunityFormModal } from '@/components/opportunities/OpportunityFormModal';
 import { SaleFormModal } from '@/components/sales/SaleFormModal';
-import { STAGE_ORDER } from '@/lib/labels';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 type BusinessView = 'opportunities' | 'sales';
@@ -16,7 +15,7 @@ export const NegocioCreatePage = () => {
   const clientId = searchParams.get('clientId') || undefined;
   const opportunityId = searchParams.get('opportunityId') || undefined;
   const stageParam = searchParams.get('stage');
-  const stage = STAGE_ORDER.find((item) => item === stageParam);
+  const stage = stageParam ?? undefined;
   const returnToBusiness = () => {
     navigate(`/negocio?view=${view}`);
   };

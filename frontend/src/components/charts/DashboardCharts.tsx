@@ -15,7 +15,7 @@ import {
 import { ChartNoAxesCombined, PieChart as PieIcon } from 'lucide-react';
 import type { DashboardData, OpportunityStage } from '@/types';
 import { formatCompactMoney, formatMoney, formatNumber } from '@/lib/format';
-import { STAGE_BAR_COLORS, STAGE_LABELS, STAGE_ORDER } from '@/lib/labels';
+import { STAGE_BAR_COLORS } from '@/lib/labels';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 const tooltipStyle = {
@@ -105,15 +105,7 @@ export const StageChart = ({
   data: DashboardData['charts']['opportunitiesByStage'];
 }) => {
   const byStage = new Map(data.map((item) => [item.stage, item]));
-  const chartData = STAGE_ORDER.map((stage) => {
-    const item = byStage.get(stage);
-    return {
-      stage,
-      label: STAGE_LABELS[stage],
-      count: item?.count ?? 0,
-      value: item?.value ?? '0.00',
-    };
-  });
+  const chartData = Array.from(byStage.values());
   const hasData = chartData.some((item) => item.count > 0);
 
   if (!hasData) {
@@ -159,7 +151,10 @@ export const StageChart = ({
           />
           <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={22}>
             {chartData.map((item) => (
-              <Cell key={item.stage} fill={STAGE_BAR_COLORS[item.stage as OpportunityStage]} />
+              <Cell
+                key={item.stage}
+                fill={STAGE_BAR_COLORS[item.stage as OpportunityStage] ?? '#64748b'}
+              />
             ))}
           </Bar>
         </BarChart>
