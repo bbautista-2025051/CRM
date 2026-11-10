@@ -70,3 +70,20 @@ export const updateOpportunitySchema = opportunityBodySchema
   .refine((data) => Object.keys(data).length > 0, {
     message: 'Envía al menos un campo para actualizar',
   });
+
+export const opportunityCommentBodySchema = z.object({
+  body: z
+    .string({ required_error: 'Escribe un comentario' })
+    .trim()
+    .min(1, 'Escribe un comentario')
+    .max(4000, 'El comentario no puede superar 4000 caracteres'),
+  fileIds: z
+    .array(z.string().uuid('El identificador del archivo no es válido'))
+    .max(10, 'Puedes adjuntar hasta 10 archivos por comentario')
+    .optional(),
+});
+
+export const opportunityFileParamsSchema = z.object({
+  id: z.string().uuid('El identificador de la oportunidad no es válido'),
+  fileId: z.string().uuid('El identificador del archivo no es válido'),
+});

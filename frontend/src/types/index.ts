@@ -139,6 +139,30 @@ export interface Opportunity {
   project?: { id: string; number: number | null } | null;
 }
 
+export interface OpportunityComment {
+  id: string;
+  opportunityId: string;
+  authorId: string | null;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  author?: { id: string; name: string; avatarUrl: string | null } | null;
+  files?: OpportunityFile[];
+}
+
+export interface OpportunityFile {
+  id: string;
+  opportunityId: string;
+  commentId: string | null;
+  originalName: string;
+  storedName: string;
+  mimeType: string;
+  size: number;
+  uploadedById: string | null;
+  createdAt: string;
+  uploadedBy?: { id: string; name: string; avatarUrl: string | null } | null;
+}
+
 export interface Sale {
   id: string;
   saleNumber: string;

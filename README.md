@@ -21,7 +21,7 @@ tablero comercial.
 | Panel | KPIs (ingresos confirmados, pipeline abierto, conversión, clientes), gráfico de ingresos de 6 meses, embudo por etapa, oportunidades y actividad recientes. |
 | Empresas | CRUD, filtros por estado/sector, búsqueda, detalle con clientes, oportunidades y ventas, archivado lógico. |
 | Clientes | CRUD, filtros por estado/empresa, búsqueda, detalle con oportunidades y ventas, archivado lógico. |
-| Negocio | Oportunidades con vista tabla y **Kanban** por etapa, filtros, importe, probabilidad, fecha estimada y cierre automático por etapa; ventas con registro desde oportunidades ganadas o de forma manual, numeración `V-AAAA-00001`, confirmación (solo administrador), cancelación con confirmación explícita y resumen por moneda. |
+| Negocio | Oportunidades con vista tabla y **Kanban** por etapa, filtros, comentarios y archivos adjuntos de cualquier tipo (incluidos ZIP), importe, probabilidad, fecha estimada y cierre automático por etapa; ventas con registro desde oportunidades ganadas o de forma manual, numeración `V-AAAA-00001`, confirmación (solo administrador), cancelación con confirmación explícita y resumen por moneda. |
 | Usuarios | Exclusivo de administradores: alta, edición, rol, estado, reseteo de contraseña temporal. |
 | Configuración | Perfil, avatar, cambio de contraseña, tema (claro/oscuro/sistema), sesiones activas, vinculación de Google. |
 | Actividad | Auditoría filtrable por entidad de todas las acciones relevantes. |

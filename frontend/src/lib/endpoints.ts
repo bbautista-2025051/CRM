@@ -11,6 +11,8 @@ import type {
   GoogleStatus,
   ListResponse,
   Opportunity,
+  OpportunityComment,
+  OpportunityFile,
   ProfileResponse,
   ProjectComment,
   ProjectDetail,
@@ -117,6 +119,22 @@ export const opportunitiesApi = {
     sortOrder?: string;
   }) => api.get<ListResponse<Opportunity>>(`/api/opportunities${buildQuery(params)}`),
   get: (id: string) => api.get<DataEnvelope<Opportunity>>(`/api/opportunities/${id}`),
+  listComments: (id: string) =>
+    api.get<DataEnvelope<OpportunityComment[]>>(`/api/opportunities/${id}/comments`),
+  createComment: (id: string, body: string, fileIds: string[] = []) =>
+    api.post<DataEnvelope<OpportunityComment>>(`/api/opportunities/${id}/comments`, {
+      body,
+      fileIds,
+    }),
+  uploadFile: (id: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<DataEnvelope<OpportunityFile>>(`/api/opportunities/${id}/files`, form);
+  },
+  removeFile: (id: string, fileId: string) =>
+    api.delete<void>(`/api/opportunities/${id}/files/${fileId}`),
+  downloadFile: (id: string, fileId: string) =>
+    download(`/api/opportunities/${id}/files/${fileId}/download`),
   create: (payload: Record<string, unknown>) =>
     api.post<DataEnvelope<Opportunity>>('/api/opportunities', payload),
   update: (id: string, payload: Record<string, unknown>) =>

@@ -533,6 +533,74 @@ export const openApiDocument = {
         responses: { '204': { description: 'Eliminada' }, '409': errorResponse },
       },
     },
+    '/opportunities/{id}/comments': {
+      get: {
+        tags: ['Oportunidades'],
+        summary: 'Lista comentarios y sus archivos adjuntos',
+        parameters: [idParam],
+        responses: { '200': { description: 'Comentarios' }, '404': errorResponse },
+      },
+      post: {
+        tags: ['Oportunidades'],
+        summary: 'Agrega un comentario y adjunta archivos ya subidos',
+        parameters: withCsrf([idParam]),
+        requestBody: jsonBody({
+          type: 'object',
+          required: ['body'],
+          properties: {
+            body: { type: 'string', maxLength: 4000 },
+            fileIds: {
+              type: 'array',
+              maxItems: 10,
+              items: { type: 'string', format: 'uuid' },
+            },
+          },
+        }),
+        responses: { '201': { description: 'Comentario creado' }, '400': errorResponse },
+      },
+    },
+    '/opportunities/{id}/files': {
+      post: {
+        tags: ['Oportunidades'],
+        summary: 'Sube un archivo de cualquier tipo de hasta 10 MB',
+        parameters: withCsrf([idParam]),
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                required: ['file'],
+                properties: { file: { type: 'string', format: 'binary' } },
+              },
+            },
+          },
+        },
+        responses: { '201': { description: 'Archivo guardado' }, '413': errorResponse },
+      },
+    },
+    '/opportunities/{id}/files/{fileId}/download': {
+      get: {
+        tags: ['Oportunidades'],
+        summary: 'Descarga un archivo privado de la oportunidad',
+        parameters: [
+          idParam,
+          { name: 'fileId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+        ],
+        responses: { '200': { description: 'Archivo binario' }, '404': errorResponse },
+      },
+    },
+    '/opportunities/{id}/files/{fileId}': {
+      delete: {
+        tags: ['Oportunidades'],
+        summary: 'Elimina un archivo propio (o cualquier archivo si ADMIN)',
+        parameters: withCsrf([
+          idParam,
+          { name: 'fileId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+        ]),
+        responses: { '204': { description: 'Archivo eliminado' }, '403': errorResponse },
+      },
+    },
     '/sales': {
       get: {
         tags: ['Ventas'],

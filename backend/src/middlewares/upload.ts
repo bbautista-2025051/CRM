@@ -22,17 +22,20 @@ const sanitizeFileName = (name: string): string =>
 // despliegues con sistema de archivos efímero.
 const projectStorage = multer.memoryStorage();
 
-/** Subida genérica de archivos de proyecto: cualquier tipo, máximo 10 MB. */
-export const projectFileUpload = multer({
+/** Subida genérica de archivos comerciales: cualquier tipo, máximo 10 MB. */
+const businessFileUpload = multer({
   storage: projectStorage,
   limits: { fileSize: PROJECT_FILE_LIMIT_BYTES, files: 1 },
   fileFilter: (_req, _file, callback) => callback(null, true),
 });
+export const projectFileUpload = businessFileUpload;
+export const opportunityFileUpload = businessFileUpload;
 
-export const projectFileStoredName = (originalName: string): string =>
+export const uploadedFileStoredName = (originalName: string): string =>
   `${crypto.randomUUID()}${extFromName(originalName)}`;
-
-export const projectFileOriginalName = sanitizeFileName;
+export const projectFileStoredName = uploadedFileStoredName;
+export const uploadedFileOriginalName = sanitizeFileName;
+export const projectFileOriginalName = uploadedFileOriginalName;
 
 export const removeProjectFile = (storedName: string): void => {
   if (!storedName || storedName !== path.basename(storedName)) return;

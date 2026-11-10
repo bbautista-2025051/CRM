@@ -27,7 +27,6 @@ import {
 } from '@/lib/labels';
 import { cn } from '@/lib/cn';
 import { OpportunityFormModal } from '@/components/opportunities/OpportunityFormModal';
-import { OpportunityDetailModal } from '@/components/opportunities/OpportunityDetailModal';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -71,7 +70,6 @@ export const OpportunitiesPage = () => {
   const [view, setView] = useState<ViewMode>('table');
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
-  const [openId, setOpenId] = useState<string | null>(openRequested);
   const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
@@ -87,7 +85,10 @@ export const OpportunitiesPage = () => {
       navigate(`/negocio/nuevo?${params.toString()}`, { replace: true });
       return;
     }
-    if (openRequested) setOpenId(openRequested);
+    if (openRequested) {
+      navigate(`/negocio/oportunidad/${openRequested}`, { replace: true });
+      return;
+    }
     const next = new URLSearchParams(searchParams);
     next.delete('create');
     next.delete('open');
@@ -128,11 +129,6 @@ export const OpportunitiesPage = () => {
   const openEdit = (opportunity: Opportunity) => {
     setEditing(opportunity);
     setFormOpen(true);
-  };
-
-  const onEditFromDetail = (opportunity: Opportunity) => {
-    setOpenId(null);
-    openEdit(opportunity);
   };
 
   const clearFilters = () => {
@@ -317,7 +313,7 @@ export const OpportunitiesPage = () => {
                         <td>
                           <button
                             type="button"
-                            onClick={() => setOpenId(opportunity.id)}
+                            onClick={() => navigate(`/negocio/oportunidad/${opportunity.id}`)}
                             className="group block max-w-[260px] text-left"
                           >
                             <span className="block truncate font-medium text-ink group-hover:text-brand-strong dark:group-hover:text-brand">
@@ -373,7 +369,7 @@ export const OpportunitiesPage = () => {
                                   icon={<Eye className="h-4 w-4" />}
                                   onClick={() => {
                                     close();
-                                    setOpenId(opportunity.id);
+                                    navigate(`/negocio/oportunidad/${opportunity.id}`);
                                   }}
                                 >
                                   Ver detalle
@@ -456,7 +452,7 @@ export const OpportunitiesPage = () => {
                         <button
                           key={opportunity.id}
                           type="button"
-                          onClick={() => setOpenId(opportunity.id)}
+                          onClick={() => navigate(`/negocio/oportunidad/${opportunity.id}`)}
                           className="focus-ring w-full rounded-lg border border-line bg-surface p-3 text-left shadow-sm transition hover:border-brand/40 hover:shadow-card"
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -517,11 +513,6 @@ export const OpportunitiesPage = () => {
         opportunity={editing}
       />
 
-      <OpportunityDetailModal
-        opportunityId={openId}
-        onClose={() => setOpenId(null)}
-        onEdit={onEditFromDetail}
-      />
     </div>
   );
 };

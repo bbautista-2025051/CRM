@@ -501,4 +501,91 @@ describe('Operaciones comerciales', () => {
 
     expect(mismatch.status).toBe(400);
   });
+
+  it('permite comentar una oportunidad y adjuntar y descargar archivos ZIP', async () => {
+    const admin = await setupAdmin();
+    const opportunity = await admin.agent
+      .post('/api/opportunities')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ name: 'Proyecto con documentación', value: 12000 });
+    expect(opportunity.status).toBe(201);
+
+    const zip = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x10, 0x20, 0x30]);
+    const uploaded = await admin.agent
+      .post(`/api/opportunities/${opportunity.body.data.id}/files`)
+      .set('X-CSRF-Token', admin.csrfToken)
+      .attach('file', zip, { filename: 'documentación.zip', contentType: 'application/zip' });
+
+    expect(uploaded.status).toBe(201);
+    expect(uploaded.body.data.originalName).toBe('documentación.zip');
+    expect(uploaded.body.data.mimeType).toBe('application/zip');
+    expect(uploaded.body.data.size).toBe(zip.length);
+    expect(uploaded.body.data).not.toHaveProperty('data');
+
+    const comment = await admin.agent
+      .post(`/api/opportunities/${opportunity.body.data.id}/comments`)
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ body: 'Documentación recibida.', fileIds: [uploaded.body.data.id] });
+    expect(comment.status).toBe(201);
+    expect(comment.body.data.body).toBe('Documentación recibida.');
+    expect(comment.body.data.files[0].originalName).toBe('documentación.zip');
+
+    const listed = await admin.agent.get(
+      `/api/opportunities/${opportunity.body.data.id}/comments`,
+    );
+    expect(listed.status).toBe(200);
+    expect(listed.body.data).toHaveLength(1);
+    expect(listed.body.data[0].files[0]).not.toHaveProperty('data');
+
+    const downloaded = await admin.agent
+      .get(
+        `/api/opportunities/${opportunity.body.data.id}/files/${uploaded.body.data.id}/download`,
+      )
+      .buffer(true)
+      .parse((response, callback) => {
+        const chunks: Buffer[] = [];
+        response.on('data', (chunk: Buffer) => chunks.push(chunk));
+        response.on('end', () => callback(null, Buffer.concat(chunks)));
+      });
+    expect(downloaded.status).toBe(200);
+    expect(downloaded.headers['content-disposition']).toContain(
+      "filename*=UTF-8''documentaci%C3%B3n.zip",
+    );
+    expect(downloaded.body).toEqual(zip);
+  });
+
+  it('valida CSRF y restringe la eliminación de archivos de oportunidades a quien los subió', async () => {
+    const admin = await setupAdmin();
+    const vendor = await setupVendor();
+    const opportunity = await admin.agent
+      .post('/api/opportunities')
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ name: 'Archivos privados', value: 100 });
+    const opportunityId = opportunity.body.data.id as string;
+    const content = Buffer.from('contenido binario');
+
+    const missingCsrf = await vendor.agent
+      .post(`/api/opportunities/${opportunityId}/files`)
+      .attach('file', content, { filename: 'evidence.anything', contentType: 'application/x-anything' });
+    expect(missingCsrf.status).toBe(403);
+
+    const uploaded = await admin.agent
+      .post(`/api/opportunities/${opportunityId}/files`)
+      .set('X-CSRF-Token', admin.csrfToken)
+      .attach('file', content, {
+        filename: 'evidence.anything',
+        contentType: 'application/x-anything',
+      });
+    expect(uploaded.status).toBe(201);
+
+    const forbidden = await vendor.agent
+      .delete(`/api/opportunities/${opportunityId}/files/${uploaded.body.data.id}`)
+      .set('X-CSRF-Token', vendor.csrfToken);
+    expect(forbidden.status).toBe(403);
+
+    const allowed = await admin.agent
+      .delete(`/api/opportunities/${opportunityId}/files/${uploaded.body.data.id}`)
+      .set('X-CSRF-Token', admin.csrfToken);
+    expect(allowed.status).toBe(204);
+  });
 });
