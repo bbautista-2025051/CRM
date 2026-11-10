@@ -196,3 +196,13 @@
     display: none !important;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-login-up,
+  .animate-login-scale,
+  .animate-login-shine {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
