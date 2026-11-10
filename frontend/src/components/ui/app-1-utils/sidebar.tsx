@@ -21,6 +21,10 @@ export function useSidebar() {
   return context;
 }
 
+export function useOptionalSidebar() {
+  return React.useContext(SidebarContext);
+}
+
 export function SidebarProvider({
   defaultOpen = true,
   open: openProp,
