@@ -25,7 +25,6 @@ import {
   formatPercent,
 } from '@/lib/format';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { StatCard } from '@/components/ui/StatCard';
 import { buttonStyles } from '@/components/ui/Button';
 import { CardsSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -246,53 +245,69 @@ export const DashboardPage = () => {  usePageTitle('Panel');
         </div>
       ) : data ? (
         <>
-          <div className="grid divide-y divide-line border-y border-line sm:grid-cols-2 sm:divide-y-0 xl:grid-cols-4 xl:divide-x">
-            <StatCard
-              flat
-              label="Ingresos confirmados"
-              value={formatMoney(primaryRevenue?.total ?? '0.00', data.defaultCurrency)}
-              hint={
-                <span className="flex flex-wrap items-center gap-1.5">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="card p-5">
+              <div className="flex items-center justify-between pb-2">
+                <span className="text-sm font-medium text-muted">Ingresos confirmados</span>
+                <WalletIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="metric text-2xl font-bold tracking-tight text-ink">
+                  {formatMoney(primaryRevenue?.total ?? '0.00', data.defaultCurrency)}
+                </p>
+                <p className="mt-1 text-xs text-muted">
                   {data.totals.confirmedSales} ventas confirmadas
-                  {otherCurrencies?.length ? (
-                    <>
-                      <span className="text-muted/40">·</span>
-                      {otherCurrencies.map((item) => (
-                        <span key={item.currency}>
-                          {formatMoney(item.total, item.currency)}
-                        </span>
-                      ))}
-                    </>
-                  ) : null}
-                </span>
-              }
-              icon={WalletIcon}
-              tone="emerald"
-            />
-            <StatCard
-              flat
-              label="Pipeline abierto"
-              value={formatMoney(data.totals.openValue, data.defaultCurrency)}
-              hint={`${data.totals.openOpportunities} oportunidades abiertas`}
-              icon={OpportunitiesIcon}
-              tone="brand"
-            />
-            <StatCard
-              flat
-              label="Tasa de conversión"
-              value={formatPercent(data.totals.conversionRate)}
-              hint={`${data.totals.wonOpportunities} ganadas · ${data.totals.lostOpportunities} perdidas`}
-              icon={ConversionIcon}
-              tone="sky"
-            />
-            <StatCard
-              flat
-              label="Clientes activos"
-              value={formatNumber(data.totals.clients)}
-              hint={`${data.totals.activeCompanies} de ${data.totals.companies} empresas activas`}
-              icon={ClientsIcon}
-              tone="amber"
-            />
+                  {otherCurrencies?.length
+                    ? ` · ${otherCurrencies.map((item) => formatMoney(item.total, item.currency)).join(' · ')}`
+                    : ''}
+                </p>
+              </div>
+            </div>
+
+            <div className="card p-5">
+              <div className="flex items-center justify-between pb-2">
+                <span className="text-sm font-medium text-muted">Pipeline abierto</span>
+                <OpportunitiesIcon className="h-5 w-5 text-brand" />
+              </div>
+              <div>
+                <p className="metric text-2xl font-bold tracking-tight text-ink">
+                  {formatMoney(data.totals.openValue, data.defaultCurrency)}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {data.totals.openOpportunities} oportunidades abiertas
+                </p>
+              </div>
+            </div>
+
+            <div className="card p-5">
+              <div className="flex items-center justify-between pb-2">
+                <span className="text-sm font-medium text-muted">Tasa de conversión</span>
+                <ConversionIcon className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+              </div>
+              <div>
+                <p className="metric text-2xl font-bold tracking-tight text-ink">
+                  {formatPercent(data.totals.conversionRate)}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {data.totals.wonOpportunities} ganadas · {data.totals.lostOpportunities} perdidas
+                </p>
+              </div>
+            </div>
+
+            <div className="card p-5">
+              <div className="flex items-center justify-between pb-2">
+                <span className="text-sm font-medium text-muted">Clientes activos</span>
+                <ClientsIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="metric text-2xl font-bold tracking-tight text-ink">
+                  {formatNumber(data.totals.clients)}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {data.totals.activeCompanies} de {data.totals.companies} empresas activas
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="grid gap-6 xl:grid-cols-12">
