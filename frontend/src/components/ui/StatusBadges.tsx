@@ -49,11 +49,19 @@ export const UserStatusBadge = ({ status }: { status: UserStatus }) => {
   );
 };
 
-export const StageBadge = ({ stage }: { stage: OpportunityStage }) => (
+export const StageBadge = ({
+  stage,
+  label,
+}: {
+  stage: OpportunityStage;
+  label?: string;
+}) => (
   <span
-    className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${STAGE_TONES[stage]}`}
+    className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+      STAGE_TONES[stage] ?? 'bg-slate-100 text-slate-700 dark:bg-slate-500/15 dark:text-slate-300'
+    }`}
   >
-    {STAGE_LABELS[stage]}
+    {label ?? STAGE_LABELS[stage] ?? stage}
   </span>
 );
 

@@ -6,7 +6,7 @@ import { hashPassword } from '../utils/password';
 
 export const resetDatabase = async (): Promise<void> => {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE activity_logs, sales, opportunities, clients, companies, sessions, users RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE activity_logs, sales, opportunities, custom_opportunity_stages, clients, companies, sessions, users RESTART IDENTITY CASCADE',
   );
   await prisma.$executeRawUnsafe('ALTER SEQUENCE sale_number_seq RESTART WITH 1');
 };

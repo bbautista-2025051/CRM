@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Building2,
   Columns3,
@@ -15,23 +15,26 @@ import {
 import { useAuth } from '@/providers/AuthProvider';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useCompanyOptions, useUserOptions } from '@/hooks/queries';
+import {
+  useCompanyOptions,
+  useOpportunityStages,
+  useUserOptions,
+} from '@/hooks/queries';
 import { opportunitiesApi } from '@/lib/endpoints';
 import { canManageOpportunity } from '@/lib/permissions';
 import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 import {
-  OPEN_STAGES,
   STAGE_BAR_COLORS,
-  STAGE_LABELS,
   STAGE_ORDER,
 } from '@/lib/labels';
 import { cn } from '@/lib/cn';
+import { useToast } from '@/providers/ToastProvider';
 import { OpportunityFormModal } from '@/components/opportunities/OpportunityFormModal';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { SearchInput } from '@/components/ui/SearchInput';
-import { Select } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { Pagination } from '@/components/ui/Pagination';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -52,9 +55,12 @@ export const OpportunitiesPage = () => {
   usePageTitle('Negocio');
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { success, error: toastError } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const companies = useCompanyOptions('', true);
   const users = useUserOptions(user?.role === 'ADMIN');
+  const stages = useOpportunityStages();
 
   const createRequested = searchParams.get('create') === '1';
   const openRequested = searchParams.get('open');
@@ -70,7 +76,24 @@ export const OpportunitiesPage = () => {
   const [view, setView] = useState<ViewMode>('table');
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Opportunity | null>(null);
+  const [addingStage, setAddingStage] = useState(false);
+  const [newStageName, setNewStageName] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
+  const createStage = useMutation({
+    mutationFn: () => opportunitiesApi.createStage(newStageName.trim()),
+    onSuccess: (response) => {
+      success('Etapa agregada', `${response.data.label} ya está disponible.`);
+      setNewStageName('');
+      setAddingStage(false);
+      void queryClient.invalidateQueries({ queryKey: ['opportunities', 'stages'] });
+    },
+    onError: (error) => {
+      toastError(
+        'No se pudo agregar la etapa',
+        error instanceof Error ? error.message : 'Inténtalo de nuevo.',
+      );
+    },
+  });
 
   useEffect(() => {
     setPage(1);
@@ -142,10 +165,23 @@ export const OpportunitiesPage = () => {
   const opportunities = query.data?.data ?? [];
   const meta = query.data?.meta;
   const hasFilters = Boolean(debouncedSearch || stage || status || ownerId || companyId);
+  const stageOptions = stages.data ?? STAGE_ORDER.map((value) => ({
+    value,
+    label:
+      value === 'NEGOCIACION'
+        ? 'Negociación'
+        : value === 'GANADA'
+          ? 'Ganada'
+          : 'Perdida',
+    isCustom: false,
+  }));
+  const stageLabel = (value: OpportunityStage) =>
+    stageOptions.find((option) => option.value === value)?.label ?? value;
 
-  const boardColumns = STAGE_ORDER.map((columnStage) => ({
-    stage: columnStage,
-    items: opportunities.filter((item) => item.stage === columnStage),
+  const boardColumns = stageOptions.map((option) => ({
+    stage: option.value,
+    label: option.label,
+    items: opportunities.filter((item) => item.stage === option.value),
   }));
 
   return (
@@ -182,9 +218,61 @@ export const OpportunitiesPage = () => {
             <Button onClick={() => openCreate()} leftIcon={<Plus className="h-4 w-4" />}>
               Nueva oportunidad
             </Button>
+            {user?.role === 'ADMIN' ? (
+              <Button
+                variant="secondary"
+                onClick={() => setAddingStage((current) => !current)}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
+                Agregar etapa
+              </Button>
+            ) : null}
           </>
         }
       />
+
+      {addingStage ? (
+        <Card className="p-4">
+          <form
+            className="flex flex-col gap-3 sm:flex-row sm:items-end"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (newStageName.trim()) createStage.mutate();
+            }}
+          >
+            <label className="flex-1 space-y-1.5 text-sm font-medium text-ink">
+              Nueva etapa
+              <Input
+                autoFocus
+                maxLength={60}
+                value={newStageName}
+                onChange={(event) => setNewStageName(event.target.value)}
+                placeholder="Ej. Revisión legal"
+                required
+              />
+            </label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setAddingStage(false);
+                  setNewStageName('');
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                loading={createStage.isPending}
+                disabled={!newStageName.trim()}
+              >
+                Guardar etapa
+              </Button>
+            </div>
+          </form>
+        </Card>
+      ) : null}
 
       <Card>
         <div className="flex flex-col gap-3 border-b border-line p-4 xl:flex-row xl:items-center">
@@ -202,9 +290,9 @@ export const OpportunitiesPage = () => {
               className="w-auto min-w-[140px]"
             >
               <option value="">Todas las etapas</option>
-              {STAGE_ORDER.map((item) => (
-                <option key={item} value={item}>
-                  {STAGE_LABELS[item]}
+              {stageOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
                 </option>
               ))}
             </Select>
@@ -339,7 +427,10 @@ export const OpportunitiesPage = () => {
                           </span>
                         </td>
                         <td>
-                          <StageBadge stage={opportunity.stage} />
+                          <StageBadge
+                            stage={opportunity.stage}
+                            label={stageLabel(opportunity.stage)}
+                          />
                         </td>
                         <td className="whitespace-nowrap text-right font-medium text-ink">
                           {formatMoney(opportunity.value)}
@@ -420,15 +511,17 @@ export const OpportunitiesPage = () => {
                 <section
                   key={column.stage}
                   className="w-[272px] shrink-0 rounded-xl border border-line bg-elevated/30"
-                  aria-label={STAGE_LABELS[column.stage]}
+                  aria-label={column.label}
                 >
                   <header className="flex items-center gap-2 border-b border-line px-3 py-2.5">
                     <span
                       className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: STAGE_BAR_COLORS[column.stage] }}
+                      style={{
+                        backgroundColor: STAGE_BAR_COLORS[column.stage] ?? '#64748b',
+                      }}
                     />
                     <h2 className="text-xs font-semibold uppercase tracking-wide text-ink">
-                      {STAGE_LABELS[column.stage]}
+                      {column.label}
                     </h2>
                     <span className="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-semibold text-muted ring-1 ring-inset ring-line">
                       {column.items.length}
@@ -437,7 +530,7 @@ export const OpportunitiesPage = () => {
                       type="button"
                       onClick={() => openCreate(column.stage)}
                       className="focus-ring ml-auto rounded-md p-1 text-muted transition hover:bg-surface hover:text-ink"
-                      aria-label={`Nueva oportunidad en ${STAGE_LABELS[column.stage]}`}
+                      aria-label={`Nueva oportunidad en ${column.label}`}
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
@@ -500,8 +593,12 @@ export const OpportunitiesPage = () => {
               </p>
             ) : null}
             <p className="mt-3 text-center text-[11px] text-muted">
-              {OPEN_STAGES.length} etapas abiertas · Haz clic en una tarjeta para ver el
-              detalle.
+              {
+                stageOptions.filter(
+                  ({ value }) => value !== 'GANADA' && value !== 'PERDIDA',
+                ).length
+              }{' '}
+              etapas abiertas · Haz clic en una tarjeta para ver el detalle.
             </p>
           </div>
         )}

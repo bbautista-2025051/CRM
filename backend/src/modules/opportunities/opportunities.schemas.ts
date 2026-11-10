@@ -1,8 +1,5 @@
 import { z } from 'zod';
-import {
-  OpportunityStage,
-  OpportunityStatus,
-} from '@prisma/client';
+import { OpportunityStatus } from '@prisma/client';
 import { paginationQuerySchema } from '../../utils/pagination';
 import {
   moneySchema,
@@ -11,7 +8,7 @@ import {
 } from '../../utils/zod';
 
 export const opportunityListQuerySchema = paginationQuerySchema.extend({
-  stage: z.nativeEnum(OpportunityStage).optional(),
+  stage: z.string().trim().min(1).max(60).optional(),
   status: z.nativeEnum(OpportunityStatus).optional(),
   ownerId: z.string().uuid().optional(),
   companyId: z.string().uuid().optional(),
@@ -62,7 +59,7 @@ export const opportunityBodySchema = z.object({
     .max(100, 'La probabilidad máxima es 100')
     .default(50),
   expectedCloseDate: optionalDateOnly('La fecha estimada de cierre'),
-  stage: z.nativeEnum(OpportunityStage).optional().default(OpportunityStage.PROSPECTO),
+  stage: z.string().trim().min(1).max(60).optional().default('NEGOCIACION'),
 });
 
 export const updateOpportunitySchema = opportunityBodySchema
@@ -86,4 +83,12 @@ export const opportunityCommentBodySchema = z.object({
 export const opportunityFileParamsSchema = z.object({
   id: z.string().uuid('El identificador de la oportunidad no es válido'),
   fileId: z.string().uuid('El identificador del archivo no es válido'),
+});
+
+export const opportunityStageBodySchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'El nombre de la etapa debe tener al menos 2 caracteres')
+    .max(60, 'El nombre de la etapa no puede superar 60 caracteres'),
 });

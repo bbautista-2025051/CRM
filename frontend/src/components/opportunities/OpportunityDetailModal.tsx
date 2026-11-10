@@ -28,6 +28,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { opportunitiesApi, unwrap } from '@/lib/endpoints';
+import { useOpportunityStages } from '@/hooks/queries';
 import { ApiError } from '@/lib/api';
 import { canDeleteOpportunity, canManageOpportunity } from '@/lib/permissions';
 import { formatBytes, formatDate, formatDateTime, formatMoney } from '@/lib/format';
@@ -47,6 +48,7 @@ export const OpportunityDetailModal = ({
   const { confirm } = useConfirm();
   const { success, error: toastError } = useToast();
   const queryClient = useQueryClient();
+  const stages = useOpportunityStages(Boolean(opportunityId));
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stagedFilesRef = useRef<OpportunityFile[]>([]);
   const isMountedRef = useRef(false);
@@ -329,7 +331,10 @@ export const OpportunityDetailModal = ({
       ) : (
         <div className="mx-auto max-w-4xl space-y-5">
           <div className="flex flex-wrap items-center gap-2">
-            <StageBadge stage={opportunity.stage} />
+            <StageBadge
+              stage={opportunity.stage}
+              label={stages.data?.find((item) => item.value === opportunity.stage)?.label}
+            />
             <Badge
               tone={
                 opportunity.status === 'WON'

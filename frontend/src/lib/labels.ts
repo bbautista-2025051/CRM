@@ -36,43 +36,24 @@ export const CLIENT_STATUS_LABELS: Record<ClientStatus, string> = {
 };
 
 export const STAGE_LABELS: Record<OpportunityStage, string> = {
-  PROSPECTO: 'Prospecto',
-  CALIFICACION: 'Calificación',
-  PROPUESTA: 'Propuesta',
   NEGOCIACION: 'Negociación',
   GANADA: 'Ganada',
   PERDIDA: 'Perdida',
 };
 
 export const STAGE_ORDER: OpportunityStage[] = [
-  'PROSPECTO',
-  'CALIFICACION',
-  'PROPUESTA',
   'NEGOCIACION',
   'GANADA',
   'PERDIDA',
 ];
 
-export const OPEN_STAGES: OpportunityStage[] = [
-  'PROSPECTO',
-  'CALIFICACION',
-  'PROPUESTA',
-  'NEGOCIACION',
-];
-
 export const STAGE_TONES: Record<OpportunityStage, string> = {
-  PROSPECTO: 'bg-slate-100 text-slate-700 dark:bg-slate-500/15 dark:text-slate-300',
-  CALIFICACION: 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
-  PROPUESTA: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300',
   NEGOCIACION: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
   GANADA: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
   PERDIDA: 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
 };
 
 export const STAGE_BAR_COLORS: Record<OpportunityStage, string> = {
-  PROSPECTO: '#94a3b8',
-  CALIFICACION: '#38bdf8',
-  PROPUESTA: '#6366f1',
   NEGOCIACION: '#f59e0b',
   GANADA: '#10b981',
   PERDIDA: '#f43f5e',

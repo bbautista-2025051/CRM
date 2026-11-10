@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/NexoIcons';
 import { useAuth } from '@/providers/AuthProvider';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useOpportunityStages } from '@/hooks/queries';
 import { dashboardApi, unwrap, usersApi } from '@/lib/endpoints';
 import {
   formatDate,
@@ -66,8 +67,10 @@ const SectionHeader = ({
   </div>
 );
 
-export const DashboardPage = () => {  usePageTitle('Panel');
+export const DashboardPage = () => {
+  usePageTitle('Panel');
   const { user } = useAuth();
+  const opportunityStages = useOpportunityStages();
   const currentYear = new Date().getFullYear();
   const [roleFilter, setRoleFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
@@ -435,7 +438,12 @@ export const DashboardPage = () => {  usePageTitle('Panel');
                             </Link>
                           </td>
                           <td>
-                            <StageBadge stage={opportunity.stage} />
+                            <StageBadge
+                              stage={opportunity.stage}
+                              label={opportunityStages.data?.find(
+                                (item) => item.value === opportunity.stage,
+                              )?.label}
+                            />
                           </td>
                           <td className="whitespace-nowrap text-right font-medium text-ink">
                             {formatMoney(opportunity.value, data.defaultCurrency)}

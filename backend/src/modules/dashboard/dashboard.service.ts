@@ -105,6 +105,7 @@ export const getDashboard = async (filters: DashboardFilters = {}) => {
     lostOpportunities,
     salesByCurrencyRows,
     opportunitiesByStage,
+    customOpportunityStages,
     monthlyRows,
     clientsByCompanyRows,
     clientsWithoutCompany,
@@ -176,6 +177,9 @@ export const getDashboard = async (filters: DashboardFilters = {}) => {
       },
       _count: { _all: true },
       _sum: { value: true },
+    }),
+    prisma.customOpportunityStage.findMany({
+      select: { id: true, name: true },
     }),
     prisma.$queryRaw<MonthlySalesRow[]>`
       SELECT
@@ -300,6 +304,15 @@ export const getDashboard = async (filters: DashboardFilters = {}) => {
       monthlySales,
       opportunitiesByStage: opportunitiesByStage.map((row) => ({
         stage: row.stage,
+        label:
+          row.stage === 'NEGOCIACION'
+            ? 'Negociación'
+            : row.stage === 'GANADA'
+              ? 'Ganada'
+              : row.stage === 'PERDIDA'
+                ? 'Perdida'
+                : customOpportunityStages.find((stage) => stage.id === row.stage)?.name ??
+                  row.stage,
         count: row._count._all,
         value: Number(row._sum.value ?? 0).toFixed(2),
       })),

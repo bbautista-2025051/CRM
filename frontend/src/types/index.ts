@@ -4,12 +4,15 @@ export type ThemePreference = 'LIGHT' | 'DARK' | 'SYSTEM';
 export type CompanyStatus = 'ACTIVE' | 'ARCHIVED';
 export type ClientStatus = 'ACTIVE' | 'ARCHIVED';
 export type OpportunityStage =
-  | 'PROSPECTO'
-  | 'CALIFICACION'
-  | 'PROPUESTA'
   | 'NEGOCIACION'
   | 'GANADA'
-  | 'PERDIDA';
+  | 'PERDIDA'
+  | (string & {});
+export interface OpportunityStageOption {
+  value: OpportunityStage;
+  label: string;
+  isCustom: boolean;
+}
 export type OpportunityStatus = 'OPEN' | 'WON' | 'LOST';
 export type SaleStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED';
@@ -127,6 +130,7 @@ export interface Opportunity {
   probability: number;
   expectedCloseDate: string | null;
   stage: OpportunityStage;
+  stageLabel?: string;
   status: OpportunityStatus;
   wonAt: string | null;
   lostAt: string | null;
@@ -212,7 +216,12 @@ export interface DashboardData {
   };
   charts: {
     monthlySales: Array<{ month: string; total: string; count: number }>;
-    opportunitiesByStage: Array<{ stage: OpportunityStage; count: number; value: string }>;
+    opportunitiesByStage: Array<{
+      stage: OpportunityStage;
+      label: string;
+      count: number;
+      value: string;
+    }>;
     clientsByCompany: Array<{ companyId: string | null; company: string; count: number }>;
     companiesBySector: Array<{ sector: string; count: number }>;
   };
