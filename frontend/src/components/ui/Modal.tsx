@@ -30,6 +30,7 @@ interface ModalProps {
   closeOnBackdrop?: boolean;
   /** Ventana completa: ocupa todo el viewport, sin marco flotante. */
   fullWindow?: boolean;
+  inline?: boolean;
   className?: string;
 }
 
@@ -55,6 +56,7 @@ export const Modal = ({
   size = 'md',
   closeOnBackdrop = true,
   fullWindow = true,
+  inline = false,
   className,
 }: ModalProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -71,7 +73,7 @@ export const Modal = ({
   const descriptionId = useId();
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || inline) return;
     const id = modalSeq++;
     modalStack.push(id);
 
@@ -104,7 +106,7 @@ export const Modal = ({
     };
     // Solo reacciona a `open`: los cambios de identidad de onClose no deben
     // reenfocar el modal mientras el usuario escribe dentro de él.
-  }, [open]);
+  }, [open, inline]);
 
   const handlePanelKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Tab' || !panelRef.current) return;
@@ -124,6 +126,41 @@ export const Modal = ({
   };
 
   if (!open) return null;
+
+  if (inline) {
+    return (
+      <section
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
+        className={cn('space-y-5', className)}
+      >
+        <header>
+          <h1
+            id={titleId}
+            className="font-display text-[26px] font-extrabold leading-[1.15] tracking-[-0.03em] text-ink sm:text-[30px]"
+          >
+            {title}
+          </h1>
+          {description ? (
+            <p
+              id={descriptionId}
+              className="mt-1.5 max-w-2xl text-[13px] leading-6 text-muted"
+            >
+              {description}
+            </p>
+          ) : null}
+        </header>
+        <div className="rounded-xl border border-line bg-surface p-4 shadow-card sm:p-6">
+          {children}
+        </div>
+        {footer ? (
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            {footer}
+          </div>
+        ) : null}
+      </section>
+    );
+  }
 
   return createPortal(
     <div

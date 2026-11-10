@@ -47,6 +47,7 @@ export const SaleFormModal = ({
   defaultClientId,
   defaultOpportunityId,
   onSaved,
+  inline = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -55,6 +56,7 @@ export const SaleFormModal = ({
   defaultClientId?: string;
   defaultOpportunityId?: string;
   onSaved?: (sale: Sale) => void;
+  inline?: boolean;
 }) => {
   const { user } = useAuth();
   const { success } = useToast();
@@ -219,6 +221,7 @@ export const SaleFormModal = ({
     <Modal
       open={open}
       onClose={onClose}
+      inline={inline}
       size="xl"
       title={editing ? `Editar venta ${sale?.saleNumber ?? ''}` : 'Registrar venta'}
       description={

@@ -37,6 +37,11 @@ const ClientDetailPage = lazy(() =>
 const NegocioPage = lazy(() =>
   import('@/pages/NegocioPage').then((module) => ({ default: module.NegocioPage })),
 );
+const NegocioCreatePage = lazy(() =>
+  import('@/pages/NegocioCreatePage').then((module) => ({
+    default: module.NegocioCreatePage,
+  })),
+);
 const UsersPage = lazy(() =>
   import('@/pages/UsersPage').then((module) => ({ default: module.UsersPage })),
 );
@@ -103,6 +108,7 @@ export const App = () => (
           <Route path="companies/:id" element={<CompanyDetailPage />} />
           <Route path="clients" element={<ClientsPage />} />
           <Route path="clients/:id" element={<ClientDetailPage />} />
+          <Route path="negocio/nuevo" element={<NegocioCreatePage />} />
           <Route path="negocio" element={<NegocioPage />} />
           <Route
             path="opportunities"

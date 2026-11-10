@@ -53,6 +53,7 @@ export const OpportunityFormModal = ({
   defaultClientId,
   defaultStage,
   onSaved,
+  inline = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -61,6 +62,7 @@ export const OpportunityFormModal = ({
   defaultClientId?: string;
   defaultStage?: OpportunityStage;
   onSaved?: (opportunity: Opportunity) => void;
+  inline?: boolean;
 }) => {
   const { user } = useAuth();
   const { success } = useToast();
@@ -215,6 +217,7 @@ export const OpportunityFormModal = ({
     <Modal
       open={open}
       onClose={onClose}
+      inline={inline}
       size="xl"
       title={editing ? 'Editar oportunidad' : 'Nueva oportunidad'}
       description={
