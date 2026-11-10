@@ -164,7 +164,7 @@
   }
 
   .input-base {
-    @apply w-full rounded-lg border border-line bg-surface/80 px-3 py-2 text-sm text-ink shadow-sm outline-none transition placeholder:text-muted hover:border-muted/50 focus:border-brand focus:ring-1 focus:ring-brand/30 disabled:cursor-not-allowed disabled:bg-elevated disabled:text-muted;
+    @apply w-full rounded-[10px] border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition placeholder:text-muted/70 hover:border-muted/60 focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:bg-elevated disabled:text-muted;
   }
 
   .table-wrap {
@@ -176,15 +176,15 @@
   }
 
   .table-base thead th {
-    @apply whitespace-nowrap border-b border-line bg-surface/40 px-4 py-3 text-[11px] font-semibold tracking-wider text-muted;
+    @apply whitespace-nowrap border-b border-line bg-transparent px-4 py-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-muted;
   }
 
   .table-base tbody td {
-    @apply border-b border-line/60 px-4 py-3.5 align-middle text-sm text-ink;
+    @apply border-b border-line/70 px-4 py-3.5 align-middle text-sm;
   }
 
   .table-base tbody tr {
-    @apply transition-colors hover:bg-elevated/40;
+    @apply transition-colors hover:bg-elevated/50;
   }
 
   .table-base tbody tr:last-child td {
@@ -192,13 +192,13 @@
   }
 
   .nav-link {
-    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-muted transition-colors duration-150 hover:bg-elevated/60 hover:text-ink;
+    @apply flex items-center gap-3 rounded-[10px] px-3 py-2 text-[13px] font-medium text-muted transition-colors duration-150 hover:bg-elevated/70 hover:text-ink;
   }
 
   .nav-link-active {
-    background: rgb(var(--brand) / 0.1);
+    background: rgb(var(--brand) / 0.09);
     color: rgb(var(--brand));
-    box-shadow: inset 3px 0 0 rgb(var(--brand));
+    box-shadow: inset 2.5px 0 0 rgb(var(--brand));
   }
 
   .nav-link-active svg {
@@ -258,15 +258,5 @@
 @media print {
   .no-print {
     display: none !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-login-up,
-  .animate-login-scale,
-  .animate-login-shine {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
   }
 }
