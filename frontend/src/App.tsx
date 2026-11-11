@@ -47,6 +47,21 @@ const NegocioOpportunityPage = lazy(() =>
     default: module.NegocioOpportunityPage,
   })),
 );
+const SaleDetailPage = lazy(() =>
+  import('@/pages/SaleDetailPage').then((module) => ({
+    default: module.SaleDetailPage,
+  })),
+);
+const SaleFormPage = lazy(() =>
+  import('@/pages/SaleFormPage').then((module) => ({
+    default: module.SaleFormPage,
+  })),
+);
+const OpportunityFormPage = lazy(() =>
+  import('@/pages/OpportunityFormPage').then((module) => ({
+    default: module.OpportunityFormPage,
+  })),
+);
 const UsersPage = lazy(() =>
   import('@/pages/UsersPage').then((module) => ({ default: module.UsersPage })),
 );
@@ -117,6 +132,15 @@ export const App = () => (
           <Route
             path="negocio/oportunidad/:id"
             element={<NegocioOpportunityPage />}
+          />
+          <Route path="negocio/venta/:id" element={<SaleDetailPage />} />
+          <Route
+            path="negocio/venta/:id/editar"
+            element={<SaleFormPage />}
+          />
+          <Route
+            path="negocio/oportunidad/:id/editar"
+            element={<OpportunityFormPage />}
           />
           <Route path="negocio" element={<NegocioPage />} />
           <Route

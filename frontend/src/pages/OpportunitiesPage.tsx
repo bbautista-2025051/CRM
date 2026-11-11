@@ -29,7 +29,6 @@ import {
 } from '@/lib/labels';
 import { cn } from '@/lib/cn';
 import { useToast } from '@/providers/ToastProvider';
-import { OpportunityFormModal } from '@/components/opportunities/OpportunityFormModal';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -47,7 +46,7 @@ import {
   DropdownItem,
   DropdownSeparator,
 } from '@/components/ui/Dropdown';
-import type { Opportunity, OpportunityStage } from '@/types';
+import type { OpportunityStage } from '@/types';
 
 type ViewMode = 'table' | 'board';
 
@@ -74,8 +73,6 @@ export const OpportunitiesPage = () => {
   const [companyId, setCompanyId] = useState(companyParam);
   const [page, setPage] = useState(1);
   const [view, setView] = useState<ViewMode>('table');
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Opportunity | null>(null);
   const [addingStage, setAddingStage] = useState(false);
   const [newStageName, setNewStageName] = useState('');
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -147,11 +144,6 @@ export const OpportunitiesPage = () => {
     if (companyId) params.set('companyId', companyId);
     if (initialStage) params.set('stage', initialStage);
     navigate(`/negocio/nuevo?${params.toString()}`);
-  };
-
-  const openEdit = (opportunity: Opportunity) => {
-    setEditing(opportunity);
-    setFormOpen(true);
   };
 
   const clearFilters = () => {
@@ -470,7 +462,7 @@ export const OpportunitiesPage = () => {
                                     icon={<Pencil className="h-4 w-4" />}
                                     onClick={() => {
                                       close();
-                                      openEdit(opportunity);
+                                      navigate(`/negocio/oportunidad/${opportunity.id}/editar`);
                                     }}
                                   >
                                     Editar
@@ -485,7 +477,7 @@ export const OpportunitiesPage = () => {
                                       icon={<Handshake className="h-4 w-4" />}
                                       onClick={() => {
                                         close();
-                                        navigate(`/sales?create=1&opportunityId=${opportunity.id}`);
+                                        navigate(`/negocio/nuevo?view=sales&opportunityId=${opportunity.id}`);
                                       }}
                                     >
                                       Registrar venta
@@ -603,12 +595,6 @@ export const OpportunitiesPage = () => {
           </div>
         )}
       </Card>
-
-      <OpportunityFormModal
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        opportunity={editing}
-      />
 
     </div>
   );
