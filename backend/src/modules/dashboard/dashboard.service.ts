@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { env } from '../../config/env';
 import { prisma } from '../../config/prisma';
 
@@ -9,7 +9,7 @@ interface MonthlySalesRow {
 }
 
 interface DashboardFilters {
-  role?: 'ADMIN' | 'VENDEDOR';
+  role?: Role;
   userId?: string;
   month?: string | number;
   year?: string | number;

@@ -18,6 +18,8 @@ import { useAuth } from '@/providers/AuthProvider';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useOpportunityStages } from '@/hooks/queries';
 import { dashboardApi, unwrap, usersApi } from '@/lib/endpoints';
+import { ROLE_LABELS } from '@/lib/labels';
+import type { Role } from '@/types';
 import {
   formatDate,
   formatDateTime,
@@ -78,12 +80,13 @@ export const DashboardPage = () => {
   const [yearFilter, setYearFilter] = useState(String(currentYear));
 
   const usersQuery = useQuery({
-    queryKey: ['dashboard', 'users', 'ACTIVE'],
+    queryKey: ['dashboard', 'users', 'ACTIVE', roleFilter],
     queryFn: () =>
       usersApi.list({
         page: 1,
         pageSize: 500,
         status: 'ACTIVE',
+        role: roleFilter || undefined,
         sortBy: 'name',
         sortOrder: 'asc',
       }),
@@ -174,29 +177,42 @@ export const DashboardPage = () => {
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
               Filtros
             </p>
-            <p className="mt-0.5 text-[13px] text-muted">Vendedor, rol, mes o año.</p>
+            <p className="mt-0.5 text-[13px] text-muted">Usuario, rol, mes o año.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Select
               aria-label="Filtrar por rol"
               value={roleFilter}
-              onChange={(event) => setRoleFilter(event.target.value)}
+              onChange={(event) => {
+                setRoleFilter(event.target.value);
+                // Al cambiar el rol se recarga la lista de usuarios: la
+                // selección previa puede no pertenecer al nuevo rol.
+                setUserFilter('');
+              }}
               className="min-w-[180px]"
             >
-              <option value="">Todos</option>
-              <option value="ADMIN">Administrador</option>
-              <option value="VENDEDOR">Vendedor</option>
+              <option value="">Todos los roles</option>
+              {(Object.keys(ROLE_LABELS) as Role[]).map((role) => (
+                <option key={role} value={role}>
+                  {ROLE_LABELS[role]}
+                </option>
+              ))}
             </Select>
             <Select
-              aria-label="Filtrar por vendedor"
+              aria-label="Filtrar por usuario"
               value={userFilter}
               onChange={(event) => setUserFilter(event.target.value)}
               className="min-w-[220px]"
+              disabled={usersQuery.isLoading}
             >
-              <option value="">Todos los vendedores</option>
+              <option value="">
+                {roleFilter
+                  ? `Todos (${ROLE_LABELS[roleFilter as Role]})`
+                  : 'Todos los usuarios'}
+              </option>
               {users.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name}
+                  {item.name} · {ROLE_LABELS[item.role]}
                 </option>
               ))}
             </Select>
