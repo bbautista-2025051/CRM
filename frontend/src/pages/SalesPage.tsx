@@ -66,12 +66,15 @@ export const SalesPage = () => {
 
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [ownerId, setOwnerId] = useState('');
+  // Cada usuario ve por defecto únicamente sus propias ventas; los
+  // administradores pueden ampliar el alcance con el filtro de responsable.
+  const [ownerId, setOwnerId] = useState(user?.id ?? '');
   const [companyId, setCompanyId] = useState(companyParam);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 300);
+  const ownSalesId = user?.id ?? '';
 
   useEffect(() => {
     setPage(1);
@@ -130,10 +133,11 @@ export const SalesPage = () => {
   });
 
   const summaryQuery = useQuery({
-    queryKey: ['sales', 'summary', dateFrom, dateTo],
+    queryKey: ['sales', 'summary', ownerId, dateFrom, dateTo],
     queryFn: async () =>
       unwrap(
         await salesApi.summary({
+          ownerId: ownerId || undefined,
           dateFrom: dateFrom || undefined,
           dateTo: dateTo || undefined,
         }),
@@ -206,7 +210,7 @@ export const SalesPage = () => {
   const clearFilters = () => {
     setSearch('');
     setStatus('');
-    setOwnerId('');
+    setOwnerId(ownSalesId);
     setCompanyId('');
     setDateFrom('');
     setDateTo('');
@@ -216,7 +220,13 @@ export const SalesPage = () => {
   const meta = query.data?.meta;
   const summary = summaryQuery.data;
   const hasFilters = Boolean(
-    debouncedSearch || status || ownerId || companyId || dateFrom || dateTo,
+    debouncedSearch ||
+      status ||
+      companyId ||
+      dateFrom ||
+      dateTo ||
+      // Ver las ventas propias es el alcance por defecto, no un filtro activo.
+      ownerId !== ownSalesId,
   );
   const confirmedTotals = summary?.byCurrency ?? [];
 
@@ -360,7 +370,11 @@ export const SalesPage = () => {
               </Button>
             ) : null}
             <span className="ml-auto text-xs text-muted">
-              {meta ? `${formatNumber(meta.total)} ventas` : ''}
+              {meta
+                ? `${formatNumber(meta.total)} ventas${
+                    ownerId === ownSalesId ? ' tuyas' : ownerId ? '' : ' en total'
+                  }`
+                : ''}
             </span>
           </div>
         </div>

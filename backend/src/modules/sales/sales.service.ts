@@ -124,16 +124,22 @@ export const getSale = async (id: string) => {
   return sale;
 };
 
-export const getSalesSummary = async (dateFrom?: string, dateTo?: string) => {
-  const where: Prisma.SaleWhereInput =
-    dateFrom || dateTo
+export const getSalesSummary = async (
+  dateFrom?: string,
+  dateTo?: string,
+  ownerId?: string,
+) => {
+  const where: Prisma.SaleWhereInput = {
+    ...(ownerId ? { ownerId } : {}),
+    ...(dateFrom || dateTo
       ? {
           saleDate: {
             ...(dateFrom ? { gte: new Date(`${dateFrom}T00:00:00.000Z`) } : {}),
             ...(dateTo ? { lte: new Date(`${dateTo}T00:00:00.000Z`) } : {}),
           },
         }
-      : {};
+      : {}),
+  };
 
   const grouped = await prisma.sale.groupBy({
     by: ['status', 'currency'],

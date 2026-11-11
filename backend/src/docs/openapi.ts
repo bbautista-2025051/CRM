@@ -650,6 +650,7 @@ export const openApiDocument = {
         tags: ['Ventas'],
         summary: 'Totales confirmados por moneda y conteos por estado',
         parameters: [
+          { name: 'ownerId', in: 'query', schema: { type: 'string', format: 'uuid' } },
           { name: 'dateFrom', in: 'query', schema: { type: 'string', format: 'date' } },
           { name: 'dateTo', in: 'query', schema: { type: 'string', format: 'date' } },
         ],

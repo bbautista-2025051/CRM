@@ -8,8 +8,8 @@ export const list = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const summary = asyncHandler(async (req: Request, res: Response) => {
-  const { dateFrom, dateTo } = req.validated.query;
-  const data = await salesService.getSalesSummary(dateFrom, dateTo);
+  const { dateFrom, dateTo, ownerId } = req.validated.query;
+  const data = await salesService.getSalesSummary(dateFrom, dateTo, ownerId);
   res.status(200).json({ data });
 });
 
