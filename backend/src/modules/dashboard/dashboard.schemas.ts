@@ -1,10 +1,10 @@
 import { z } from 'zod';
+import { Role } from '@prisma/client';
 
 const currentYear = new Date().getUTCFullYear();
 
 export const dashboardQuerySchema = z.object({
-  // El dashboard actualmente ofrece análisis por rol solo para estos dos grupos.
-  role: z.enum(['ADMIN', 'VENDEDOR']).optional(),
+  role: z.nativeEnum(Role).optional(),
   userId: z.string().uuid('El identificador del usuario no es válido').optional(),
   month: z
     .string()

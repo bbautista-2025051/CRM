@@ -650,6 +650,7 @@ export const openApiDocument = {
         tags: ['Ventas'],
         summary: 'Totales confirmados por moneda y conteos por estado',
         parameters: [
+          { name: 'ownerId', in: 'query', schema: { type: 'string', format: 'uuid' } },
           { name: 'dateFrom', in: 'query', schema: { type: 'string', format: 'date' } },
           { name: 'dateTo', in: 'query', schema: { type: 'string', format: 'date' } },
         ],
@@ -683,6 +684,27 @@ export const openApiDocument = {
       get: {
         tags: ['Dashboard'],
         summary: 'Indicadores, gráficos y actividad reciente calculados desde PostgreSQL',
+        parameters: [
+          {
+            name: 'role',
+            in: 'query',
+            schema: {
+              type: 'string',
+              enum: [
+                'ADMIN',
+                'VENDEDOR',
+                'PREVENTA',
+                'GERENTE',
+                'OPERACIONES',
+                'PROGRAMADOR',
+                'SUPERVISOR',
+              ],
+            },
+          },
+          { name: 'userId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'month', in: 'query', schema: { type: 'string', enum: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', 'all'] } },
+          { name: 'year', in: 'query', schema: { type: 'string', pattern: '^\\d{4}$' } },
+        ],
         responses: { '200': { description: 'Resumen del dashboard' } },
       },
     },

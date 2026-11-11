@@ -13,12 +13,26 @@ describe('dashboardQuerySchema', () => {
     ).toBe(true);
   });
 
+  it('acepta cualquier rol existente del sistema', () => {
+    for (const role of [
+      'ADMIN',
+      'VENDEDOR',
+      'PREVENTA',
+      'GERENTE',
+      'OPERACIONES',
+      'PROGRAMADOR',
+      'SUPERVISOR',
+    ]) {
+      expect(dashboardQuerySchema.safeParse({ role }).success).toBe(true);
+    }
+  });
+
   it('acepta el valor especial para todos los meses', () => {
     expect(dashboardQuerySchema.safeParse({ month: 'all' }).success).toBe(true);
   });
 
   it('rechaza roles no soportados, UUID inválido y rangos de fecha incorrectos', () => {
-    expect(dashboardQuerySchema.safeParse({ role: 'GERENTE' }).success).toBe(false);
+    expect(dashboardQuerySchema.safeParse({ role: 'DIRECTOR' }).success).toBe(false);
     expect(dashboardQuerySchema.safeParse({ userId: 'no-es-uuid' }).success).toBe(false);
     expect(dashboardQuerySchema.safeParse({ month: '13' }).success).toBe(false);
     expect(dashboardQuerySchema.safeParse({ year: '9999' }).success).toBe(false);

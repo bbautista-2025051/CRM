@@ -182,7 +182,7 @@ export const salesApi = {
     sortOrder?: string;
   }) => api.get<ListResponse<Sale>>(`/api/sales${buildQuery(params)}`),
   get: (id: string) => api.get<DataEnvelope<Sale>>(`/api/sales/${id}`),
-  summary: (params: { dateFrom?: string; dateTo?: string } = {}) =>
+  summary: (params: { ownerId?: string; dateFrom?: string; dateTo?: string } = {}) =>
     api.get<DataEnvelope<SalesSummary>>(`/api/sales/summary${buildQuery(params)}`),
   create: (payload: Record<string, unknown>) =>
     api.post<DataEnvelope<Sale>>('/api/sales', payload),
