@@ -21,6 +21,9 @@ const DashboardPage = lazy(() =>
 const CompaniesPage = lazy(() =>
   import('@/pages/CompaniesPage').then((module) => ({ default: module.CompaniesPage })),
 );
+const CompanyFormPage = lazy(() =>
+  import('@/pages/CompanyFormPage').then((module) => ({ default: module.CompanyFormPage })),
+);
 const CompanyDetailPage = lazy(() =>
   import('@/pages/CompanyDetailPage').then((module) => ({
     default: module.CompanyDetailPage,
@@ -28,6 +31,9 @@ const CompanyDetailPage = lazy(() =>
 );
 const ClientsPage = lazy(() =>
   import('@/pages/ClientsPage').then((module) => ({ default: module.ClientsPage })),
+);
+const ClientFormPage = lazy(() =>
+  import('@/pages/ClientFormPage').then((module) => ({ default: module.ClientFormPage })),
 );
 const ClientDetailPage = lazy(() =>
   import('@/pages/ClientDetailPage').then((module) => ({
@@ -125,8 +131,10 @@ export const App = () => (
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="companies" element={<CompaniesPage />} />
+          <Route path="companies/nuevo" element={<CompanyFormPage />} />
           <Route path="companies/:id" element={<CompanyDetailPage />} />
           <Route path="clients" element={<ClientsPage />} />
+          <Route path="clients/nuevo" element={<ClientFormPage />} />
           <Route path="clients/:id" element={<ClientDetailPage />} />
           <Route path="negocio/nuevo" element={<NegocioCreatePage />} />
           <Route

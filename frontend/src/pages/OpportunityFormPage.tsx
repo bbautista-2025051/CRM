@@ -1,9 +1,9 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Target, ArrowLeft } from 'lucide-react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Target, ArrowLeft, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, Select, Textarea } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
@@ -40,18 +40,31 @@ const defaults = (
   stage: opportunity?.stage ?? stage ?? 'NEGOCIACION',
 });
 
+/**
+ * Estado de navegación al volver de crear una empresa o un cliente desde
+ * este formulario: se restaura el borrador (`draft`) y se preselecciona
+ * lo recién creado (`preselect`).
+ */
+type OpportunityFormNavState = {
+  draft?: OpportunityFormValues;
+  preselect?: { companyId?: string; clientId?: string };
+};
+
 export const OpportunityFormPage = () => {
   usePageTitle('Oportunidad');
   const { user } = useAuth();
   const { success } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const formId = useId().replace(/:/g, '');
   const [formError, setFormError] = useState<string | null>(null);
   const opportunityId = id;
   const editing = Boolean(opportunityId);
   const admin = isAdmin(user?.role);
+  const navState = (location.state ?? null) as OpportunityFormNavState | null;
+  const currentPath = location.pathname + location.search;
 
   const {
     register,
@@ -59,6 +72,7 @@ export const OpportunityFormPage = () => {
     reset,
     watch,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<OpportunityFormValues>({
     resolver: zodResolver(opportunityFormSchema),
@@ -72,27 +86,6 @@ export const OpportunityFormPage = () => {
   const users = useUserOptions(admin);
   const stages = useOpportunityStages(true);
 
-  useEffect(() => {
-    if (opportunityId) {
-      void opportunitiesApi.get(opportunityId).then((response) => {
-        const opportunity = unwrap(response);
-        reset(
-          defaults(
-            opportunity,
-            user?.id,
-            opportunity.companyId ?? undefined,
-            opportunity.clientId ?? undefined,
-            opportunity.stage,
-          ),
-        );
-        setFormError(null);
-      });
-    } else {
-      reset(defaults(undefined, user?.id));
-      setFormError(null);
-    }
-  }, [opportunityId, user?.id, reset]);
-
   const companyOptions = companies.data ?? [];
   const clientOptions = clients.data ?? [];
   const userOptions = users.data?.data ?? [];
@@ -101,6 +94,83 @@ export const OpportunityFormPage = () => {
     { value: 'GANADA', label: 'Ganada', isCustom: false },
     { value: 'PERDIDA', label: 'Perdida', isCustom: false },
   ];
+
+  useEffect(() => {
+    if (opportunityId) {
+      void opportunitiesApi.get(opportunityId).then((response) => {
+        const opportunity = unwrap(response);
+        reset({
+          ...defaults(
+            opportunity,
+            user?.id,
+            opportunity.companyId ?? undefined,
+            opportunity.clientId ?? undefined,
+            opportunity.stage,
+          ),
+          // Cambios sin guardar capturados antes de salir a crear
+          // una empresa o un cliente.
+          ...(navState?.draft ?? {}),
+        });
+        setFormError(null);
+      });
+    } else {
+      reset({ ...defaults(undefined, user?.id), ...(navState?.draft ?? {}) });
+      setFormError(null);
+    }
+  }, [opportunityId, user?.id, navState, reset]);
+
+  /**
+   * La preselección de la empresa o el cliente recién creados se aplica
+   * cuando sus opciones ya están en el select: un select no puede retener
+   * un valor cuya opción todavía no se renderizó (las listas se recargan
+   * de forma asíncrona al volver).
+   */
+  const pendingPreselect = useRef(navState?.preselect);
+  useEffect(() => {
+    const preselect = pendingPreselect.current;
+    if (!preselect) return;
+
+    if (preselect.clientId) {
+      // Primero la empresa del cliente (para que el listado de clientes
+      // se recargue con la empresa correcta)…
+      if (preselect.companyId && !companyOptions.some((c) => c.id === preselect.companyId)) {
+        return;
+      }
+      if (getValues('companyId') !== (preselect.companyId ?? '')) {
+        setValue('companyId', preselect.companyId ?? '');
+      }
+      // …y después el cliente, cuando aparezca en la lista de su empresa.
+      if (!clientOptions.some((c) => c.id === preselect.clientId)) return;
+      setValue('clientId', preselect.clientId);
+      pendingPreselect.current = undefined;
+      return;
+    }
+
+    if (preselect.companyId) {
+      // Empresa recién creada: se selecciona y se limpia el cliente previo
+      // porque podría pertenecer a otra empresa.
+      if (!companyOptions.some((c) => c.id === preselect.companyId)) return;
+      setValue('companyId', preselect.companyId);
+      setValue('clientId', '');
+      pendingPreselect.current = undefined;
+    }
+  }, [companyOptions, clientOptions, getValues, setValue]);
+
+  /**
+   * Abre el formulario de nueva empresa/cliente conservando el borrador:
+   * se guarda en la entrada actual del historial (para que "atrás" del
+   * navegador también lo restaure) y se envía a la página destino para
+   * que lo devuelva al guardar o al cancelar.
+   *
+   * El borrador se captura siempre: no depende de "isDirty" porque tras
+   * restaurar una preselección el formulario queda "limpio" y se perdería
+   * lo que el usuario escribió.
+   */
+  const openLinkedForm = (path: string, extra: Record<string, unknown> = {}) => {
+    const draft = getValues();
+    navigate(currentPath, { state: { draft }, replace: true });
+    navigate(path, { state: { returnTo: currentPath, draft, ...extra } });
+  };
 
   const mutation = useMutation({
     mutationFn: async (values: OpportunityFormValues) => {
@@ -223,11 +293,11 @@ export const OpportunityFormPage = () => {
                 variant="secondary"
                 size="icon"
                 className="h-[38px] w-[38px] shrink-0 rounded-[10px]"
-                onClick={() => navigate('/companies/nuevo')}
+                onClick={() => openLinkedForm('/companies/nuevo')}
                 aria-label="Registrar una empresa nueva"
                 title="Registrar una empresa nueva"
               >
-                <span className="sr-only">Registrar empresa</span>
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
           </Field>
@@ -266,11 +336,16 @@ export const OpportunityFormPage = () => {
                 variant="secondary"
                 size="icon"
                 className="h-[38px] w-[38px] shrink-0 rounded-[10px]"
-                onClick={() => navigate('/clients/nuevo')}
+                onClick={() =>
+                  openLinkedForm('/clients/nuevo', {
+                    // La empresa ya elegida prellena el formulario del cliente.
+                    companyId: companyId || undefined,
+                  })
+                }
                 aria-label="Registrar un cliente nuevo"
                 title="Registrar un cliente nuevo"
               >
-                <span className="sr-only">Registrar cliente</span>
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
           </Field>
