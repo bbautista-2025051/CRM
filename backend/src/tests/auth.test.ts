@@ -3,6 +3,7 @@ import request from 'supertest';
 import { app } from '../app';
 import { prisma } from '../config/prisma';
 import { createTestUser, loginAs, resetDatabase } from './helpers';
+import { SESSION_COOKIE } from '../utils/session';
 
 describe('Autenticación y autorización', () => {
   beforeEach(async () => {
@@ -49,6 +50,40 @@ describe('Autenticación y autorización', () => {
     // Sin cookie ni token debe rechazarse.
     const withoutAuth = await request(app).get('/api/auth/me');
     expect(withoutAuth.status).toBe(401);
+  });
+
+  it('ignora una cookie de sesión inválida y acepta el Bearer válido', async () => {
+    await createTestUser({ email: 'cookie-vieja@test.local' });
+    const { response } = await loginAs('cookie-vieja@test.local');
+    const sessionToken = response.body.data.sessionToken as string;
+
+    // Navegador con una cookie vieja que ya no existe en la base de datos.
+    const withStaleCookie = await request(app)
+      .get('/api/auth/me')
+      .set('Cookie', `${SESSION_COOKIE}=cookie-anticipada-invalida-1234567890`)
+      .set('Authorization', `Bearer ${sessionToken}`);
+    expect(withStaleCookie.status).toBe(200);
+    expect(withStaleCookie.body.data.user.email).toBe('cookie-vieja@test.local');
+
+    // Si ambos tokens son inválidos, se rechaza.
+    const bothInvalid = await request(app)
+      .get('/api/auth/me')
+      .set('Cookie', `${SESSION_COOKIE}=cookie-anticipada-invalida-1234567890`)
+      .set('Authorization', 'Bearer token-invalido-1234567890');
+    expect(bothInvalid.status).toBe(401);
+  });
+
+  it('prefiere la cookie válida aunque el Bearer sea inválido', async () => {
+    await createTestUser({ email: 'cookie-valida@test.local' });
+    const { agent, response } = await loginAs('cookie-valida@test.local');
+    const sessionToken = response.body.data.sessionToken as string;
+    expect(sessionToken).toBeTruthy();
+
+    const withInvalidBearer = await agent
+      .get('/api/auth/me')
+      .set('Authorization', 'Bearer token-invalido-1234567890');
+    expect(withInvalidBearer.status).toBe(200);
+    expect(withInvalidBearer.body.data.user.email).toBe('cookie-valida@test.local');
   });
 
   it('rechaza credenciales incorrectas sin revelar si el usuario existe', async () => {

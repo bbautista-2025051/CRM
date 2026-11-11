@@ -24,35 +24,75 @@ export const getCsrfToken = (): string | null => csrfToken;
 /**
  * Token de sesión de respaldo. La cookie HttpOnly es el mecanismo principal,
  * pero los navegadores bloquean las cookies de terceros en modo incógnito
- * (Chrome) y navegación privada (Safari) cuando el frontend y la API viven en
- * dominios distintos. En ese caso se envía el token como `Authorization`.
- * Se guarda en `sessionStorage` (por pestaña) para sobrevivir recargas.
+ * (Chrome) y navegación privada (Safari/iOS) cuando el frontend y la API viven
+ * en dominios distintos. En ese caso se envía el token como `Authorization`.
+ *
+ * Se guarda en `sessionStorage` (por pestaña) para sobrevivir recargas. Si el
+ * navegador lo bloquea (navegación privada, almacenamiento restringido o web
+ * app instalada en iOS) se usa `localStorage`; si tampoco está disponible, el
+ * token vive solo en memoria para no perder la sesión durante la navegación.
  */
 const AUTH_TOKEN_STORAGE_KEY = 'nexo_session_token';
 let authToken: string | null = null;
 let authTokenLoaded = false;
 
+const getStorages = (): Storage[] => {
+  const storages: Storage[] = [];
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      storages.push(window.sessionStorage);
+    }
+  } catch {
+    // Acceso a sessionStorage bloqueado por el navegador.
+  }
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      storages.push(window.localStorage);
+    }
+  } catch {
+    // Acceso a localStorage bloqueado por el navegador.
+  }
+  return storages;
+};
+
 const readStoredAuthToken = (): void => {
   if (authTokenLoaded) return;
   authTokenLoaded = true;
-  try {
-    authToken = window.sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
-  } catch {
-    authToken = null;
+  authToken = null;
+  for (const storage of getStorages()) {
+    try {
+      const stored = storage.getItem(AUTH_TOKEN_STORAGE_KEY);
+      if (stored) {
+        authToken = stored;
+        return;
+      }
+    } catch {
+      // Se prueba el siguiente almacén disponible.
+    }
   }
+};
+
+/** Token de respaldo actual (útil para ignorar respuestas 401 antiguas). */
+export const getAuthToken = (): string | null => {
+  readStoredAuthToken();
+  return authToken;
 };
 
 export const setAuthToken = (token: string | null): void => {
   authTokenLoaded = true;
   authToken = token;
-  try {
-    if (token) {
-      window.sessionStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
-    } else {
-      window.sessionStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+
+  const storages = getStorages();
+  for (const storage of storages) {
+    try {
+      if (token) {
+        storage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+      } else {
+        storage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+      }
+    } catch {
+      // Almacén no escribible: se conserva el token en memoria.
     }
-  } catch {
-    // sessionStorage no disponible: el token solo vive en memoria.
   }
 };
 
@@ -73,7 +113,7 @@ export class ApiError extends Error {
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
   skipAuthEvent?: boolean;
-  /** No envía el token de respaldo (se usa para comprobar si la cookie funciona). */
+  /** No envía el token de respaldo (útil para probar solo la cookie). */
   skipBearerAuth?: boolean;
 }
 
@@ -94,8 +134,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   const headers = new Headers(rawHeaders);
 
   readStoredAuthToken();
-  if (authToken && !skipBearerAuth) {
-    headers.set('Authorization', `Bearer ${authToken}`);
+  const bearerToken = authToken && !skipBearerAuth ? authToken : null;
+  if (bearerToken) {
+    headers.set('Authorization', `Bearer ${bearerToken}`);
   }
   if (body !== undefined && !isFormData(body)) {
     headers.set('Content-Type', 'application/json');
@@ -151,7 +192,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     );
 
     if (response.status === 401 && !skipAuthEvent) {
-      window.dispatchEvent(new CustomEvent('nexo:unauthorized'));
+      window.dispatchEvent(
+        new CustomEvent('nexo:unauthorized', { detail: { token: bearerToken } }),
+      );
     }
 
     throw error;
@@ -165,8 +208,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
  */
 export async function download(path: string): Promise<Blob> {
   readStoredAuthToken();
+  const bearerToken = authToken;
   const headers: Record<string, string> = { Accept: '*/*' };
-  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  if (bearerToken) headers.Authorization = `Bearer ${bearerToken}`;
 
   let response: Response;
   try {
@@ -201,7 +245,9 @@ export async function download(path: string): Promise<Blob> {
       errorBody?.error?.details,
     );
     if (response.status === 401) {
-      window.dispatchEvent(new CustomEvent('nexo:unauthorized'));
+      window.dispatchEvent(
+        new CustomEvent('nexo:unauthorized', { detail: { token: bearerToken } }),
+      );
     }
     throw error;
   }

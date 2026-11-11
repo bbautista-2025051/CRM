@@ -4,11 +4,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { authApi, unwrap } from '@/lib/endpoints';
-import { setAuthToken, setCsrfToken } from '@/lib/api';
+import { getAuthToken, setAuthToken, setCsrfToken } from '@/lib/api';
 import { useTheme } from './ThemeProvider';
 import type { PublicUser, SessionPayload } from '@/types';
 
@@ -32,6 +33,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(true);
+  /**
+   * Marca cada inicio de sesión. Las comprobaciones que estaban en curso
+   * (bootstrap o refresh) solo pueden limpiar la sesión si no ocurrió un login
+   * después de que empezaran; de lo contrario borrarían una sesión recién
+   * creada (el "entra y me saca al instante" en iOS con la API en otro dominio).
+   */
+  const sessionGeneration = useRef(0);
 
   const applySession = useCallback(
     (session: SessionPayload) => {
@@ -53,23 +61,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refresh = useCallback(async () => {
+    const generation = sessionGeneration.current;
     try {
       const session = unwrap(await authApi.me());
-      applySession(session);
+      if (sessionGeneration.current === generation) applySession(session);
     } catch {
-      clearSession();
+      if (sessionGeneration.current === generation) clearSession();
     }
   }, [applySession, clearSession]);
 
   useEffect(() => {
     let active = true;
+    const generation = sessionGeneration.current;
 
     const bootstrap = async () => {
       try {
         const session = unwrap(await authApi.me());
-        if (active) applySession(session);
+        if (active && sessionGeneration.current === generation) applySession(session);
       } catch {
-        if (active) clearSession();
+        if (active && sessionGeneration.current === generation) clearSession();
       } finally {
         if (active) setLoading(false);
       }
@@ -83,31 +93,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [applySession, clearSession]);
 
   useEffect(() => {
-    const onUnauthorized = () => clearSession();
+    const onUnauthorized = (event: Event) => {
+      const failedToken =
+        (event as CustomEvent<{ token?: string | null }>).detail?.token ?? null;
+      const currentToken = getAuthToken();
+      // Un 401 de una petición anterior no debe cerrar una sesión más reciente.
+      if (currentToken && currentToken !== failedToken) return;
+      clearSession();
+    };
     window.addEventListener('nexo:unauthorized', onUnauthorized);
     return () => window.removeEventListener('nexo:unauthorized', onUnauthorized);
   }, [clearSession]);
 
   /**
-   * Tras iniciar sesión se comprueba si el navegador guardó la cookie de
-   * sesión. Si no la guardó (cookies de terceros bloqueadas en modo incógnito
-   * o en Safari), se conserva el token devuelto por el login y se envía como
-   * `Authorization: Bearer`. Cuando la cookie funciona no se conserva el
-   * token, para mantener la protección HttpOnly.
+   * Conserva siempre el token devuelto por el login. La cookie HttpOnly sigue
+   * siendo el mecanismo principal, pero en iOS/Safari y en modo incógnito el
+   * navegador bloquea las cookies de terceros (frontend y API en dominios
+   * distintos) y el token es lo único que mantiene la sesión. El backend
+   * acepta la primera sesión válida entre cookie y Bearer, así que enviarlo
+   * también cuando la cookie funciona no rompe nada.
    */
   const applyLoginSession = useCallback(
-    async (session: SessionPayload) => {
+    (session: SessionPayload) => {
+      sessionGeneration.current += 1;
       applySession(session);
-      if (!session.sessionToken) return;
-
-      setAuthToken(session.sessionToken);
-      try {
-        // Petición deliberadamente sin el token: si responde, la cookie sirve.
-        unwrap(await authApi.me({ skipBearerAuth: true }));
-        setAuthToken(null);
-      } catch {
-        // Sin cookie de sesión disponible: se mantiene el token de respaldo.
-      }
+      if (session.sessionToken) setAuthToken(session.sessionToken);
     },
     [applySession],
   );
@@ -115,7 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = useCallback(
     async (email: string, password: string, remember: boolean) => {
       const session = unwrap(await authApi.login({ email, password, rememberMe: remember }));
-      await applyLoginSession(session);
+      applyLoginSession(session);
       return session.user;
     },
     [applyLoginSession],
@@ -124,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithGoogle = useCallback(
     async (credential: string) => {
       const session = unwrap(await authApi.loginWithGoogle(credential));
-      await applyLoginSession(session);
+      applyLoginSession(session);
       return session.user;
     },
     [applyLoginSession],

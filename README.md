@@ -127,11 +127,17 @@ bloquean en modo incógnito de Chrome y en la navegación privada de Safari, por
 el login parecía funcionar pero la sesión se cerraba al instante.
 
 Para que funcione sin cambiar el despliegue, el login también devuelve el token de
-sesión en `data.sessionToken`. El frontend comprueba si la cookie funciona; si el
-navegador la bloqueó, guarda el token en `sessionStorage` y lo envía como
-`Authorization: Bearer`. Es la misma sesión opaca de la base de datos, así que el
-cierre de sesión y la expiración se mantienen. Cuando la cookie sí funciona, el token
-se descarta y se conserva la protección `HttpOnly`.
+sesión en `data.sessionToken`. El frontend lo guarda siempre (en `sessionStorage`,
+con `localStorage` y memoria como respaldo) y lo envía como `Authorization: Bearer`.
+Es la misma sesión opaca de la base de datos, así que el cierre de sesión y la
+expiración se mantienen. El backend acepta la primera sesión válida entre la cookie
+y el Bearer, de modo que una cookie vieja o inválida no invalida un token correcto.
+La cookie `HttpOnly` sigue siendo el mecanismo principal cuando el navegador la
+acepta.
+
+El frontend además ignora los `401` de peticiones que empezaron antes de un login
+y evita que la comprobación inicial de sesión (`bootstrap`) borre una sesión recién
+creada, que era la causa de que en iOS se cerrara la sesión al instante.
 
 Recomendación a futuro: publica el frontend y la API bajo el **mismo origen** (por
 ejemplo, con reglas de rewrite en el sitio estático de Render hacia `/api/*`) para no

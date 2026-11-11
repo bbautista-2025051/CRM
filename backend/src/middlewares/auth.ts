@@ -17,49 +17,88 @@ export interface AuthContext {
 }
 
 /**
- * Obtiene el token de sesión desde la cookie HttpOnly o, como respaldo, desde
- * el header `Authorization: Bearer`.
+ * Obtiene los tokens de sesión candidatos: primero la cookie HttpOnly y luego,
+ * como respaldo, el header `Authorization: Bearer`.
  *
  * El respaldo permite autenticar cuando el frontend y la API viven en dominios
  * distintos y el navegador bloquea las cookies de terceros (modo incógnito de
- * Chrome, navegación privada de Safari). Es la misma sesión opaca guardada en
- * la base de datos, así que el cierre de sesión y la expiración siguen
+ * Chrome, navegación privada de Safari/iOS). Es la misma sesión opaca guardada
+ * en la base de datos, así que el cierre de sesión y la expiración siguen
  * funcionando igual.
+ *
+ * Se devuelven ambos porque un navegador puede conservar una cookie vieja que
+ * ya no corresponde a ninguna sesión (por ejemplo, tras reiniciar la base de
+ * datos o rotar el secreto). En ese caso se debe probar el Bearer en lugar de
+ * rechazar la petición por la cookie inválida.
  */
-const getSessionToken = (req: Request): string | null => {
+const getSessionTokens = (req: Request): string[] => {
+  const tokens: string[] = [];
+
   const cookieToken = req.cookies?.[SESSION_COOKIE];
   if (typeof cookieToken === 'string' && cookieToken.length >= 20) {
-    return cookieToken;
+    tokens.push(cookieToken);
   }
 
   const bearerToken = extractBearerToken(req.headers.authorization);
-  return bearerToken && bearerToken.length >= 20 ? bearerToken : null;
+  if (bearerToken && bearerToken.length >= 20 && !tokens.includes(bearerToken)) {
+    tokens.push(bearerToken);
+  }
+
+  return tokens;
 };
 
 export const requireAuth = asyncHandler(
   async (req: Request, _res: Response, next: NextFunction) => {
-    const token = getSessionToken(req);
-    if (!token) {
+    const tokens = getSessionTokens(req);
+    if (tokens.length === 0) {
       throw new UnauthorizedError();
     }
 
-    const session = await prisma.session.findUnique({
-      where: { tokenHash: hashSessionToken(token) },
+    const hashedTokens = tokens.map((token) => hashSessionToken(token));
+    const sessions = await prisma.session.findMany({
+      where: { tokenHash: { in: hashedTokens } },
       include: { user: true },
     });
+    const sessionsByHash = new Map(sessions.map((session) => [session.tokenHash, session]));
+
+    let session: (typeof sessions)[number] | null = null;
+    let expiredSessionId: string | null = null;
+    let inactiveUserId: string | null = null;
+
+    // Se respeta el orden cookie → Bearer, pero solo se acepta la primera
+    // sesión realmente válida.
+    for (const hash of hashedTokens) {
+      const candidate = sessionsByHash.get(hash);
+      if (!candidate) continue;
+
+      if (candidate.expiresAt.getTime() <= Date.now()) {
+        expiredSessionId ??= candidate.id;
+        continue;
+      }
+
+      if (candidate.user.status !== 'ACTIVE') {
+        inactiveUserId ??= candidate.userId;
+        continue;
+      }
+
+      session = candidate;
+      break;
+    }
 
     if (!session) {
+      if (inactiveUserId) {
+        await prisma.session.deleteMany({ where: { userId: inactiveUserId } });
+        throw new UnauthorizedError('La cuenta está desactivada.');
+      }
+
+      if (expiredSessionId) {
+        await prisma.session
+          .delete({ where: { id: expiredSessionId } })
+          .catch(() => undefined);
+        throw new UnauthorizedError('Tu sesión ha expirado. Inicia sesión de nuevo.');
+      }
+
       throw new UnauthorizedError('Tu sesión no es válida. Inicia sesión de nuevo.');
-    }
-
-    if (session.expiresAt.getTime() <= Date.now()) {
-      await prisma.session.delete({ where: { id: session.id } }).catch(() => undefined);
-      throw new UnauthorizedError('Tu sesión ha expirado. Inicia sesión de nuevo.');
-    }
-
-    if (session.user.status !== 'ACTIVE') {
-      await prisma.session.deleteMany({ where: { userId: session.userId } });
-      throw new UnauthorizedError('La cuenta está desactivada.');
     }
 
     req.auth = {
