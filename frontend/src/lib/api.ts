@@ -21,6 +21,41 @@ export const setCsrfToken = (token: string | null): void => {
 
 export const getCsrfToken = (): string | null => csrfToken;
 
+/**
+ * Token de sesión de respaldo. La cookie HttpOnly es el mecanismo principal,
+ * pero los navegadores bloquean las cookies de terceros en modo incógnito
+ * (Chrome) y navegación privada (Safari) cuando el frontend y la API viven en
+ * dominios distintos. En ese caso se envía el token como `Authorization`.
+ * Se guarda en `sessionStorage` (por pestaña) para sobrevivir recargas.
+ */
+const AUTH_TOKEN_STORAGE_KEY = 'nexo_session_token';
+let authToken: string | null = null;
+let authTokenLoaded = false;
+
+const readStoredAuthToken = (): void => {
+  if (authTokenLoaded) return;
+  authTokenLoaded = true;
+  try {
+    authToken = window.sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+  } catch {
+    authToken = null;
+  }
+};
+
+export const setAuthToken = (token: string | null): void => {
+  authTokenLoaded = true;
+  authToken = token;
+  try {
+    if (token) {
+      window.sessionStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+    } else {
+      window.sessionStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+    }
+  } catch {
+    // sessionStorage no disponible: el token solo vive en memoria.
+  }
+};
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
@@ -38,6 +73,8 @@ export class ApiError extends Error {
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
   skipAuthEvent?: boolean;
+  /** No envía el token de respaldo (se usa para comprobar si la cookie funciona). */
+  skipBearerAuth?: boolean;
 }
 
 interface ErrorBody {
@@ -52,10 +89,14 @@ const isFormData = (value: unknown): value is FormData =>
   typeof FormData !== 'undefined' && value instanceof FormData;
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { body, skipAuthEvent, headers: rawHeaders, ...rest } = options;
+  const { body, skipAuthEvent, skipBearerAuth, headers: rawHeaders, ...rest } = options;
   const method = (rest.method ?? 'GET').toUpperCase();
   const headers = new Headers(rawHeaders);
 
+  readStoredAuthToken();
+  if (authToken && !skipBearerAuth) {
+    headers.set('Authorization', `Bearer ${authToken}`);
+  }
   if (body !== undefined && !isFormData(body)) {
     headers.set('Content-Type', 'application/json');
   }
@@ -123,12 +164,16 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
  * Descarga un recurso binario autenticado usando la ruta de la API configurada.
  */
 export async function download(path: string): Promise<Blob> {
+  readStoredAuthToken();
+  const headers: Record<string, string> = { Accept: '*/*' };
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+
   let response: Response;
   try {
     response = await fetch(resolveApiUrl(path), {
       method: 'GET',
       credentials: 'include',
-      headers: { Accept: '*/*' },
+      headers,
     });
   } catch {
     throw new ApiError(

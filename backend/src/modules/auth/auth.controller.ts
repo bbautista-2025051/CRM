@@ -17,6 +17,9 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
       csrfToken: session.csrfToken,
       expiresAt: session.expiresAt,
       rememberMe: session.rememberMe,
+      // Token de respaldo para clientes que no pueden usar la cookie de
+      // sesión (cookies de terceros bloqueadas en incógnito o Safari).
+      sessionToken: session.token,
     },
   });
 });
@@ -33,6 +36,7 @@ export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) 
       csrfToken: session.csrfToken,
       expiresAt: session.expiresAt,
       rememberMe: false,
+      sessionToken: session.token,
     },
   });
 });

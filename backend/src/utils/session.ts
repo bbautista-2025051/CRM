@@ -24,7 +24,11 @@ export const setSessionCookie = (
   res.cookie(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: env.cookieSecure,
-    sameSite: 'none',
+    // "none" permite sesiones cruzadas frontend/backend en producción
+    // (siempre con HTTPS). En desarrollo se usa "lax" porque el proxy de
+    // Vite sirve la API en el mismo origen y los navegadores rechazan
+    // SameSite=None sin Secure.
+    sameSite: env.isProduction ? 'none' : 'lax',
     path: '/',
     // Sin "Recuérdame" la cookie es de sesión del navegador; el servidor
     // además impone una expiración corta (SESSION_TTL_HOURS).
@@ -36,7 +40,7 @@ export const clearSessionCookie = (res: Response): void => {
   res.clearCookie(SESSION_COOKIE, {
     httpOnly: true,
     secure: env.cookieSecure,
-    sameSite: 'none',
+    sameSite: env.isProduction ? 'none' : 'lax',
     path: '/',
   });
 };

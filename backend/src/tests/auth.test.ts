@@ -24,8 +24,31 @@ describe('Autenticación y autorización', () => {
     expect(response.body.data.user.role).toBe('ADMIN');
     expect(response.body.data.user.passwordHash).toBeUndefined();
     expect(csrfToken).toBeTruthy();
+    expect(response.body.data.sessionToken).toBeTruthy();
     expect(setCookie.join(';')).toContain('HttpOnly');
-    expect(setCookie.join(';')).toContain('SameSite=None');
+    // En desarrollo/pruebas (sin HTTPS) la cookie usa SameSite=Lax; en
+    // producción se usa SameSite=None para permitir el cruce de dominios.
+    expect(setCookie.join(';')).toContain('SameSite=Lax');
+  });
+
+  it('autentica con el token Bearer cuando la cookie no está disponible', async () => {
+    await createTestUser({ email: 'bearer@test.local' });
+
+    // Se inicia sesión con un agente (guarda cookie) para obtener el token.
+    const { response } = await loginAs('bearer@test.local');
+    const sessionToken = response.body.data.sessionToken as string;
+    expect(sessionToken).toBeTruthy();
+
+    // Petición sin cookie de sesión, solo con el header Authorization.
+    const withBearer = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${sessionToken}`);
+    expect(withBearer.status).toBe(200);
+    expect(withBearer.body.data.user.email).toBe('bearer@test.local');
+
+    // Sin cookie ni token debe rechazarse.
+    const withoutAuth = await request(app).get('/api/auth/me');
+    expect(withoutAuth.status).toBe(401);
   });
 
   it('rechaza credenciales incorrectas sin revelar si el usuario existe', async () => {

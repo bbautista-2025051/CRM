@@ -38,6 +38,11 @@ export interface SessionPayload {
   csrfToken: string;
   expiresAt: string;
   rememberMe: boolean;
+  /**
+   * Token de respaldo que solo devuelve el login. Se usa cuando el navegador
+   * bloquea la cookie de sesión (cookies de terceros en incógnito o Safari).
+   */
+  sessionToken?: string;
 }
 
 export interface GoogleStatus {

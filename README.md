@@ -119,6 +119,24 @@ backend (reverse proxy). En producción configura `COOKIE_SECURE=true` (HTTPS
 obligatorio), `NODE_ENV=production`, `TRUST_PROXY=true` si hay proxy y `APP_URL` /
 `CORS_ORIGINS` con el dominio real.
 
+#### Frontend y API en dominios distintos (Render)
+
+Cuando el frontend (`*.onrender.com`) y la API (`*.onrender.com` de otro servicio)
+viven en **sitios distintos**, la cookie de sesión es de terceros. Los navegadores la
+bloquean en modo incógnito de Chrome y en la navegación privada de Safari, por lo que
+el login parecía funcionar pero la sesión se cerraba al instante.
+
+Para que funcione sin cambiar el despliegue, el login también devuelve el token de
+sesión en `data.sessionToken`. El frontend comprueba si la cookie funciona; si el
+navegador la bloqueó, guarda el token en `sessionStorage` y lo envía como
+`Authorization: Bearer`. Es la misma sesión opaca de la base de datos, así que el
+cierre de sesión y la expiración se mantienen. Cuando la cookie sí funciona, el token
+se descarta y se conserva la protección `HttpOnly`.
+
+Recomendación a futuro: publica el frontend y la API bajo el **mismo origen** (por
+ejemplo, con reglas de rewrite en el sitio estático de Render hacia `/api/*`) para no
+depender de cookies de terceros.
+
 ## 5. Variables de entorno
 
 Todas se validan al arrancar (`backend/src/config/env.ts`); si falta o es inválida una

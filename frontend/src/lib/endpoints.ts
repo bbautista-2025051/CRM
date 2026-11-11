@@ -1,4 +1,4 @@
-import { api, buildQuery, download } from './api';
+import { api, buildQuery, download, type RequestOptions } from './api';
 import type {
   ActivityLog,
   Client,
@@ -39,7 +39,11 @@ interface DataEnvelope<T> {
 const unwrap = <T>(response: DataEnvelope<T>): T => response.data;
 
 export const authApi = {
-  me: () => api.get<DataEnvelope<SessionPayload>>('/api/auth/me', { skipAuthEvent: true }),
+  me: (options?: RequestOptions) =>
+    api.get<DataEnvelope<SessionPayload>>('/api/auth/me', {
+      skipAuthEvent: true,
+      ...options,
+    }),
   login: (payload: { email: string; password: string; rememberMe: boolean }) =>
     api.post<DataEnvelope<SessionPayload>>('/api/auth/login', payload),
   loginWithGoogle: (credential: string) =>

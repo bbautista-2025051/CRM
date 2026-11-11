@@ -3,6 +3,7 @@ import type { User } from '@prisma/client';
 import { prisma } from '../config/prisma';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ForbiddenError, UnauthorizedError } from '../utils/errors';
+import { extractBearerToken } from '../utils/jwt';
 import { SESSION_COOKIE, hashSessionToken } from '../utils/session';
 
 export interface AuthContext {
@@ -15,10 +16,30 @@ export interface AuthContext {
   };
 }
 
+/**
+ * Obtiene el token de sesión desde la cookie HttpOnly o, como respaldo, desde
+ * el header `Authorization: Bearer`.
+ *
+ * El respaldo permite autenticar cuando el frontend y la API viven en dominios
+ * distintos y el navegador bloquea las cookies de terceros (modo incógnito de
+ * Chrome, navegación privada de Safari). Es la misma sesión opaca guardada en
+ * la base de datos, así que el cierre de sesión y la expiración siguen
+ * funcionando igual.
+ */
+const getSessionToken = (req: Request): string | null => {
+  const cookieToken = req.cookies?.[SESSION_COOKIE];
+  if (typeof cookieToken === 'string' && cookieToken.length >= 20) {
+    return cookieToken;
+  }
+
+  const bearerToken = extractBearerToken(req.headers.authorization);
+  return bearerToken && bearerToken.length >= 20 ? bearerToken : null;
+};
+
 export const requireAuth = asyncHandler(
   async (req: Request, _res: Response, next: NextFunction) => {
-    const token = req.cookies?.[SESSION_COOKIE];
-    if (typeof token !== 'string' || token.length < 20) {
+    const token = getSessionToken(req);
+    if (!token) {
       throw new UnauthorizedError();
     }
 

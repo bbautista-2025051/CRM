@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { authApi, unwrap } from '@/lib/endpoints';
-import { setCsrfToken } from '@/lib/api';
+import { setAuthToken, setCsrfToken } from '@/lib/api';
 import { useTheme } from './ThemeProvider';
 import type { PublicUser, SessionPayload } from '@/types';
 
@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setExpiresAt(null);
     setRememberMe(false);
     setCsrfToken(null);
+    setAuthToken(null);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -87,22 +88,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => window.removeEventListener('nexo:unauthorized', onUnauthorized);
   }, [clearSession]);
 
+  /**
+   * Tras iniciar sesión se comprueba si el navegador guardó la cookie de
+   * sesión. Si no la guardó (cookies de terceros bloqueadas en modo incógnito
+   * o en Safari), se conserva el token devuelto por el login y se envía como
+   * `Authorization: Bearer`. Cuando la cookie funciona no se conserva el
+   * token, para mantener la protección HttpOnly.
+   */
+  const applyLoginSession = useCallback(
+    async (session: SessionPayload) => {
+      applySession(session);
+      if (!session.sessionToken) return;
+
+      setAuthToken(session.sessionToken);
+      try {
+        // Petición deliberadamente sin el token: si responde, la cookie sirve.
+        unwrap(await authApi.me({ skipBearerAuth: true }));
+        setAuthToken(null);
+      } catch {
+        // Sin cookie de sesión disponible: se mantiene el token de respaldo.
+      }
+    },
+    [applySession],
+  );
+
   const login = useCallback(
     async (email: string, password: string, remember: boolean) => {
       const session = unwrap(await authApi.login({ email, password, rememberMe: remember }));
-      applySession(session);
+      await applyLoginSession(session);
       return session.user;
     },
-    [applySession],
+    [applyLoginSession],
   );
 
   const loginWithGoogle = useCallback(
     async (credential: string) => {
       const session = unwrap(await authApi.loginWithGoogle(credential));
-      applySession(session);
+      await applyLoginSession(session);
       return session.user;
     },
-    [applySession],
+    [applyLoginSession],
   );
 
   const logout = useCallback(async () => {

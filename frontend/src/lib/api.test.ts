@@ -3,9 +3,11 @@ import {
   ApiError,
   api,
   buildQuery,
+  download,
   getCsrfToken,
   getFieldErrors,
   request,
+  setAuthToken,
   setCsrfToken,
 } from './api';
 
@@ -22,11 +24,13 @@ describe('cliente HTTP', () => {
     fetchMock.mockReset();
     vi.stubGlobal('fetch', fetchMock);
     setCsrfToken(null);
+    setAuthToken(null);
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
     setCsrfToken(null);
+    setAuthToken(null);
   });
 
   it('envía el token CSRF en mutaciones y credenciales de sesión', async () => {
@@ -67,6 +71,34 @@ describe('cliente HTTP', () => {
     const headers = init.headers as Headers;
     expect(headers.get('Content-Type')).toBeNull();
     expect(init.body).toBe(form);
+  });
+
+  it('envía el token de respaldo como Authorization y permite omitirlo', async () => {
+    fetchMock.mockImplementation(async () => jsonResponse({ data: {} }));
+    setAuthToken('session-token-123');
+
+    await api.get('/api/auth/me');
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect((init.headers as Headers).get('Authorization')).toBe('Bearer session-token-123');
+
+    // skipBearerAuth permite comprobar si la cookie de sesión funciona sola.
+    await api.get('/api/auth/me', { skipBearerAuth: true });
+
+    const [, initWithout] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect((initWithout.headers as Headers).get('Authorization')).toBeNull();
+  });
+
+  it('incluye el token de respaldo al descargar archivos', async () => {
+    fetchMock.mockResolvedValue(new Response(new Blob(['x']), { status: 200 }));
+    setAuthToken('session-token-123');
+
+    await download('/api/companies/1/files/2/download');
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect((init.headers as Record<string, string>).Authorization).toBe(
+      'Bearer session-token-123',
+    );
   });
 
   it('devuelve undefined en respuestas 204', async () => {
