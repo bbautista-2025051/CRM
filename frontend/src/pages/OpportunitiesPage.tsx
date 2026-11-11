@@ -210,16 +210,7 @@ export const OpportunitiesPage = () => {
             <Button onClick={() => openCreate()} leftIcon={<Plus className="h-4 w-4" />}>
               Nueva oportunidad
             </Button>
-            {user?.role === 'ADMIN' ? (
-              <Button
-                variant="secondary"
-                onClick={() => setAddingStage((current) => !current)}
-                leftIcon={<Plus className="h-4 w-4" />}
-              >
-                Agregar etapa
-              </Button>
-            ) : null}
-          </>
+          </> 
         }
       />
 
@@ -278,7 +269,15 @@ export const OpportunitiesPage = () => {
             <Select
               aria-label="Filtrar por etapa"
               value={stage}
-              onChange={(event) => setStage(event.target.value)}
+              onChange={(event) => {
+                const next = event.target.value;
+                if (next === '__new_stage__') {
+                  setStage('');
+                  setAddingStage(true);
+                  return;
+                }
+                setStage(next);
+              }}
               className="w-auto min-w-[140px]"
             >
               <option value="">Todas las etapas</option>
@@ -287,6 +286,9 @@ export const OpportunitiesPage = () => {
                   {item.label}
                 </option>
               ))}
+              {user?.role === 'ADMIN' ? (
+                <option value="__new_stage__">+ Agregar nueva etapa</option>
+              ) : null}
             </Select>
             <Select
               aria-label="Filtrar por estado"
