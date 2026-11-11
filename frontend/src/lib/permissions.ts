@@ -1,4 +1,4 @@
-import type { Role, SaleStatus, User } from '@/types';
+import type { Role, SaleStatus } from '@/types';
 
 // --- Funciones de identificación de rol ---
 
@@ -53,9 +53,23 @@ export const canManageOpportunity = (
 /**
  * Verifica si el usuario puede gestionar una venta.
  * ADMIN, GERENTE o el dueño de la venta pueden gestionarla.
- * Las ventas CONFIRMED solo pueden modificarse por ADMIN o GERENTE.
  */
 export const canManageSale = (
+  role: Role | undefined | null,
+  userId: string | undefined | null,
+  ownerId: string,
+): boolean =>
+  isAdmin(role) ||
+  isGerente(role) ||
+  (Boolean(userId) && userId === ownerId);
+
+/**
+ * Verifica si el usuario puede editar una venta.
+ * Las ventas CANCELLED no se pueden editar.
+ * ADMIN y GERENTE pueden editar cualquier venta.
+ * El dueño solo puede editar ventas PENDING.
+ */
+export const canEditSale = (
   role: Role | undefined | null,
   userId: string | undefined | null,
   ownerId: string,
@@ -213,18 +227,22 @@ export const canCreateTask = (role: Role | undefined | null): boolean =>
  * ADMIN, GERENTE y OPERACIONES pueden asignar tareas.
  */
 export const canAssignTask = (role: Role | undefined | null): boolean =>
-  isAdmin(role) || isGerente(role) || isOperacionesrole me.
+  isAdmin(role) || isGerente(role) || isOperaciones(role);
 
---- Permisos de proyecto por rol ---
+/** ADMIN, GERENTE y OPERACIONES pueden crear, asignar y gestionar tareas de equipo. */
+export const canManageTeamTasks = (role: Role | undefined | null): boolean =>
+  isAdmin(role) || isGerente(role) || isOperaciones(role);
+
+// --- Permisos de proyecto por rol ---
 
 /**
  * Verifica si el usuario puede crear un proyecto.
  * Requiere una venta confirmada.
  */
 export const canCreateProjectByRole = (role: Role | undefined | null): boolean =>
-  isAdmin(role) || isGerente(role) || isPreventa(role) || isOperacionesrole me.
+  isAdmin(role) || isGerente(role) || isPreventa(role) || isOperaciones(role);
 
---- Permisos de dashboard y reporte ---
+// --- Permisos de dashboard y reporte ---
 
 /**
  * Verifica si el usuario puede acceder a métricas específicas por departamento.
@@ -238,51 +256,55 @@ export const canViewDepartmentMetrics = (
   if (isAdmin(role)) return true;
   if (isGerente(role)) return true;
   if (isSupervisor(role)) return userDepartment === targetDepartment;
-  if (isPreventa(role) || isOperacionesrole me.
+  if (isPreventa(role) || isOperaciones(role)) {
+    return userDepartment === targetDepartment;
+  }
+  return false;
+};
 
---- Permisos específicos de flujo de trabajo ---
+// --- Permisos específicos de flujo de trabajo ---
 
 /**
  * Verifica si el usuario puede iniciar el flujo de venta.
  * Vendedores pueden crear ventas PENDING.
  */
 export const canStartSaleFlow = (role: Role | undefined | null): boolean =>
-  isVendedor(role) || isPreventa(role) || isOperacionesrole me.
+  isVendedor(role) || isPreventa(role) || isOperaciones(role);
 
 /**
  * Verifica si el usuario puede terminar/cerrar un proyecto.
  * ADMIN, GERENTE y OPERACIONES pueden cerrar proyectos.
  */
 export const canCloseProject = (role: Role | undefined | null): boolean =>
-  isAdminrole me.
+  isAdmin(role) || isGerente(role) || isOperaciones(role);
 
 /**
  * Verifica si el usuario puede reiniciar un proyecto.
  * Solo ADMIN puede reiniciar proyectos cerrados o archivados.
  */
 export const canReopenProject = (role: Role | undefined | null): boolean =>
-  isAdminrole me.
+  isAdmin(role);
 
 /**
  * Verifica si el usuario puede ver información financiera restringida.
  * Solo ADMIN y GERENTE tienen acceso a márgenes, descuentos internos, etc.
  */
 export const canViewFinancialData = (role: Role | undefined | null): boolean =>
-  isAdminrole me.
+  isAdmin(role) || isGerente(role);
 
 /**
  * Verifica si el usuario puede gestionar configuraciones del sistema.
  * Solo ADMIN tiene este permiso.
  */
 export const canManageSystemConfig = (role: Role | undefined | null): boolean =>
-  isAdminrole me.
+  isAdmin(role);
 
 /**
  * Verifica si el usuario puede restablecer contraseñas de otros usuarios.
  * Solo ADMIN puede restablecer contraseñas.
  */
 export const canResetPasswords = (role: Role | undefined | null): boolean =>
-  isAdminrole me.
+  isAdmin(role);
 
 /**
  * Verifica si el usuario puede ver el historial/auditoría completo.
@@ -290,11 +312,11 @@ export const canResetPasswords = (role: Role | undefined | null): boolean =>
  * Otros roles ven solo su propio historial.
  */
 export const canViewFullAuditLog = (role: Role | undefined | null): boolean =>
-  isAdminrole me.
+  isAdmin(role) || isGerente(role);
 
 /**
  * Verifica si el usuario puede invitar a otros usuarios.
  * ADMIN y GERENTE pueden invitar usuarios.
  */
 export const canInviteUsers = (role: Role | undefined | null): boolean =>
-  isAdminrole me.
+  isAdmin(role) || isGerente(role);

@@ -17,7 +17,12 @@ import {
   buildPaginationMeta,
   skipTake,
 } from '../../utils/pagination';
-import { isAdmin, isGerente, isVendedor, isPreventa, isOperaciones } from '@/lib/permissions';
+
+const isAdmin = (role: string) => role === 'ADMIN';
+const isGerente = (role: string) => role === 'GERENTE';
+const isVendedor = (role: string) => role === 'VENDEDOR';
+const isPreventa = (role: string) => role === 'PREVENTA';
+const isOperaciones = (role: string) => role === 'OPERACIONES';
 
 interface ListParams {
   page: number;
