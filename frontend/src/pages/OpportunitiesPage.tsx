@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -75,6 +75,7 @@ export const OpportunitiesPage = () => {
   const [view, setView] = useState<ViewMode>('table');
   const [addingStage, setAddingStage] = useState(false);
   const [newStageName, setNewStageName] = useState('');
+  const boardScrollRef = useRef<HTMLDivElement>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
   const createStage = useMutation({
     mutationFn: () => opportunitiesApi.createStage(newStageName.trim()),
@@ -95,6 +96,17 @@ export const OpportunitiesPage = () => {
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, stage, status, ownerId, companyId, view]);
+
+  useEffect(() => {
+    if (view !== 'board' || !addingStage) return;
+    const container = boardScrollRef.current;
+    container?.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+  }, [view, addingStage]);
+
+  const cancelAddStage = () => {
+    setAddingStage(false);
+    setNewStageName('');
+  };
 
   useEffect(() => {
     if (!createRequested && !openRequested) return;
@@ -214,7 +226,7 @@ export const OpportunitiesPage = () => {
         }
       />
 
-      {addingStage ? (
+      {addingStage && view !== 'board' ? (
         <Card className="p-4">
           <form
             className="flex flex-col gap-3 sm:flex-row sm:items-end"
@@ -235,14 +247,7 @@ export const OpportunitiesPage = () => {
               />
             </label>
             <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setAddingStage(false);
-                  setNewStageName('');
-                }}
-              >
+              <Button type="button" variant="secondary" onClick={cancelAddStage}>
                 Cancelar
               </Button>
               <Button
@@ -499,7 +504,7 @@ export const OpportunitiesPage = () => {
             {meta ? <Pagination meta={meta} onPageChange={setPage} /> : null}
           </>
         ) : (
-          <div className="scrollbar-thin overflow-x-auto p-4">
+          <div className="scrollbar-thin overflow-x-auto p-4" ref={boardScrollRef}>
             <div className="flex min-w-max gap-3">
               {boardColumns.map((column) => (
                 <section
@@ -579,6 +584,68 @@ export const OpportunitiesPage = () => {
                   </div>
                 </section>
               ))}
+              {user?.role === 'ADMIN' ? (
+                <section
+                  className="w-[272px] shrink-0 rounded-xl border border-dashed border-line bg-elevated/20"
+                  aria-label="Agregar nueva etapa"
+                >
+                  <header className="flex items-center gap-2 border-b border-dashed border-line px-3 py-2.5">
+                    <span className="h-2 w-2 rounded-full border border-dashed border-muted/60" />
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
+                      Nueva etapa
+                    </h2>
+                  </header>
+                  <div className="p-2.5">
+                    {addingStage ? (
+                      <form
+                        className="space-y-2"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          if (newStageName.trim()) createStage.mutate();
+                        }}
+                      >
+                        <Input
+                          autoFocus
+                          maxLength={60}
+                          value={newStageName}
+                          onChange={(event) => setNewStageName(event.target.value)}
+                          placeholder="Ej. Revisión legal"
+                          aria-label="Nombre de la nueva etapa"
+                          required
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="flex-1"
+                            onClick={cancelAddStage}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            type="submit"
+                            size="sm"
+                            className="flex-1"
+                            loading={createStage.isPending}
+                            disabled={!newStageName.trim()}
+                          >
+                            Crear
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setAddingStage(true)}
+                        className="focus-ring flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-6 text-[12px] font-medium text-muted transition hover:border-brand/40 hover:bg-surface hover:text-ink"
+                      >
+                        <Plus className="h-4 w-4" /> Agregar etapa
+                      </button>
+                    )}
+                  </div>
+                </section>
+              ) : null}
             </div>
             {meta && meta.total > 100 ? (
               <p className="mt-3 text-center text-[11px] text-muted">
