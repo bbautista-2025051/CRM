@@ -17,6 +17,7 @@ import {
   buildPaginationMeta,
   skipTake,
 } from '../../utils/pagination';
+import { isAdmin, isGerente, isVendedor, isPreventa, isOperaciones } from '@/lib/permissions';
 
 interface ListParams {
   page: number;
@@ -286,9 +287,15 @@ const resolveRelations = async (
 };
 
 export const createSale = async (input: SaleInput, actor: User) => {
-  if (input.status === 'CONFIRMED' && actor.role !== 'ADMIN') {
-    throw new ForbiddenError('Solo un administrador puede confirmar una venta');
+  // Vendedor/Preventa/Operations pueden crear ventas con estado PENDING
+  // Solo ADMIN puede crear una venta con estado CONFIRMED directamente
+  if (input.status === 'CONFIRMED' && !isAdmin(actor.role)) {
+    throw new ForbiddenError(
+      'Solo un administrador puede crear una venta con estado CONFIRMED',
+    );
   }
+  // Vendedores/Preventa/Operations crean con PENDING por defecto
+  if (!input.status) input.status = 'PENDING';
 
   const relations = await resolveRelations(input, actor);
 
@@ -354,24 +361,35 @@ export const updateSale = async (
   const existing = await prisma.sale.findUnique({ where: { id } });
   if (!existing) throw new NotFoundError('La venta no existe');
 
-  assertCanManage(existing, actor);
-
-  if (actor.role !== 'ADMIN' && existing.status === 'CONFIRMED') {
-    throw new ForbiddenError(
-      'Una venta confirmada solo puede ser modificada por un administrador',
-    );
+  // ADMIN puede modificar cualquier venta
+  if (isAdmin(actor.role)) {
+    // Permitir todas las modificaciones
+  } else if (isGerente(actor.role)) {
+    // GERENTE puede editar ventas PENDING de su equipo
+    // No puede modificar ventas CONFIRMED a menos que sea para corregir información menor
+    if (existing.status === 'CONFIRMED') {
+      throw new ForbiddenError(
+        'Las ventas confirmadas solo pueden modificarse por un administrador',
+      );
+    }
+  } else if (isVendedor(actor.role) || isPreventa(actor.role) || isOperaciones(actor.role)) {
+    // Vendedores/Preventa/Operaciones solo pueden editar sus propias ventas PENDING
+    if (existing.ownerId !== actor.id) {
+      throw new ForbiddenError(
+        'Solo puedes gestionar las ventas que tienes asignadas',
+      );
+    }
+    if (existing.status !== 'PENDING') {
+      throw new ForbiddenError(
+        'Solo puedes editar ventas con estado PENDING',
+      );
+    }
+  } else {
+    throw new ForbiddenError('No tienes permiso para modificar esta venta');
   }
 
-  if (existing.status === 'CANCELLED' && input.status !== undefined) {
+  if (existing.status === 'CANCELLED') {
     throw new ConflictError('Una venta cancelada no puede volver a cambiar de estado');
-  }
-
-  if (input.status === 'CONFIRMED' && actor.role !== 'ADMIN') {
-    throw new ForbiddenError('Solo un administrador puede confirmar una venta');
-  }
-
-  if (input.status === 'CANCELLED') {
-    throw new BadRequestError('Usa la acción de cancelación para anular una venta');
   }
 
   const companyId =
@@ -430,13 +448,29 @@ export const cancelSale = async (id: string, actor: User) => {
   const existing = await prisma.sale.findUnique({ where: { id } });
   if (!existing) throw new NotFoundError('La venta no existe');
 
-  assertCanManage(existing, actor);
+  // ADMIN puede cancelar cualquier venta
+  if (isAdmin(actor.role)) {
+    // Permitir cancelación
+  } else if (isGerente(actor.role)) {
+    // GERENTE puede cancelar cualquier venta
+  } else if (isVendedor(actor.role) || isPreventa(actor.role) || isOperaciones(actor.role)) {
+    // Vendedores/Preventa/Operations solo pueden cancelar sus ventas PENDING
+    if (existing.ownerId !== actor.id) {
+      throw new ForbiddenError(
+        'Solo puedes cancelar las ventas que tienes asignadas',
+      );
+    }
+    if (existing.status !== 'PENDING') {
+      throw new ForbiddenError(
+        'Solo puedes cancelar ventas con estado PENDING',
+      );
+    }
+  } else {
+    throw new ForbiddenError('No tienes permiso para cancelar esta venta');
+  }
 
   if (existing.status === 'CANCELLED') {
     throw new ConflictError('La venta ya está cancelada');
-  }
-  if (existing.status === 'CONFIRMED' && actor.role !== 'ADMIN') {
-    throw new ForbiddenError('Solo un administrador puede cancelar una venta confirmada');
   }
 
   const sale = await prisma.sale.update({

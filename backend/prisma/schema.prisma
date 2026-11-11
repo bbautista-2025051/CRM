@@ -78,11 +78,9 @@ model User {
   status             UserStatus       @default(ACTIVE)
   avatarUrl          String?          @map("avatar_url") @db.VarChar(500)
   googleId           String?          @unique @map("google_id") @db.VarChar(255)
-  themePreference    ThemePreference  @default(SYSTEM) @map("theme_preference")
-  mustChangePassword Boolean          @default(false) @map("must_change_password")
-  lastLoginAt        DateTime?        @map("last_login_at")
-  createdAt          DateTime         @default(now()) @map("created_at")
-  updatedAt          DateTime         @updatedAt @map("updated_at")
+  department         String?          @db.VarChar(50)
+  supervisorId       String?          @db.Uuid @map("supervisor_id")
+  isGeneralSupervisor Boolean         @default(false)
 
   sessions         Session[]
   createdCompanies Company[]       @relation("CompanyCreatedBy")
