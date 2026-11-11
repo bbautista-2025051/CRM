@@ -26,8 +26,7 @@ import {
 } from '@/lib/permissions';
 import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 import { ApiError } from '@/lib/api';
-import { SaleFormModal } from '@/components/sales/SaleFormModal';
-import { SaleDetailModal } from '@/components/sales/SaleDetailModal';
+
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -72,9 +71,6 @@ export const SalesPage = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Sale | null>(null);
-  const [openId, setOpenId] = useState<string | null>(openRequested);
   const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
@@ -91,7 +87,10 @@ export const SalesPage = () => {
       navigate(`/negocio/nuevo?${params.toString()}`, { replace: true });
       return;
     }
-    if (openRequested) setOpenId(openRequested);
+    if (openRequested) {
+      navigate(`/negocio/venta/${openRequested}`, { replace: true });
+      return;
+    }
     const next = new URLSearchParams(searchParams);
     next.delete('create');
     next.delete('open');
@@ -99,8 +98,6 @@ export const SalesPage = () => {
     next.delete('clientId');
     next.delete('opportunityId');
     setSearchParams(next, { replace: true });
-    // Solo se ejecuta cuando la URL trae una acción puntual.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createRequested, openRequested, companyParam, clientParam, opportunityParam]);
 
   const query = useQuery({
@@ -183,12 +180,6 @@ export const SalesPage = () => {
     const params = new URLSearchParams({ view: 'sales' });
     if (companyId) params.set('companyId', companyId);
     navigate(`/negocio/nuevo?${params.toString()}`);
-  };
-
-  const openEdit = (sale: Sale) => {
-    setOpenId(null);
-    setEditing(sale);
-    setFormOpen(true);
   };
 
   const onConfirm = async (sale: Sale) => {
@@ -441,7 +432,7 @@ export const SalesPage = () => {
                         <td>
                           <button
                             type="button"
-                            onClick={() => setOpenId(sale.id)}
+                            onClick={() => navigate(`/negocio/venta/${sale.id}`)}
                             className="font-mono text-xs font-semibold text-brand-strong hover:underline dark:text-brand"
                           >
                             {sale.saleNumber}
@@ -500,7 +491,7 @@ export const SalesPage = () => {
                                   icon={<Eye className="h-4 w-4" />}
                                   onClick={() => {
                                     close();
-                                    setOpenId(sale.id);
+                                    navigate(`/negocio/venta/${sale.id}`);
                                   }}
                                 >
                                   Ver detalle
@@ -510,7 +501,7 @@ export const SalesPage = () => {
                                     icon={<Pencil className="h-4 w-4" />}
                                     onClick={() => {
                                       close();
-                                      openEdit(sale);
+                                      navigate(`/negocio/venta/${sale.id}/editar`);
                                     }}
                                   >
                                     Editar
@@ -570,18 +561,6 @@ export const SalesPage = () => {
           </Link>
         ) : null}
       </div>
-
-      <SaleFormModal
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        sale={editing}
-      />
-
-      <SaleDetailModal
-        saleId={openId}
-        onClose={() => setOpenId(null)}
-        onEdit={openEdit}
-      />
     </div>
   );
 };
