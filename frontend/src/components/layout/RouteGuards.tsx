@@ -6,7 +6,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { isAdmin } from '@/lib/permissions';
 
 const FullScreenLoader = () => (
-  <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-canvas">
+  <div className="flex min-h-svh flex-col items-center justify-center gap-5 bg-canvas">
     <Logo />
     <div className="flex items-center gap-2 text-sm text-muted">
       <Spinner className="h-4 w-4" />

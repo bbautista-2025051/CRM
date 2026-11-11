@@ -359,27 +359,27 @@ export const DashboardPage = () => {
                 }
               />
               <div className="mt-5 grid grid-cols-3 divide-x divide-line border-y border-line">
-                <div className="px-4 py-3">
+                <div className="px-2 py-3 sm:px-4">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                     Ganadas
                   </p>
-                  <p className="metric mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+                  <p className="metric mt-1 text-base font-semibold text-emerald-600 dark:text-emerald-400 sm:text-lg">
                     {data.totals.wonOpportunities}
                   </p>
                 </div>
-                <div className="px-4 py-3">
+                <div className="px-2 py-3 sm:px-4">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                     Perdidas
                   </p>
-                  <p className="metric mt-1 text-lg font-semibold text-rose-600 dark:text-rose-400">
+                  <p className="metric mt-1 text-base font-semibold text-rose-600 dark:text-rose-400 sm:text-lg">
                     {data.totals.lostOpportunities}
                   </p>
                 </div>
-                <div className="px-4 py-3">
+                <div className="px-2 py-3 sm:px-4">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
                     Conversión
                   </p>
-                  <p className="metric mt-1 text-lg font-semibold text-ink">
+                  <p className="metric mt-1 text-base font-semibold text-ink sm:text-lg">
                     {formatPercent(data.totals.conversionRate)}
                   </p>
                 </div>

@@ -85,7 +85,7 @@ export const LoginPage = () => {
   const googleEnabled = Boolean(googleStatus.data?.enabled && googleStatus.data?.clientId);
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-indigo-100 p-4 dark:from-black dark:via-slate-950 dark:to-indigo-950">
+    <div className="relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-indigo-100 p-4 dark:from-black dark:via-slate-950 dark:to-indigo-950">
       <div
         aria-hidden
         className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl dark:bg-blue-500/5"
@@ -138,7 +138,7 @@ export const LoginPage = () => {
             </div>
           </section>
 
-          <section className="flex w-full flex-col justify-center bg-white p-7 sm:p-10 md:w-1/2 dark:bg-slate-900">
+          <section className="flex w-full flex-col justify-center bg-white p-5 sm:p-10 md:w-1/2 dark:bg-slate-900">
             <div className="mx-auto w-full max-w-[380px]">
               <div className="animate-login-up">
                 <h1 className="text-2xl font-bold tracking-tight text-gray-800 sm:text-3xl dark:text-slate-100">

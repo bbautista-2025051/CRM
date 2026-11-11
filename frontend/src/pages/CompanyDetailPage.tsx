@@ -286,17 +286,29 @@ export const CompanyDetailPage = () => {
           <Card>
             <CardHeader title="Resumen comercial" />
             <div className="grid grid-cols-3 divide-x divide-line border-b border-line">
-              <div className="px-3 py-4 text-center">
-                <p className="text-xl font-semibold text-ink">{formatNumber(company.clients.length)}</p>
-                <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted">Clientes</p>
+              <div className="px-2 py-4 text-center sm:px-3">
+                <p className="text-lg font-semibold text-ink sm:text-xl">
+                  {formatNumber(company.clients.length)}
+                </p>
+                <p className="mt-1 text-[9px] font-medium uppercase tracking-wide text-muted sm:text-[10px]">
+                  Clientes
+                </p>
               </div>
-              <div className="px-3 py-4 text-center">
-                <p className="text-xl font-semibold text-ink">{formatNumber(openOpportunities.length)}</p>
-                <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted">Abiertas</p>
+              <div className="px-2 py-4 text-center sm:px-3">
+                <p className="text-lg font-semibold text-ink sm:text-xl">
+                  {formatNumber(openOpportunities.length)}
+                </p>
+                <p className="mt-1 text-[9px] font-medium uppercase tracking-wide text-muted sm:text-[10px]">
+                  Abiertas
+                </p>
               </div>
-              <div className="px-3 py-4 text-center">
-                <p className="text-xl font-semibold text-ink">{formatNumber(confirmedSales.length)}</p>
-                <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted">Ventas</p>
+              <div className="px-2 py-4 text-center sm:px-3">
+                <p className="text-lg font-semibold text-ink sm:text-xl">
+                  {formatNumber(confirmedSales.length)}
+                </p>
+                <p className="mt-1 text-[9px] font-medium uppercase tracking-wide text-muted sm:text-[10px]">
+                  Ventas
+                </p>
               </div>
             </div>
             <CardBody className="space-y-3">
