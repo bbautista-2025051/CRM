@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Ban, CheckCircle2, Pencil } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/providers/ToastProvider';
@@ -9,12 +10,11 @@ import { salesApi, unwrap } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
 import { SaleDetailModal } from '@/components/sales/SaleDetailModal';
 import { Button } from '@/components/ui/Button';
-import { Alert } from '@/components/ui/Alert';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Avatar } from '@/components/ui/Avatar';
 import { SaleStatusBadge } from '@/components/ui/StatusBadges';
-import { formatDate, formatMoney, formatDateTime } from '@/lib/format';
+import { formatMoney, formatDate, formatDateTime } from '@/lib/format';
 
 export const SaleDetailPage = () => {
   usePageTitle('Detalle de venta');

@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import {
   Building2,
   CalendarDays,
   Download,
   File as FileIcon,
   FileArchive,
-  Handshake,
+  FileImage,
+  FileText,
+  FileSpreadsheet,
   Image,
   Pencil,
   Target,
@@ -17,19 +18,15 @@ import {
   Plus,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
-import { Button, buttonStyles } from '@/components/ui/Button';
-import { Alert } from '@/components/ui/Alert';
-import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Avatar } from '@/components/ui/Avatar';
 import { SaleStatusBadge } from '@/components/ui/StatusBadges';
-import { StageBadge } from '@/components/ui/StatusBadges';
 import { useAuth } from '@/providers/AuthProvider';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { salesApi, unwrap } from '@/lib/endpoints';
-import { useSaleStages } from '@/hooks/queries';
 import { ApiError } from '@/lib/api';
 import { formatBytes, formatDate, formatDateTime, formatMoney } from '@/lib/format';
 import type { Sale, SaleComment, SaleFile } from '@/types';
@@ -317,10 +314,6 @@ export const SaleDetailModal = ({
       ) : (
         <div className="mx-auto max-w-4xl space-y-5">
           <div className="flex flex-wrap items-center gap-2">
-            <StageBadge
-              stage={sale?.stage}
-              label={sale?.status}
-            />
             <SaleStatusBadge status={sale?.status} />
             <span className="text-xs text-muted">
               {sale?.saleNumber ?? ''}
