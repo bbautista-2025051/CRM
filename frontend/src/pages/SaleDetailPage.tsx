@@ -1,34 +1,20 @@
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Ban,
-  Building2,
-  CalendarDays,
-  CheckCircle2,
-  Handshake,
-  Pencil,
-  Target,
-  UserRound,
-  ArrowLeft,
-} from 'lucide-react';
+import { useAuth } from '@/providers/AuthProvider';
+import { useConfirm } from '@/providers/ConfirmProvider';
+import { useToast } from '@/providers/ToastProvider';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { salesApi, unwrap } from '@/lib/endpoints';
+import { ApiError } from '@/lib/api';
+import { SaleDetailModal } from '@/components/sales/SaleDetailModal';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Avatar } from '@/components/ui/Avatar';
 import { SaleStatusBadge } from '@/components/ui/StatusBadges';
-import { useAuth } from '@/providers/AuthProvider';
-import { useConfirm } from '@/providers/ConfirmProvider';
-import { useToast } from '@/providers/ToastProvider';
-import { salesApi, unwrap } from '@/lib/endpoints';
-import { ApiError } from '@/lib/api';
-import {
-  canCancelSale,
-  canConfirmSales,
-  canEditSale,
-} from '@/lib/permissions';
-import { formatDate, formatDateTime, formatMoney } from '@/lib/format';
-import { usePageTitle } from '@/hooks/usePageTitle';
+import { formatDate, formatMoney, formatDateTime } from '@/lib/format';
 
 export const SaleDetailPage = () => {
   usePageTitle('Detalle de venta');
@@ -37,7 +23,7 @@ export const SaleDetailPage = () => {
   const { success, error: toastError } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { id } = useSearchParams();
   const saleId = id;
 
   const query = useQuery({
@@ -110,13 +96,12 @@ export const SaleDetailPage = () => {
   };
 
   const canEdit = sale
-    ? canEditSale(user?.role, user?.id, sale.ownerId, sale.status)
+    ? sale.ownerId === user?.id || user?.role === 'ADMIN'
     : false;
   const canCancel = sale
-    ? canCancelSale(user?.role, user?.id, sale.ownerId, sale.status)
+    ? sale.ownerId === user?.id || user?.role === 'ADMIN'
     : false;
-  const canConfirm =
-    sale?.status === 'PENDING' && canConfirmSales(user?.role);
+  const canConfirm = sale?.status === 'PENDING';
   const pending = confirmSale.isPending || cancelSale.isPending;
 
   return (
@@ -181,168 +166,11 @@ export const SaleDetailPage = () => {
       ) : query.isError || !sale ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} compact />
       ) : (
-        <div className="mx-auto max-w-4xl space-y-5">
-          {sale.status === 'CONFIRMED' ? (
-            <Alert variant="success" title="Venta confirmada">
-              Este importe se incluye en los ingresos confirmados. Solo un administrador
-              puede modificarla o cancelarla.
-            </Alert>
-          ) : sale.status === 'CANCELLED' ? (
-            <Alert variant="warning" title="Venta cancelada">
-              La venta se conserva para auditoría, pero no suma a los ingresos.
-            </Alert>
-          ) : canConfirm ? (
-            <Alert variant="info" title="Venta pendiente de confirmación">
-              Revísala y confírmala cuando el cobro esté validado.
-            </Alert>
-          ) : (
-            <Alert variant="info" title="Pendiente de confirmación">
-              Un administrador debe confirmar esta venta para que cuente como ingreso.
-            </Alert>
-          )}
-
-          <div className="border-y border-line py-3.5">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Importe
-                </p>
-                <p className="mt-1 text-2xl font-semibold tracking-tight text-ink">
-                  {formatMoney(sale.amount, sale.currency)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Moneda
-                </p>
-                <p className="mt-1 text-lg font-semibold text-ink">{sale.currency}</p>
-              </div>
-            </div>
-          </div>
-
-          <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Fecha de venta
-              </dt>
-              <dd className="mt-1 flex items-center gap-1.5 text-sm text-ink">
-                <CalendarDays className="h-3.5 w-3.5 text-muted" />
-                {formatDate(sale.saleDate)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Responsable
-              </dt>
-              <dd className="mt-1 flex items-center gap-2 text-sm text-ink">
-                {sale.owner ? (
-                  <>
-                    <Avatar name={sale.owner.name} src={sale.owner.avatarUrl} size="xs" />
-                    {sale.owner.name}
-                  </>
-                ) : (
-                  '—'
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Cliente
-              </dt>
-              <dd className="mt-1 flex items-center gap-1.5 text-sm text-ink">
-                <UserRound className="h-3.5 w-3.5 text-muted" />
-                {sale.client ? (
-                  <a
-                    href={`/clients/${sale.client.id}`}
-                    className="hover:text-brand-strong hover:underline dark:hover:text-brand"
-                  >
-                    {sale.client.firstName} {sale.client.lastName}
-                  </a>
-                ) : (
-                  '—'
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Empresa
-              </dt>
-              <dd className="mt-1 flex items-center gap-1.5 text-sm text-ink">
-                <Building2 className="h-3.5 w-3.5 text-muted" />
-                {sale.company ? (
-                  <a
-                    href={`/companies/${sale.company.id}`}
-                    className="hover:text-brand-strong hover:underline dark:hover:text-brand"
-                  >
-                    {sale.company.name}
-                  </a>
-                ) : (
-                  '—'
-                )}
-              </dd>
-            </div>
-            <div className="sm:col-span-2">
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Oportunidad
-              </dt>
-              <dd className="mt-1 flex items-center gap-1.5 text-sm text-ink">
-                <Target className="h-3.5 w-3.5 text-muted" />
-                {sale.opportunity ? (
-                  <a
-                    href={`/negocio/oportunidad/${sale.opportunity.id}`}
-                    className="hover:text-brand-strong hover:underline dark:hover:text-brand"
-                  >
-                    {sale.opportunity.name}
-                  </a>
-                ) : (
-                  <span className="text-muted">Venta manual sin oportunidad</span>
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Registrada
-              </dt>
-              <dd className="mt-1 text-sm text-ink">{formatDateTime(sale.createdAt)}</dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Última actualización
-              </dt>
-              <dd className="mt-1 text-sm text-ink">{formatDateTime(sale.updatedAt)}</dd>
-            </div>
-          </dl>
-
-          {sale.notes ? (
-            <div className="border-t border-line pt-3.5">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Observaciones
-              </p>
-              <p className="mt-1.5 whitespace-pre-line text-sm leading-6 text-ink">
-                {sale.notes}
-              </p>
-            </div>
-          ) : null}
-
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="flex items-center gap-1.5 text-[11px] text-muted">
-              <Handshake className="h-3.5 w-3.5" />
-              {canEdit
-                ? 'Puedes actualizar los datos de esta venta.'
-                : sale.status === 'CANCELLED'
-                  ? 'Una venta cancelada no puede modificarse.'
-                  : 'Solo lectura: esta venta no admite cambios con tu rol actual.'}
-            </p>
-            {sale.opportunity ? (
-              <a
-                href={`/negocio/oportunidad/${sale.opportunity.id}`}
-                className="text-xs text-brand-strong hover:underline dark:text-brand"
-              >
-                Ver oportunidad
-              </a>
-            ) : null}
-          </div>
-        </div>
+        <SaleDetailModal
+          saleId={saleId ?? ''}
+          onClose={() => {}}
+          onEdit={(sale) => navigate(`/negocio/venta/${sale.id}/editar`)}
+        />
       )}
     </div>
   );

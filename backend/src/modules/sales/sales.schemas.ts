@@ -43,6 +43,18 @@ export const saleBodySchema = z.object({
   notes: optionalText(2000, 'Las observaciones'),
 });
 
+export const saleCommentBodySchema = z.object({
+  body: z
+    .string({ required_error: 'Escribe un comentario' })
+    .trim()
+    .min(1, 'Escribe un comentario')
+    .max(4000, 'El comentario no puede superar 4000 caracteres'),
+  fileIds: z
+    .array(z.string().uuid('El identificador del archivo no es válido'))
+    .max(10, 'Puedes adjuntar hasta 10 archivos por comentario')
+    .optional(),
+});
+
 export const updateSaleSchema = z
   .object({
     companyId: optionalId(),
