@@ -265,11 +265,29 @@ describe('Operaciones comerciales', () => {
     expect(summary.body.data.counts.CONFIRMED).toBe(1);
     expect(summary.body.data.byCurrency[0].confirmedTotal).toBe('1500.50');
 
+    // Con la venta activa la oportunidad no puede salir de Ganada.
+    const blockedLoss = await admin.agent
+      .patch(`/api/opportunities/${opportunity.body.data.id}`)
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ stage: 'PERDIDA' });
+    expect(blockedLoss.status).toBe(409);
+
     const cancelled = await admin.agent
       .post(`/api/sales/${sale.body.data.id}/cancel`)
       .set('X-CSRF-Token', admin.csrfToken);
     expect(cancelled.status).toBe(200);
     expect(cancelled.body.data.status).toBe('CANCELLED');
+
+    // Una vez cancelada la venta, la oportunidad sí puede marcarse como perdida.
+    const lost = await admin.agent
+      .patch(`/api/opportunities/${opportunity.body.data.id}`)
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ stage: 'PERDIDA' });
+    expect(lost.status).toBe(200);
+    expect(lost.body.data.status).toBe('LOST');
+    expect(lost.body.data.stage).toBe('PERDIDA');
+    expect(lost.body.data.lostAt).toBeTruthy();
+    expect(lost.body.data.sale.saleNumber).toBe(won.body.data.sale.saleNumber);
 
     const afterCancel = await admin.agent.get('/api/dashboard/summary');
     expect(afterCancel.body.data.totals.confirmedSales).toBe(0);
