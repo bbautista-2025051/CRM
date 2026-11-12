@@ -76,7 +76,9 @@ export const OpportunityFormModal = ({
   const [pendingCompanyId, setPendingCompanyId] = useState<string | null>(null);
   const [pendingClientId, setPendingClientId] = useState<string | null>(null);
   const editing = Boolean(opportunity);
-  const hasSale = Boolean(opportunity?.sale);
+  const hasActiveSale = Boolean(
+    opportunity?.sale && opportunity.sale.status !== 'CANCELLED',
+  );
 
   const {
     register,
@@ -259,7 +261,7 @@ export const OpportunityFormModal = ({
           </Alert>
         ) : null}
 
-        {hasSale ? (
+        {hasActiveSale ? (
           <Alert variant="warning">
             Esta oportunidad ya tiene una venta asociada. La etapa solo puede mantenerse
             como «Ganada» mientras la venta exista.
@@ -425,11 +427,11 @@ export const OpportunityFormModal = ({
             label="Etapa"
             htmlFor="opportunity-stage"
             error={errors.stage?.message}
-            hint={hasSale ? 'Solo puede permanecer en Ganada.' : undefined}
+            hint={hasActiveSale ? 'Solo puede permanecer en Ganada.' : undefined}
           >
-            <Select id="opportunity-stage" disabled={hasSale} {...register('stage')}>
+            <Select id="opportunity-stage" disabled={hasActiveSale} {...register('stage')}>
               {stageOptions
-                .filter((stage) => !hasSale || stage.value === 'GANADA')
+                .filter((stage) => !hasActiveSale || stage.value === 'GANADA')
                 .map((stage) => (
                   <option key={stage.value} value={stage.value}>
                     {stage.label}

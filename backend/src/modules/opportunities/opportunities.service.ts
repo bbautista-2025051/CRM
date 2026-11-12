@@ -392,7 +392,7 @@ export const updateOpportunity = async (
   const existing = await prisma.opportunity.findUnique({
     where: { id },
     include: {
-      sale: { select: { id: true, saleNumber: true } },
+      sale: { select: { id: true, saleNumber: true, status: true } },
       project: { select: { id: true } },
     },
   });
@@ -414,7 +414,13 @@ export const updateOpportunity = async (
 
   const nextStage = input.stage ?? existing.stage;
   if (input.stage !== undefined) await validateStage(input.stage);
-  if (existing.sale && nextStage !== 'GANADA') {
+  // Si la venta asociada ya fue cancelada, la oportunidad puede cambiar de
+  // etapa (por ejemplo, marcarse como perdida).
+  if (
+    existing.sale &&
+    existing.sale.status !== 'CANCELLED' &&
+    nextStage !== 'GANADA'
+  ) {
     throw new ConflictError(
       `La oportunidad tiene la venta ${existing.sale.saleNumber} asociada. Cancela la venta antes de cambiar la etapa.`,
     );
@@ -446,7 +452,12 @@ export const updateOpportunity = async (
       },
     });
 
-    if (stageChanged && nextStage === 'GANADA') {
+    if (
+      stageChanged &&
+      nextStage === 'GANADA' &&
+      !existing.sale &&
+      !existing.project
+    ) {
       await createWonRecords(tx, updated);
     }
 
