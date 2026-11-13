@@ -30,7 +30,7 @@ export const Pagination = ({
       )}
     >
       <p className="text-xs text-muted">
-        Mostrando <span className="font-medium text-ink">{formatNumber(from)}</span>ÔÇô
+        Mostrando <span className="font-medium text-ink">{formatNumber(from)}</span>–
         <span className="font-medium text-ink">{formatNumber(to)}</span> de{' '}
         <span className="font-medium text-ink">{formatNumber(meta.total)}</span> registros
       </p>
@@ -40,7 +40,7 @@ export const Pagination = ({
           size="icon"
           onClick={() => onPageChange(meta.page - 1)}
           disabled={meta.page <= 1}
-          aria-label="P├ígina anterior"
+          aria-label="Página anterior"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -65,7 +65,7 @@ export const Pagination = ({
           size="icon"
           onClick={() => onPageChange(meta.page + 1)}
           disabled={meta.page >= meta.totalPages}
-          aria-label="P├ígina siguiente"
+          aria-label="Página siguiente"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

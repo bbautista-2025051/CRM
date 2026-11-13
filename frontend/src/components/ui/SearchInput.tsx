@@ -5,7 +5,7 @@ import { Input } from './Input';
 export const SearchInput = ({
   value,
   onChange,
-  placeholder = 'BuscarÔÇª',
+  placeholder = 'Buscar…',
   className,
   ariaLabel = 'Buscar',
 }: {
@@ -28,7 +28,7 @@ export const SearchInput = ({
           type="button"
           onClick={() => onChange('')}
           className="rounded-md p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
-          aria-label="Limpiar b├║squeda"
+          aria-label="Limpiar búsqueda"
         >
           <X className="h-3.5 w-3.5" />
         </button>

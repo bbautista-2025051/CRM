@@ -27,7 +27,7 @@ const labelClasses =
   'mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300';
 
 export const LoginPage = () => {
-  usePageTitle('Iniciar sesi├│n');
+  usePageTitle('Iniciar sesión');
   const { login, loginWithGoogle } = useAuth();
   const { success, info } = useToast();
   const navigate = useNavigate();
@@ -53,13 +53,13 @@ export const LoginPage = () => {
     setFormError(null);
     try {
       const user = await login(values.email, values.password, values.rememberMe);
-      success(`Bienvenido, ${user.name.split(' ')[0]}`, 'Tu sesi├│n se inici├│ correctamente.');
+      success(`Bienvenido, ${user.name.split(' ')[0]}`, 'Tu sesión se inició correctamente.');
       navigate(from, { replace: true });
     } catch (error) {
       setFormError(
         error instanceof ApiError
           ? error.message
-          : 'No se pudo iniciar sesi├│n. Int├®ntalo de nuevo.',
+          : 'No se pudo iniciar sesión. Inténtalo de nuevo.',
       );
     }
   };
@@ -69,13 +69,13 @@ export const LoginPage = () => {
     setGoogleLoading(true);
     try {
       const user = await loginWithGoogle(credential);
-      success(`Bienvenido, ${user.name.split(' ')[0]}`, 'Sesi├│n iniciada con Google.');
+      success(`Bienvenido, ${user.name.split(' ')[0]}`, 'Sesión iniciada con Google.');
       navigate(from, { replace: true });
     } catch (error) {
       setFormError(
         error instanceof ApiError
           ? error.message
-          : 'No se pudo iniciar sesi├│n con Google.',
+          : 'No se pudo iniciar sesión con Google.',
       );
     } finally {
       setGoogleLoading(false);
@@ -128,7 +128,7 @@ export const LoginPage = () => {
 
               <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-between px-8 pb-7 text-[11px] text-gray-500 dark:text-slate-500">
                 <span>
-                  ┬® {new Date().getFullYear()} {brand.company}
+                  © {new Date().getFullYear()} {brand.company}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -145,7 +145,7 @@ export const LoginPage = () => {
                   Bienvenido de nuevo
                 </h1>
                 <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
-                  Inicia sesi├│n en tu cuenta de {brand.product}.
+                  Inicia sesión en tu cuenta de {brand.product}.
                 </p>
               </div>
 
@@ -189,7 +189,7 @@ export const LoginPage = () => {
               >
                 <Field htmlFor="email" error={errors.email?.message}>
                   <label htmlFor="email" className={labelClasses}>
-                    Correo electr├│nico <span className="text-blue-500">*</span>
+                    Correo electrónico <span className="text-blue-500">*</span>
                   </label>
                   <Input
                     id="email"
@@ -204,13 +204,13 @@ export const LoginPage = () => {
 
                 <Field htmlFor="password" error={errors.password?.message}>
                   <label htmlFor="password" className={labelClasses}>
-                    Contrase├▒a <span className="text-blue-500">*</span>
+                    Contraseña <span className="text-blue-500">*</span>
                   </label>
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
-                    placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó"
+                    placeholder="••••••••••"
                     invalid={Boolean(errors.password)}
                     className={cn(fieldClasses, 'pr-11')}
                     trailing={
@@ -218,7 +218,7 @@ export const LoginPage = () => {
                         type="button"
                         onClick={() => setShowPassword((value) => !value)}
                         className="rounded-md p-1.5 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-slate-200"
-                        aria-label={showPassword ? 'Ocultar contrase├▒a' : 'Mostrar contrase├▒a'}
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
@@ -234,16 +234,16 @@ export const LoginPage = () => {
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-white/20 dark:bg-slate-800"
                       {...register('rememberMe')}
                     />
-                    Recu├®rdame
+                    Recuérdame
                   </label>
                   <button
                     type="button"
                     onClick={() =>
-                      info('Restablecer contrase├▒a', 'Solicita el cambio a un administrador.')
+                      info('Restablecer contraseña', 'Solicita el cambio a un administrador.')
                     }
                     className="text-sm font-medium text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                   >
-                    ┬┐Olvidaste tu contrase├▒a?
+                    ¿Olvidaste tu contraseña?
                   </button>
                 </div>
 
@@ -255,11 +255,11 @@ export const LoginPage = () => {
                   {isSubmitting ? (
                     <>
                       <Spinner className="h-4 w-4" />
-                      Iniciando sesi├│nÔÇª
+                      Iniciando sesión…
                     </>
                   ) : (
                     <>
-                      Iniciar sesi├│n
+                      Iniciar sesión
                       <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                     </>
                   )}
@@ -273,7 +273,7 @@ export const LoginPage = () => {
               <div className="mt-8 flex gap-2.5 rounded-xl border border-gray-100 bg-gray-50/70 p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" />
                 <p className="text-[11px] leading-5 text-gray-500 dark:text-slate-400">
-                  ┬┐No tienes acceso? Solic├¡talo a un administrador. No permitimos
+                  ¿No tienes acceso? Solicítalo a un administrador. No permitimos
                   auto-registro y nunca compartimos tus credenciales.
                 </p>
               </div>

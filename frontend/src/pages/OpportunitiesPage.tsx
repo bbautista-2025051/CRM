@@ -80,7 +80,7 @@ export const OpportunitiesPage = () => {
   const createStage = useMutation({
     mutationFn: () => opportunitiesApi.createStage(newStageName.trim()),
     onSuccess: (response) => {
-      success('Etapa agregada', `${response.data.label} ya est├í disponible.`);
+      success('Etapa agregada', `${response.data.label} ya está disponible.`);
       setNewStageName('');
       setAddingStage(false);
       void queryClient.invalidateQueries({ queryKey: ['opportunities', 'stages'] });
@@ -88,7 +88,7 @@ export const OpportunitiesPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo agregar la etapa',
-        error instanceof Error ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof Error ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -127,7 +127,7 @@ export const OpportunitiesPage = () => {
     next.delete('companyId');
     next.delete('clientId');
     setSearchParams(next, { replace: true });
-    // Solo se ejecuta cuando la URL trae una acci├│n puntual.
+    // Solo se ejecuta cuando la URL trae una acción puntual.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createRequested, openRequested, companyParam, clientParam]);
 
@@ -173,7 +173,7 @@ export const OpportunitiesPage = () => {
     value,
     label:
       value === 'NEGOCIACION'
-        ? 'Negociaci├│n'
+        ? 'Negociación'
         : value === 'GANADA'
           ? 'Ganada'
           : 'Perdida',
@@ -242,7 +242,7 @@ export const OpportunitiesPage = () => {
                 maxLength={60}
                 value={newStageName}
                 onChange={(event) => setNewStageName(event.target.value)}
-                placeholder="Ej. Revisi├│n legal"
+                placeholder="Ej. Revisión legal"
                 required
               />
             </label>
@@ -267,7 +267,7 @@ export const OpportunitiesPage = () => {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Buscar por nombre, empresa o clienteÔÇª"
+            placeholder="Buscar por nombre, empresa o cliente…"
             className="xl:w-72"
           />
           <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -352,10 +352,10 @@ export const OpportunitiesPage = () => {
         ) : opportunities.length === 0 ? (
           <EmptyState
             icon={Target}
-            title={hasFilters ? 'No encontramos oportunidades' : 'Tu pipeline est├í vac├¡o'}
+            title={hasFilters ? 'No encontramos oportunidades' : 'Tu pipeline está vacío'}
             description={
               hasFilters
-                ? 'Prueba con otros filtros o limpia la b├║squeda.'
+                ? 'Prueba con otros filtros o limpia la búsqueda.'
                 : 'Crea tu primera oportunidad para empezar a medir el embudo comercial.'
             }
             action={
@@ -415,14 +415,14 @@ export const OpportunitiesPage = () => {
                         <td className="max-w-[180px] truncate text-xs text-muted">
                           {opportunity.client
                             ? `${opportunity.client.firstName} ${opportunity.client.lastName}`
-                            : 'ÔÇö'}
+                            : '—'}
                         </td>
                         <td>
                           <span className="inline-flex items-center gap-2 text-xs text-muted">
                             {opportunity.owner ? (
                               <Avatar name={opportunity.owner.name} size="xs" />
                             ) : null}
-                            {opportunity.owner?.name ?? 'ÔÇö'}
+                            {opportunity.owner?.name ?? '—'}
                           </span>
                         </td>
                         <td>
@@ -609,7 +609,7 @@ export const OpportunitiesPage = () => {
                           maxLength={60}
                           value={newStageName}
                           onChange={(event) => setNewStageName(event.target.value)}
-                          placeholder="Ej. Revisi├│n legal"
+                          placeholder="Ej. Revisión legal"
                           aria-label="Nombre de la nueva etapa"
                           required
                         />
@@ -659,7 +659,7 @@ export const OpportunitiesPage = () => {
                   ({ value }) => value !== 'GANADA' && value !== 'PERDIDA',
                 ).length
               }{' '}
-              etapas abiertas ┬À Haz clic en una tarjeta para ver el detalle.
+              etapas abiertas · Haz clic en una tarjeta para ver el detalle.
             </p>
           </div>
         )}

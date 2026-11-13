@@ -181,7 +181,7 @@ export const TaskDetailPage = () => {
       <Card>
         <CardHeader
           title={task.title}
-          description={task.description ?? 'Sin descripci├│n.'}
+          description={task.description ?? 'Sin descripción.'}
           action={
             <Badge tone={STATUS_TONES[task.status as TaskStatus]}>
               {STATUS_LABELS[task.status as TaskStatus]}
@@ -225,7 +225,7 @@ export const TaskDetailPage = () => {
             </div>
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                Fecha l├¡mite
+                Fecha límite
               </p>
               <p className="mt-1 text-[13px] font-medium text-ink">
                 {task.dueDate ? formatDate(task.dueDate) : 'Sin fecha'}
@@ -238,8 +238,8 @@ export const TaskDetailPage = () => {
               Historial de actividad
             </p>
             <p className="text-xs text-muted">
-              La tarea se cre├│ en{' '}
-              {formatDateTime(task.createdAt)} y se actualiz├│ por ├║ltima vez en{' '}
+              La tarea se creó en{' '}
+              {formatDateTime(task.createdAt)} y se actualizó por última vez en{' '}
               {formatDateTime(task.updatedAt)}.
             </p>
           </div>
@@ -271,7 +271,7 @@ export const TaskDetailPage = () => {
               <form onSubmit={handleSave} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="col-span-2 sm:col-span-1">
-                    <label className="label">T├¡tulo de la tarea</label>
+                    <label className="label">Título de la tarea</label>
                     <input
                       className="input-base w-full"
                       value={formData.title}
@@ -315,7 +315,7 @@ export const TaskDetailPage = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="label">Fecha l├¡mite</label>
+                    <label className="label">Fecha límite</label>
                     <input
                       type="date"
                       className="input-base w-full"
@@ -327,7 +327,7 @@ export const TaskDetailPage = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="label">Descripci├│n</label>
+                  <label className="label">Descripción</label>
                   <textarea
                     className="input-base w-full resize-y"
                     rows={3}

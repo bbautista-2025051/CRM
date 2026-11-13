@@ -85,7 +85,7 @@ const themeOptions: Array<{
   {
     value: 'SYSTEM',
     label: 'Sistema',
-    description: 'Sigue autom├íticamente la preferencia del equipo.',
+    description: 'Sigue automáticamente la preferencia del equipo.',
     icon: Laptop,
   },
 ];
@@ -113,13 +113,13 @@ const describeAgent = (userAgent: string | null): { label: string; mobile: boole
             ? 'Linux'
             : 'Sistema desconocido';
   return {
-    label: `${browser} ┬À ${os}`,
+    label: `${browser} · ${os}`,
     mobile: /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent),
   };
 };
 
 export const SettingsPage = () => {
-  usePageTitle('Configuraci├│n');
+  usePageTitle('Configuración');
   const { user, updateUser } = useAuth();
   const { preference, setPreference } = useTheme();
   const { success, error: toastError, info } = useToast();
@@ -188,7 +188,7 @@ export const SettingsPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo guardar',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -203,7 +203,7 @@ export const SettingsPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo subir la imagen',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -218,7 +218,7 @@ export const SettingsPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo eliminar la foto',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -228,11 +228,11 @@ export const SettingsPage = () => {
     event.target.value = '';
     if (!file) return;
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      toastError('Formato no v├ílido', 'Solo se permiten im├ígenes JPG, PNG o WebP.');
+      toastError('Formato no válido', 'Solo se permiten imágenes JPG, PNG o WebP.');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      toastError('Imagen demasiado grande', 'El tama├▒o m├íximo es 10 MB.');
+      toastError('Imagen demasiado grande', 'El tamaño máximo es 10 MB.');
       return;
     }
     uploadAvatar.mutate(file);
@@ -241,7 +241,7 @@ export const SettingsPage = () => {
   const onDeleteAvatar = async () => {
     const accepted = await confirm({
       title: 'Eliminar foto de perfil',
-      description: 'Se quitar├í tu imagen actual y se mostrar├ín tus iniciales.',
+      description: 'Se quitará tu imagen actual y se mostrarán tus iniciales.',
       confirmLabel: 'Eliminar foto',
       variant: 'danger',
     });
@@ -259,8 +259,8 @@ export const SettingsPage = () => {
       passwordForm.reset();
       setPasswordError(null);
       success(
-        'Contrase├▒a actualizada',
-        'Se cerraron las dem├ís sesiones por seguridad.',
+        'Contraseña actualizada',
+        'Se cerraron las demás sesiones por seguridad.',
       );
       refreshProfile();
       void queryClient.invalidateQueries({ queryKey: ['settings', 'sessions'] });
@@ -279,7 +279,7 @@ export const SettingsPage = () => {
         }
         setPasswordError(applied ? null : error.message);
       } else {
-        setPasswordError('No se pudo actualizar la contrase├▒a.');
+        setPasswordError('No se pudo actualizar la contraseña.');
       }
     },
   });
@@ -296,7 +296,7 @@ export const SettingsPage = () => {
       setPreference(profile?.user.themePreference ?? 'SYSTEM', true);
       toastError(
         'No se pudo guardar el tema',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -316,16 +316,16 @@ export const SettingsPage = () => {
     onError: (error) => {
       toastError(
         'No se pudieron cerrar las sesiones',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
 
   const onRevokeSessions = async () => {
     const accepted = await confirm({
-      title: 'Cerrar las dem├ís sesiones',
+      title: 'Cerrar las demás sesiones',
       description:
-        'Se cerrar├í la sesi├│n en todos los dem├ís dispositivos. Tu sesi├│n actual se mantiene.',
+        'Se cerrará la sesión en todos los demás dispositivos. Tu sesión actual se mantiene.',
       confirmLabel: 'Cerrar otras sesiones',
       variant: 'danger',
     });
@@ -342,7 +342,7 @@ export const SettingsPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo vincular Google',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -357,7 +357,7 @@ export const SettingsPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo desvincular Google',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -367,14 +367,14 @@ export const SettingsPage = () => {
     if (!currentUser.hasPassword) {
       toastError(
         'No puedes desvincular Google',
-        'Primero establece una contrase├▒a para no perder el acceso.',
+        'Primero establece una contraseña para no perder el acceso.',
       );
       return;
     }
     const accepted = await confirm({
       title: 'Desvincular Google',
       description:
-        'Dejar├ís de poder iniciar sesi├│n con Google. Podr├ís seguir entrando con tu correo y contrase├▒a.',
+        'Dejarás de poder iniciar sesión con Google. Podrás seguir entrando con tu correo y contraseña.',
       confirmLabel: 'Desvincular',
       variant: 'danger',
     });
@@ -386,7 +386,7 @@ export const SettingsPage = () => {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Configuraci├│n"
+        title="Configuración"
         description="Administra tu perfil, la seguridad de la cuenta y tus preferencias de trabajo."
       />
 
@@ -424,7 +424,7 @@ export const SettingsPage = () => {
                     <p className="text-sm text-muted">{currentUser?.email}</p>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       <Badge tone={currentUser?.role === 'ADMIN' ? 'brand' : 'neutral'}>
-                        {currentUser ? ROLE_LABELS[currentUser.role] : 'ÔÇö'}
+                        {currentUser ? ROLE_LABELS[currentUser.role] : '—'}
                       </Badge>
                       <UserStatusBadge
                         status={(currentUser?.status ?? 'INACTIVE') as UserStatus}
@@ -486,7 +486,7 @@ export const SettingsPage = () => {
                     />
                   </Field>
                   <Field
-                    label="Correo electr├│nico"
+                    label="Correo electrónico"
                     htmlFor="profile-email"
                     hint="Solo un administrador puede cambiar tu correo."
                   >
@@ -520,7 +520,7 @@ export const SettingsPage = () => {
                   </span>
                   <span>
                     <span className="block text-[10px] font-semibold uppercase tracking-wide">
-                      ├Ültimo acceso
+                      Último acceso
                     </span>
                     {currentUser?.lastLoginAt
                       ? formatDateTime(currentUser.lastLoginAt)
@@ -528,11 +528,11 @@ export const SettingsPage = () => {
                   </span>
                   <span>
                     <span className="block text-[10px] font-semibold uppercase tracking-wide">
-                      Sesi├│n actual
+                      Sesión actual
                     </span>
                     {profile
-                      ? `${profile.session.rememberMe ? 'Recordada' : 'Est├índar'} ┬À vence ${formatDateTime(profile.session.expiresAt)}`
-                      : 'ÔÇö'}
+                      ? `${profile.session.rememberMe ? 'Recordada' : 'Estándar'} · vence ${formatDateTime(profile.session.expiresAt)}`
+                      : '—'}
                   </span>
                 </div>
               </CardBody>
@@ -544,7 +544,7 @@ export const SettingsPage = () => {
           <>
             <CardHeader
               title="Seguridad"
-              description="Cambia tu contrase├▒a y revisa el estado de la cuenta."
+              description="Cambia tu contraseña y revisa el estado de la cuenta."
             />
             <CardBody className="grid gap-6 lg:grid-cols-2">
               <form
@@ -555,8 +555,8 @@ export const SettingsPage = () => {
                 noValidate
               >
                 {currentUser?.mustChangePassword ? (
-                  <Alert variant="warning" title="Cambio de contrase├▒a pendiente">
-                    Est├ís usando una contrase├▒a temporal. Actual├¡zala para proteger tu
+                  <Alert variant="warning" title="Cambio de contraseña pendiente">
+                    Estás usando una contraseña temporal. Actualízala para proteger tu
                     cuenta.
                   </Alert>
                 ) : null}
@@ -567,7 +567,7 @@ export const SettingsPage = () => {
                 ) : null}
 
                 <Field
-                  label="Contrase├▒a actual"
+                  label="Contraseña actual"
                   htmlFor="current-password"
                   error={passwordForm.formState.errors.currentPassword?.message}
                   required
@@ -582,7 +582,7 @@ export const SettingsPage = () => {
                         type="button"
                         onClick={() => setShowCurrent((value) => !value)}
                         className="rounded-md p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
-                        aria-label={showCurrent ? 'Ocultar contrase├▒a' : 'Mostrar contrase├▒a'}
+                        aria-label={showCurrent ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                       >
                         {showCurrent ? (
                           <EyeOff className="h-4 w-4" />
@@ -595,10 +595,10 @@ export const SettingsPage = () => {
                   />
                 </Field>
                 <Field
-                  label="Nueva contrase├▒a"
+                  label="Nueva contraseña"
                   htmlFor="new-password"
                   error={passwordForm.formState.errors.newPassword?.message}
-                  hint="M├¡nimo 10 caracteres, con may├║scula, min├║scula y n├║mero."
+                  hint="Mínimo 10 caracteres, con mayúscula, minúscula y número."
                   required
                 >
                   <Input
@@ -611,7 +611,7 @@ export const SettingsPage = () => {
                         type="button"
                         onClick={() => setShowNew((value) => !value)}
                         className="rounded-md p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
-                        aria-label={showNew ? 'Ocultar contrase├▒a' : 'Mostrar contrase├▒a'}
+                        aria-label={showNew ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                       >
                         {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -620,7 +620,7 @@ export const SettingsPage = () => {
                   />
                 </Field>
                 <Field
-                  label="Confirmar nueva contrase├▒a"
+                  label="Confirmar nueva contraseña"
                   htmlFor="confirm-password"
                   error={passwordForm.formState.errors.confirmPassword?.message}
                   required
@@ -641,7 +641,7 @@ export const SettingsPage = () => {
                     }
                     leftIcon={<KeyRound className="h-4 w-4" />}
                   >
-                    Actualizar contrase├▒a
+                    Actualizar contraseña
                   </Button>
                 </div>
               </form>
@@ -649,29 +649,29 @@ export const SettingsPage = () => {
               <div className="space-y-3">
                 <div className="rounded-xl border border-line bg-elevated/40 p-4">
                   <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-                    <ShieldCheck className="h-4 w-4 text-brand" /> Protecci├│n de la cuenta
+                    <ShieldCheck className="h-4 w-4 text-brand" /> Protección de la cuenta
                   </p>
                   <ul className="mt-3 space-y-2 text-xs leading-5 text-muted">
-                    <li>┬À Las contrase├▒as se almacenan con Argon2id, nunca en texto plano.</li>
-                    <li>┬À La sesi├│n usa una cookie HttpOnly y un token CSRF por sesi├│n.</li>
-                    <li>┬À Al cambiar la contrase├▒a se cierran las dem├ís sesiones.</li>
-                    <li>┬À La cuenta se bloquea temporalmente tras intentos fallidos repetidos.</li>
+                    <li>· Las contraseñas se almacenan con Argon2id, nunca en texto plano.</li>
+                    <li>· La sesión usa una cookie HttpOnly y un token CSRF por sesión.</li>
+                    <li>· Al cambiar la contraseña se cierran las demás sesiones.</li>
+                    <li>· La cuenta se bloquea temporalmente tras intentos fallidos repetidos.</li>
                   </ul>
                 </div>
                 <div className="rounded-xl border border-line p-4">
-                  <p className="text-sm font-semibold text-ink">Sesi├│n actual</p>
+                  <p className="text-sm font-semibold text-ink">Sesión actual</p>
                   <p className="mt-1 text-xs text-muted">
                     {profile
-                      ? `${profile.session.rememberMe ? 'Recordada por 30 d├¡as' : 'Duraci├│n est├índar de 8 horas'} ┬À vence ${formatDateTime(profile.session.expiresAt)}`
-                      : 'CargandoÔÇª'}
+                      ? `${profile.session.rememberMe ? 'Recordada por 30 días' : 'Duración estándar de 8 horas'} · vence ${formatDateTime(profile.session.expiresAt)}`
+                      : 'Cargando…'}
                   </p>
                 </div>
                 <div className="rounded-xl border border-line p-4">
                   <p className="text-sm font-semibold text-ink">Acceso con Google</p>
                   <p className="mt-1 text-xs text-muted">
                     {currentUser?.googleLinked
-                      ? 'Vinculado. Puedes gestionarlo en la pesta├▒a Google.'
-                      : 'No vinculado. Puedes vincularlo desde la pesta├▒a Google.'}
+                      ? 'Vinculado. Puedes gestionarlo en la pestaña Google.'
+                      : 'No vinculado. Puedes vincularlo desde la pestaña Google.'}
                   </p>
                 </div>
               </div>
@@ -736,13 +736,13 @@ export const SettingsPage = () => {
                   })}
                 </div>
                 {updatePreferences.isPending ? (
-                  <p className="mt-2 text-[11px] text-muted">Guardando preferenciaÔÇª</p>
+                  <p className="mt-2 text-[11px] text-muted">Guardando preferencia…</p>
                 ) : null}
               </div>
 
               <div className="grid gap-3 rounded-xl border border-line bg-elevated/40 p-4 text-xs text-muted sm:grid-cols-2">
                 <span className="inline-flex items-center gap-2">
-                  <Monitor className="h-4 w-4" /> Resoluci├│n adaptada a escritorio y m├│vil.
+                  <Monitor className="h-4 w-4" /> Resolución adaptada a escritorio y móvil.
                 </span>
                 <span className="inline-flex items-center gap-2">
                   <Palette className="h-4 w-4" /> Paleta corporativa con contraste AA.
@@ -765,7 +765,7 @@ export const SettingsPage = () => {
                   loading={revokeSessions.isPending}
                   disabled={sessions.every((session) => session.current)}
                 >
-                  Cerrar las dem├ís
+                  Cerrar las demás
                 </Button>
               }
             />
@@ -802,7 +802,7 @@ export const SettingsPage = () => {
                           {agent.label}
                           {session.current ? (
                             <Badge tone="success" dot>
-                              Esta sesi├│n
+                              Esta sesión
                             </Badge>
                           ) : null}
                           {session.rememberMe ? (
@@ -810,9 +810,9 @@ export const SettingsPage = () => {
                           ) : null}
                         </p>
                         <p className="mt-0.5 text-[11px] text-muted">
-                          Inici├│ {formatDateTime(session.createdAt)} ┬À ├║ltima actividad{' '}
+                          Inició {formatDateTime(session.createdAt)} · última actividad{' '}
                           {formatDateTime(session.lastSeenAt)}
-                          {session.ipAddress ? ` ┬À IP ${session.ipAddress}` : ''}
+                          {session.ipAddress ? ` · IP ${session.ipAddress}` : ''}
                         </p>
                       </div>
                       <div className="shrink-0 text-right text-[11px] text-muted">
@@ -826,8 +826,8 @@ export const SettingsPage = () => {
             <CardBody className="border-t border-line py-3">
               <p className="flex items-start gap-1.5 text-[11px] text-muted">
                 <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                Cerrar una sesi├│n invalida su cookie en el servidor de inmediato. Las
-                sesiones recordadas duran hasta 30 d├¡as; las normales, 8 horas.
+                Cerrar una sesión invalida su cookie en el servidor de inmediato. Las
+                sesiones recordadas duran hasta 30 días; las normales, 8 horas.
               </p>
             </CardBody>
           </>
@@ -837,13 +837,13 @@ export const SettingsPage = () => {
           <>
             <CardHeader
               title="Cuenta de Google"
-              description="Vincula tu identidad de Google para iniciar sesi├│n sin contrase├▒a."
+              description="Vincula tu identidad de Google para iniciar sesión sin contraseña."
             />
             <CardBody className="space-y-5">
               {!profile?.googleEnabled ? (
-                <Alert variant="info" title="Google no est├í configurado">
+                <Alert variant="info" title="Google no está configurado">
                   Un administrador debe configurar las credenciales OAuth de Google en el
-                  servidor para habilitar esta opci├│n. El acceso con correo y contrase├▒a
+                  servidor para habilitar esta opción. El acceso con correo y contraseña
                   sigue disponible.
                 </Alert>
               ) : null}
@@ -861,12 +861,12 @@ export const SettingsPage = () => {
                     </p>
                     <p className="mt-1 max-w-lg text-xs leading-5 text-muted">
                       {currentUser?.googleLinked
-                        ? 'Puedes iniciar sesi├│n con el bot├│n de Google. Tu correo debe coincidir con el registrado en el CRM.'
+                        ? 'Puedes iniciar sesión con el botón de Google. Tu correo debe coincidir con el registrado en el CRM.'
                         : 'Solo puedes vincular una cuenta de Google cuyo correo coincida exactamente con tu correo del CRM. No hay auto-registro.'}
                     </p>
                     {currentUser && !currentUser.hasPassword ? (
                       <p className="mt-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                        Establece una contrase├▒a antes de desvincular Google para no perder
+                        Establece una contraseña antes de desvincular Google para no perder
                         el acceso.
                       </p>
                     ) : null}
@@ -905,13 +905,13 @@ export const SettingsPage = () => {
 
               <div className="rounded-xl border border-line bg-elevated/40 p-4">
                 <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-                  <UserRound className="h-4 w-4 text-brand" /> C├│mo funciona
+                  <UserRound className="h-4 w-4 text-brand" /> Cómo funciona
                 </p>
                 <ul className="mt-2 space-y-1.5 text-xs leading-5 text-muted">
-                  <li>┬À No se crean cuentas autom├íticamente desde Google.</li>
-                  <li>┬À Tu administrador debe crear primero tu usuario en el CRM.</li>
-                  <li>┬À La vinculaci├│n exige que el correo de Google est├® verificado y coincida.</li>
-                  <li>┬À Puedes desvincular Google si tienes una contrase├▒a activa.</li>
+                  <li>· No se crean cuentas automáticamente desde Google.</li>
+                  <li>· Tu administrador debe crear primero tu usuario en el CRM.</li>
+                  <li>· La vinculación exige que el correo de Google esté verificado y coincida.</li>
+                  <li>· Puedes desvincular Google si tienes una contraseña activa.</li>
                 </ul>
               </div>
               <p className="text-[11px] text-muted">
@@ -919,7 +919,7 @@ export const SettingsPage = () => {
                 <span className="font-medium text-ink">
                   {profile?.googleEnabled ? 'Configurado en el servidor' : 'No configurado'}
                 </span>
-                . La integraci├│n no se ha validado en vivo sin credenciales reales.
+                . La integración no se ha validado en vivo sin credenciales reales.
               </p>
             </CardBody>
           </>
@@ -939,7 +939,7 @@ export const SettingsPage = () => {
           }
           className="font-medium text-brand-strong hover:underline dark:text-brand"
         >
-          ┬┐Necesitas ayuda?
+          ¿Necesitas ayuda?
         </button>
       </div>
     </div>

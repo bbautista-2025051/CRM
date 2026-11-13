@@ -38,13 +38,13 @@ export const ActivityPage = () => {
     <div className="space-y-5">
       <PageHeader
         title="Actividad"
-        description="Auditor├¡a de las acciones realizadas por el equipo y el sistema."
+        description="Auditoría de las acciones realizadas por el equipo y el sistema."
       />
 
       <Card>
         <CardHeader
           title="Registro de actividad"
-          description="Los eventos m├ís recientes aparecen primero."
+          description="Los eventos más recientes aparecen primero."
           action={
             <Button
               variant="secondary"
@@ -77,8 +77,8 @@ export const ActivityPage = () => {
             onChange={(event) => setLimit(event.target.value)}
             className="sm:w-40"
           >
-            <option value="20">├Ültimos 20</option>
-            <option value="50">├Ültimos 50</option>
+            <option value="20">Últimos 20</option>
+            <option value="50">Últimos 50</option>
           </Select>
           <span className="ml-auto text-xs text-muted">
             {formatNumber(items.length)} eventos mostrados
@@ -98,7 +98,7 @@ export const ActivityPage = () => {
             description={
               entityType
                 ? 'No hay eventos para la entidad seleccionada.'
-                : 'Las acciones del equipo aparecer├ín aqu├¡ autom├íticamente.'
+                : 'Las acciones del equipo aparecerán aquí automáticamente.'
             }
             action={
               entityType ? (
@@ -117,7 +117,7 @@ export const ActivityPage = () => {
 
       <p className="flex items-start gap-1.5 px-1 text-[11px] leading-5 text-muted">
         <Activity className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        La auditor├¡a es de solo lectura. Cada evento incluye actor, entidad, acci├│n y fecha;
+        La auditoría es de solo lectura. Cada evento incluye actor, entidad, acción y fecha;
         no puede editarse ni eliminarse desde la interfaz.
       </p>
     </div>

@@ -74,7 +74,7 @@ export const CompanyDetailPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo archivar',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -84,7 +84,7 @@ export const CompanyDetailPage = () => {
     const accepted = await confirm({
       title: `Archivar ${company.name}`,
       description:
-        'La empresa y todo su hist├│rico se conservar├ín. No podr├ís asociarle nuevos registros mientras est├® archivada.',
+        'La empresa y todo su histórico se conservarán. No podrás asociarle nuevos registros mientras esté archivada.',
       confirmLabel: 'Archivar empresa',
       variant: 'danger',
     });
@@ -141,13 +141,13 @@ export const CompanyDetailPage = () => {
             <span>{company.sector ?? 'Sin sector'}</span>
             {company.legalName ? (
               <>
-                <span className="text-muted/40">┬À</span>
+                <span className="text-muted/40">·</span>
                 <span>{company.legalName}</span>
               </>
             ) : null}
             {company.taxId ? (
               <>
-                <span className="text-muted/40">┬À</span>
+                <span className="text-muted/40">·</span>
                 <span>NIT {company.taxId}</span>
               </>
             ) : null}
@@ -186,7 +186,7 @@ export const CompanyDetailPage = () => {
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card className="lg:col-span-8">
-          <CardHeader title="Informaci├│n de la empresa" description="Datos de contacto y registro" />
+          <CardHeader title="Información de la empresa" description="Datos de contacto y registro" />
           <CardBody>
             <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
               <div>
@@ -197,21 +197,21 @@ export const CompanyDetailPage = () => {
               </div>
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Raz├│n social
+                  Razón social
                 </dt>
-                <dd className="mt-1 text-sm text-ink">{company.legalName ?? 'ÔÇö'}</dd>
+                <dd className="mt-1 text-sm text-ink">{company.legalName ?? '—'}</dd>
               </div>
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  NIT / Identificaci├│n
+                  NIT / Identificación
                 </dt>
-                <dd className="mt-1 text-sm text-ink">{company.taxId ?? 'ÔÇö'}</dd>
+                <dd className="mt-1 text-sm text-ink">{company.taxId ?? '—'}</dd>
               </div>
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                   Sector
                 </dt>
-                <dd className="mt-1 text-sm text-ink">{company.sector ?? 'ÔÇö'}</dd>
+                <dd className="mt-1 text-sm text-ink">{company.sector ?? '—'}</dd>
               </div>
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
@@ -224,17 +224,17 @@ export const CompanyDetailPage = () => {
                       {company.email}
                     </a>
                   ) : (
-                    <span className="text-muted">ÔÇö</span>
+                    <span className="text-muted">—</span>
                   )}
                 </dd>
               </div>
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Tel├®fono
+                  Teléfono
                 </dt>
                 <dd className="mt-1 flex items-center gap-1.5 text-sm">
                   <Phone className="h-3.5 w-3.5 text-muted" />
-                  {company.phone ?? <span className="text-muted">ÔÇö</span>}
+                  {company.phone ?? <span className="text-muted">—</span>}
                 </dd>
               </div>
               <div>
@@ -254,17 +254,17 @@ export const CompanyDetailPage = () => {
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   ) : (
-                    <span className="text-muted">ÔÇö</span>
+                    <span className="text-muted">—</span>
                   )}
                 </dd>
               </div>
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Direcci├│n
+                  Dirección
                 </dt>
                 <dd className="mt-1 flex items-start gap-1.5 text-sm">
                   <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted" />
-                  {company.address ?? <span className="text-muted">ÔÇö</span>}
+                  {company.address ?? <span className="text-muted">—</span>}
                 </dd>
               </div>
             </dl>
@@ -328,20 +328,20 @@ export const CompanyDetailPage = () => {
                     <span className="truncate">{company.createdBy.name}</span>
                   </span>
                 ) : (
-                  <span className="text-muted">ÔÇö</span>
+                  <span className="text-muted">—</span>
                 )}
               </div>
             </CardBody>
           </Card>
 
           <Card>
-            <CardHeader title="Acciones r├ípidas" />
+            <CardHeader title="Acciones rápidas" />
             <CardBody className="grid gap-2">
               <Link
                 to={`/clients?create=1&companyId=${company.id}`}
                 className={buttonStyles({ variant: 'secondary', size: 'sm', fullWidth: true, className: 'justify-start' })}
               >
-                <Plus className="h-4 w-4" /> A├▒adir cliente
+                <Plus className="h-4 w-4" /> Añadir cliente
               </Link>
               <Link
                 to={`/opportunities?create=1&companyId=${company.id}`}
@@ -376,13 +376,13 @@ export const CompanyDetailPage = () => {
             <EmptyState
               icon={UsersRound}
               title="Sin clientes asociados"
-              description="A├▒ade el primer contacto de esta empresa."
+              description="Añade el primer contacto de esta empresa."
               action={
                 <Link
                   to={`/clients?create=1&companyId=${company.id}`}
                   className={buttonStyles({ size: 'sm' })}
                 >
-                  <Plus className="h-4 w-4" /> A├▒adir cliente
+                  <Plus className="h-4 w-4" /> Añadir cliente
                 </Link>
               }
             />
@@ -393,7 +393,7 @@ export const CompanyDetailPage = () => {
                   <tr>
                     <th>Cliente</th>
                     <th>Correo</th>
-                    <th>Tel├®fono</th>
+                    <th>Teléfono</th>
                     <th className="text-center">Oportunidades</th>
                     <th>Estado</th>
                   </tr>
@@ -415,7 +415,7 @@ export const CompanyDetailPage = () => {
                         </Link>
                       </td>
                       <td className="text-xs text-muted">{client.email}</td>
-                      <td className="text-xs text-muted">{client.phone ?? 'ÔÇö'}</td>
+                      <td className="text-xs text-muted">{client.phone ?? '—'}</td>
                       <td className="text-center text-sm text-muted">
                         {client._count?.opportunities ?? 0}
                       </td>
@@ -473,7 +473,7 @@ export const CompanyDetailPage = () => {
                           </span>
                         ) : null}
                       </td>
-                      <td className="text-xs text-muted">{opportunity.owner?.name ?? 'ÔÇö'}</td>
+                      <td className="text-xs text-muted">{opportunity.owner?.name ?? '—'}</td>
                       <td>
                         <StageBadge
                           stage={opportunity.stage}
@@ -499,7 +499,7 @@ export const CompanyDetailPage = () => {
             <EmptyState
               icon={Handshake}
               title="Sin ventas registradas"
-              description="Las ventas asociadas a esta empresa aparecer├ín aqu├¡."
+              description="Las ventas asociadas a esta empresa aparecerán aquí."
               action={
                 <Link
                   to={`/sales?create=1&companyId=${company.id}`}
@@ -514,7 +514,7 @@ export const CompanyDetailPage = () => {
               <table className="table-base">
                 <thead>
                   <tr>
-                    <th>N├║mero</th>
+                    <th>Número</th>
                     <th>Cliente</th>
                     <th>Fecha</th>
                     <th className="text-right">Importe</th>
@@ -535,7 +535,7 @@ export const CompanyDetailPage = () => {
                       <td className="text-sm text-ink">
                         {sale.client
                           ? `${sale.client.firstName} ${sale.client.lastName}`
-                          : 'ÔÇö'}
+                          : '—'}
                       </td>
                       <td className="whitespace-nowrap text-xs text-muted">
                         {formatDate(sale.saleDate)}

@@ -28,7 +28,7 @@ export const StatCard = ({
   icon: LucideIcon | NexoIcon;
   tone?: keyof typeof tones;
   loading?: boolean;
-  /** Sin caja: la m├®trica vive dentro de una tira dividida. */
+  /** Sin caja: la métrica vive dentro de una tira dividida. */
   flat?: boolean;
   className?: string;
 }) => (

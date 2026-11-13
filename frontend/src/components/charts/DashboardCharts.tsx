@@ -48,8 +48,8 @@ export const RevenueChart = ({
     return (
       <EmptyState
         icon={ChartNoAxesCombined}
-        title="A├║n no hay ingresos confirmados"
-        description="Cuando confirmes ventas ver├ís aqu├¡ los ingresos en quetzales seg├║n el mes, el a├▒o y el vendedor seleccionados."
+        title="Aún no hay ingresos confirmados"
+        description="Cuando confirmes ventas verás aquí los ingresos en quetzales según el mes, el año y el vendedor seleccionados."
         compact
       />
     );
@@ -112,7 +112,7 @@ export const StageChart = ({
     return (
       <EmptyState
         icon={ChartNoAxesCombined}
-        title="Sin oportunidades todav├¡a"
+        title="Sin oportunidades todavía"
         description="Crea tu primera oportunidad para ver el embudo por etapa."
         compact
       />
@@ -144,7 +144,7 @@ export const StageChart = ({
             formatter={(value, _name, item) => {
               const payload = item?.payload as { value?: string } | undefined;
               return [
-                `${formatNumber(Number(value))} ┬À ${formatMoney(payload?.value ?? '0')}`,
+                `${formatNumber(Number(value))} · ${formatMoney(payload?.value ?? '0')}`,
                 'Oportunidades',
               ];
             }}
@@ -173,14 +173,14 @@ export const ClientsChart = ({
       <EmptyState
         icon={ChartNoAxesCombined}
         title="Sin clientes activos"
-        description="Asocia clientes a empresas para ver su distribuci├│n."
+        description="Asocia clientes a empresas para ver su distribución."
         compact
       />
     );
   }
 
   const chartData = data.slice(0, 6).map((item) => ({
-    name: item.company.length > 22 ? `${item.company.slice(0, 21)}ÔÇª` : item.company,
+    name: item.company.length > 22 ? `${item.company.slice(0, 21)}…` : item.company,
     count: item.count,
   }));
 
@@ -227,7 +227,7 @@ export const SectorChart = ({
       <EmptyState
         icon={PieIcon}
         title="Sin sectores registrados"
-        description="A├▒ade el sector a tus empresas para segmentar la cartera."
+        description="Añade el sector a tus empresas para segmentar la cartera."
         compact
       />
     );

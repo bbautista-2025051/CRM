@@ -99,7 +99,7 @@ export const UsersPage = () => {
     <div className="space-y-5">
       <PageHeader
         title="Usuarios"
-        description="Gestiona el acceso del equipo, los roles y las contrase├▒as temporales."
+        description="Gestiona el acceso del equipo, los roles y las contraseñas temporales."
         actions={
           <Button
             onClick={() => setCreateOpen(true)}
@@ -115,7 +115,7 @@ export const UsersPage = () => {
           <UsersRound className="h-4 w-4 shrink-0 text-brand" />
           <div>
             <p className="metric text-lg font-semibold leading-none text-ink">
-              {meta ? formatNumber(meta.total) : 'ÔÇö'}
+              {meta ? formatNumber(meta.total) : '—'}
             </p>
             <p className="mt-1 text-[11px] text-muted">Usuarios en el filtro actual</p>
           </div>
@@ -126,7 +126,7 @@ export const UsersPage = () => {
             <p className="metric text-lg font-semibold leading-none text-ink">
               {formatNumber(users.filter((item) => item.role === 'ADMIN').length)}
             </p>
-            <p className="mt-1 text-[11px] text-muted">Administradores en esta p├ígina</p>
+            <p className="mt-1 text-[11px] text-muted">Administradores en esta página</p>
           </div>
         </div>
         <div className="flex items-center gap-3 px-1 py-3 sm:px-5">
@@ -136,7 +136,7 @@ export const UsersPage = () => {
               {formatNumber(users.filter((item) => item.mustChangePassword).length)}
             </p>
             <p className="mt-1 text-[11px] text-muted">
-              Con cambio de contrase├▒a pendiente
+              Con cambio de contraseña pendiente
             </p>
           </div>
         </div>
@@ -147,7 +147,7 @@ export const UsersPage = () => {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Buscar por nombre o correoÔÇª"
+            placeholder="Buscar por nombre o correo…"
             className="sm:w-72"
           />
           <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -195,7 +195,7 @@ export const UsersPage = () => {
             title={hasFilters ? 'No encontramos usuarios' : 'Sin usuarios'}
             description={
               hasFilters
-                ? 'Prueba con otros filtros o limpia la b├║squeda.'
+                ? 'Prueba con otros filtros o limpia la búsqueda.'
                 : 'Crea la primera cuenta interna del equipo.'
             }
             action={
@@ -224,7 +224,7 @@ export const UsersPage = () => {
                     <th>Rol</th>
                     <th>Estado</th>
                     <th>Acceso</th>
-                    <th>├Ültimo acceso</th>
+                    <th>Último acceso</th>
                     <th>Creado</th>
                     <th className="w-12 text-right">
                       <span className="sr-only">Acciones</span>
@@ -244,7 +244,7 @@ export const UsersPage = () => {
                                 {item.name}
                                 {isSelf ? (
                                   <span className="rounded bg-elevated px-1.5 py-0.5 text-[10px] font-semibold text-muted">
-                                    T├║
+                                    Tú
                                   </span>
                                 ) : null}
                               </p>
@@ -263,7 +263,7 @@ export const UsersPage = () => {
                         <td>
                           <div className="flex flex-wrap items-center gap-1">
                             <Badge tone={item.googleLinked ? 'success' : 'outline'}>
-                              {item.googleLinked ? 'Google' : 'Contrase├▒a'}
+                              {item.googleLinked ? 'Google' : 'Contraseña'}
                             </Badge>
                             {item.mustChangePassword ? (
                               <Badge tone="warning">Cambio pendiente</Badge>
@@ -310,7 +310,7 @@ export const UsersPage = () => {
                                         setResetting(item);
                                       }}
                                     >
-                                      Restablecer contrase├▒a
+                                      Restablecer contraseña
                                     </DropdownItem>
                                   </>
                                 ) : null}
@@ -331,8 +331,8 @@ export const UsersPage = () => {
 
       <p className="flex items-start gap-1.5 px-1 text-[11px] leading-5 text-muted">
         <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        El sistema impide desactivar o degradar al ├║ltimo administrador activo. Restablecer
-        una contrase├▒a cierra todas las sesiones del usuario.
+        El sistema impide desactivar o degradar al último administrador activo. Restablecer
+        una contraseña cierra todas las sesiones del usuario.
       </p>
 
       <UserCreateModal open={createOpen} onClose={() => setCreateOpen(false)} />

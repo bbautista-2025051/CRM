@@ -72,7 +72,7 @@ export const ClientDetailPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo archivar',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -82,7 +82,7 @@ export const ClientDetailPage = () => {
     const accepted = await confirm({
       title: `Archivar a ${fullName}`,
       description:
-        'El cliente y todo su hist├│rico comercial se conservar├ín. No podr├ís asociarle nuevas oportunidades o ventas mientras est├® archivado.',
+        'El cliente y todo su histórico comercial se conservarán. No podrás asociarle nuevas oportunidades o ventas mientras esté archivado.',
       confirmLabel: 'Archivar cliente',
       variant: 'danger',
     });
@@ -137,11 +137,11 @@ export const ClientDetailPage = () => {
         description={
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span>{client.jobTitle ?? 'Sin cargo'}</span>
-            <span className="text-muted/40">┬À</span>
+            <span className="text-muted/40">·</span>
             <span>{client.email}</span>
             {client.company ? (
               <>
-                <span className="text-muted/40">┬À</span>
+                <span className="text-muted/40">·</span>
                 <span>{client.company.name}</span>
               </>
             ) : null}
@@ -180,7 +180,7 @@ export const ClientDetailPage = () => {
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card className="lg:col-span-8">
-          <CardHeader title="Informaci├│n del cliente" description="Datos de contacto y registro" />
+          <CardHeader title="Información del cliente" description="Datos de contacto y registro" />
           <CardBody>
             <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
               <div>
@@ -198,7 +198,7 @@ export const ClientDetailPage = () => {
                 </dt>
                 <dd className="mt-1 flex items-center gap-1.5 text-sm text-ink">
                   <BriefcaseBusiness className="h-3.5 w-3.5 text-muted" />
-                  {client.jobTitle ?? 'ÔÇö'}
+                  {client.jobTitle ?? '—'}
                 </dd>
               </div>
               <div>
@@ -217,11 +217,11 @@ export const ClientDetailPage = () => {
               </div>
               <div>
                 <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Tel├®fono
+                  Teléfono
                 </dt>
                 <dd className="mt-1 flex items-center gap-1.5 text-sm">
                   <Phone className="h-3.5 w-3.5 text-muted" />
-                  {client.phone ?? <span className="text-muted">ÔÇö</span>}
+                  {client.phone ?? <span className="text-muted">—</span>}
                 </dd>
               </div>
               <div className="sm:col-span-2">
@@ -291,7 +291,7 @@ export const ClientDetailPage = () => {
           </Card>
 
           <Card>
-            <CardHeader title="Acciones r├ípidas" />
+            <CardHeader title="Acciones rápidas" />
             <CardBody className="grid gap-2">
               <Link
                 to={`/opportunities?create=1&clientId=${client.id}${client.companyId ? `&companyId=${client.companyId}` : ''}`}
@@ -390,7 +390,7 @@ export const ClientDetailPage = () => {
                           </span>
                         ) : null}
                       </td>
-                      <td className="text-xs text-muted">{opportunity.owner?.name ?? 'ÔÇö'}</td>
+                      <td className="text-xs text-muted">{opportunity.owner?.name ?? '—'}</td>
                       <td>
                         <StageBadge
                           stage={opportunity.stage}
@@ -416,7 +416,7 @@ export const ClientDetailPage = () => {
             <EmptyState
               icon={Handshake}
               title="Sin ventas registradas"
-              description="Las ventas de este cliente aparecer├ín aqu├¡."
+              description="Las ventas de este cliente aparecerán aquí."
               action={
                 <Link
                   to={`/sales?create=1&clientId=${client.id}${client.companyId ? `&companyId=${client.companyId}` : ''}`}
@@ -431,7 +431,7 @@ export const ClientDetailPage = () => {
               <table className="table-base">
                 <thead>
                   <tr>
-                    <th>N├║mero</th>
+                    <th>Número</th>
                     <th>Empresa</th>
                     <th>Fecha</th>
                     <th className="text-right">Importe</th>
@@ -449,7 +449,7 @@ export const ClientDetailPage = () => {
                           {sale.saleNumber}
                         </Link>
                       </td>
-                      <td className="text-sm text-ink">{sale.company?.name ?? 'ÔÇö'}</td>
+                      <td className="text-sm text-ink">{sale.company?.name ?? '—'}</td>
                       <td className="whitespace-nowrap text-xs text-muted">
                         {formatDate(sale.saleDate)}
                       </td>
@@ -470,7 +470,7 @@ export const ClientDetailPage = () => {
 
       <div className="flex items-center gap-2 text-[11px] text-muted">
         <UserRound className="h-3.5 w-3.5" />
-        El hist├│rico se conserva aunque el cliente sea archivado.
+        El histórico se conserva aunque el cliente sea archivado.
       </div>
 
       <ClientFormModal

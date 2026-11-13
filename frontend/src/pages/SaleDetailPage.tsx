@@ -52,7 +52,7 @@ export const SaleDetailPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo confirmar',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -67,7 +67,7 @@ export const SaleDetailPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo cancelar',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -76,7 +76,7 @@ export const SaleDetailPage = () => {
     if (!sale) return;
     const accepted = await confirm({
       title: `Confirmar la venta ${sale.saleNumber}`,
-      description: `${formatMoney(sale.amount, sale.currency)} pasar├í a contar como ingreso confirmado. Despu├®s solo un administrador podr├í modificarla.`,
+      description: `${formatMoney(sale.amount, sale.currency)} pasará a contar como ingreso confirmado. Después solo un administrador podrá modificarla.`,
       confirmLabel: 'Confirmar venta',
     });
     if (accepted) confirmSale.mutate();
@@ -87,7 +87,7 @@ export const SaleDetailPage = () => {
     const accepted = await confirm({
       title: `Cancelar la venta ${sale.saleNumber}`,
       description:
-        'La venta se conservar├í en el hist├│rico con estado cancelada. Esta acci├│n no se puede revertir.',
+        'La venta se conservará en el histórico con estado cancelada. Esta acción no se puede revertir.',
       confirmLabel: 'Cancelar venta',
       cancelLabel: 'Volver',
       variant: 'danger',
@@ -115,8 +115,8 @@ export const SaleDetailPage = () => {
           <p className="mt-1 text-[13px] leading-6 text-muted">
             {sale
               ? sale.client
-                ? `${sale.client.firstName} ${sale.client.lastName} ┬À ${sale.company?.name ?? 'Sin empresa'}`
-                : `Sin cliente ┬À ${sale.company?.name ?? 'Sin empresa'}`
+                ? `${sale.client.firstName} ${sale.client.lastName} · ${sale.company?.name ?? 'Sin empresa'}`
+                : `Sin cliente · ${sale.company?.name ?? 'Sin empresa'}`
               : 'Detalle de la venta'}
           </p>
         </div>

@@ -66,7 +66,7 @@ export const SalesPage = () => {
 
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  // Cada usuario ve por defecto ├║nicamente sus propias ventas; los
+  // Cada usuario ve por defecto únicamente sus propias ventas; los
   // administradores pueden ampliar el alcance con el filtro de responsable.
   const [ownerId, setOwnerId] = useState(user?.id ?? '');
   const [companyId, setCompanyId] = useState(companyParam);
@@ -161,7 +161,7 @@ export const SalesPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo confirmar',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -175,7 +175,7 @@ export const SalesPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo cancelar',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -189,7 +189,7 @@ export const SalesPage = () => {
   const onConfirm = async (sale: Sale) => {
     const accepted = await confirm({
       title: `Confirmar la venta ${sale.saleNumber}`,
-      description: `${formatMoney(sale.amount, sale.currency)} pasar├í a contar como ingreso confirmado. Despu├®s solo un administrador podr├í modificarla.`,
+      description: `${formatMoney(sale.amount, sale.currency)} pasará a contar como ingreso confirmado. Después solo un administrador podrá modificarla.`,
       confirmLabel: 'Confirmar venta',
     });
     if (accepted) confirmSale.mutate(sale.id);
@@ -199,7 +199,7 @@ export const SalesPage = () => {
     const accepted = await confirm({
       title: `Cancelar la venta ${sale.saleNumber}`,
       description:
-        'La venta se conservar├í en el hist├│rico con estado cancelada. Esta acci├│n no se puede revertir.',
+        'La venta se conservará en el histórico con estado cancelada. Esta acción no se puede revertir.',
       confirmLabel: 'Cancelar venta',
       cancelLabel: 'Volver',
       variant: 'danger',
@@ -245,33 +245,33 @@ export const SalesPage = () => {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Ventas totales"
-          value={summary ? formatNumber(summary.total) : 'ÔÇö'}
+          value={summary ? formatNumber(summary.total) : '—'}
           hint={
             summary
-              ? `${summary.counts.PENDING} pendientes ┬À ${summary.counts.CONFIRMED} confirmadas`
-              : 'Cargando resumenÔÇª'
+              ? `${summary.counts.PENDING} pendientes · ${summary.counts.CONFIRMED} confirmadas`
+              : 'Cargando resumen…'
           }
           icon={Handshake}
           tone="brand"
         />
         <StatCard
           label="Confirmadas"
-          value={summary ? formatNumber(summary.counts.CONFIRMED) : 'ÔÇö'}
+          value={summary ? formatNumber(summary.counts.CONFIRMED) : '—'}
           hint="Suman a los ingresos"
           icon={CheckCircle2}
           tone="emerald"
         />
         <StatCard
           label="Pendientes"
-          value={summary ? formatNumber(summary.counts.PENDING) : 'ÔÇö'}
-          hint="Esperan validaci├│n de un administrador"
+          value={summary ? formatNumber(summary.counts.PENDING) : '—'}
+          hint="Esperan validación de un administrador"
           icon={CalendarDays}
           tone="amber"
         />
         <StatCard
           label="Canceladas"
-          value={summary ? formatNumber(summary.counts.CANCELLED) : 'ÔÇö'}
-          hint="Conservadas para auditor├¡a"
+          value={summary ? formatNumber(summary.counts.CANCELLED) : '—'}
+          hint="Conservadas para auditoría"
           icon={Ban}
           tone="rose"
         />
@@ -288,7 +288,7 @@ export const SalesPage = () => {
                 {formatMoney(item.confirmedTotal, item.currency)}
               </span>
               <span className="text-[11px] text-muted">
-                {formatNumber(item.confirmedCount)} ventas ┬À {item.currency}
+                {formatNumber(item.confirmedCount)} ventas · {item.currency}
               </span>
             </span>
           ))}
@@ -297,7 +297,7 @@ export const SalesPage = () => {
               Periodo filtrado
             </span>
           ) : (
-            <span className="ml-auto text-[11px] text-muted">Hist├│rico completo</span>
+            <span className="ml-auto text-[11px] text-muted">Histórico completo</span>
           )}
         </div>
       ) : null}
@@ -307,7 +307,7 @@ export const SalesPage = () => {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Buscar por n├║mero, cliente o empresaÔÇª"
+            placeholder="Buscar por número, cliente o empresa…"
             className="xl:w-72"
           />
           <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -386,10 +386,10 @@ export const SalesPage = () => {
         ) : sales.length === 0 ? (
           <EmptyState
             icon={Handshake}
-            title={hasFilters ? 'No encontramos ventas' : 'A├║n no hay ventas'}
+            title={hasFilters ? 'No encontramos ventas' : 'Aún no hay ventas'}
             description={
               hasFilters
-                ? 'Prueba con otros filtros o limpia la b├║squeda.'
+                ? 'Prueba con otros filtros o limpia la búsqueda.'
                 : 'Registra la primera venta para empezar a medir los ingresos.'
             }
             action={
@@ -414,7 +414,7 @@ export const SalesPage = () => {
               <table className="table-base">
                 <thead>
                   <tr>
-                    <th>N├║mero</th>
+                    <th>Número</th>
                     <th>Cliente / Empresa</th>
                     <th>Responsable</th>
                     <th>Fecha</th>
@@ -474,7 +474,7 @@ export const SalesPage = () => {
                             {sale.owner ? (
                               <Avatar name={sale.owner.name} size="xs" />
                             ) : null}
-                            {sale.owner?.name ?? 'ÔÇö'}
+                            {sale.owner?.name ?? '—'}
                           </span>
                         </td>
                         <td className="whitespace-nowrap text-xs text-muted">
@@ -563,8 +563,8 @@ export const SalesPage = () => {
       </Card>
 
       <div className="flex flex-wrap items-center gap-2 px-1 text-[11px] text-muted">
-        <Badge tone="neutral">Pol├¡tica</Badge>
-        Las ventas no se eliminan: se cancelan para conservar el hist├│rico. Una venta
+        <Badge tone="neutral">Política</Badge>
+        Las ventas no se eliminan: se cancelan para conservar el histórico. Una venta
         confirmada solo puede modificarla un administrador.
         {user?.role !== 'ADMIN' ? (
           <Link

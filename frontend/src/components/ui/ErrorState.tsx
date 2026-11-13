@@ -17,11 +17,11 @@ export const ErrorState = ({
       ? error.message
       : error instanceof Error
         ? error.message
-        : 'No se pudo cargar la informaci├│n.';
+        : 'No se pudo cargar la información.';
   return (
     <EmptyState
       icon={ServerCrash}
-      title="Algo sali├│ mal"
+      title="Algo salió mal"
       description={message}
       compact={compact}
       action={

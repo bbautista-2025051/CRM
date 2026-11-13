@@ -102,7 +102,7 @@ export const ClientsPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo archivar',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -123,7 +123,7 @@ export const ClientsPage = () => {
     const accepted = await confirm({
       title: `Archivar a ${client.firstName} ${client.lastName}`,
       description:
-        'El cliente y su hist├│rico comercial se conservar├ín. No podr├ís asociarle nuevas oportunidades o ventas mientras est├® archivado.',
+        'El cliente y su histórico comercial se conservarán. No podrás asociarle nuevas oportunidades o ventas mientras esté archivado.',
       confirmLabel: 'Archivar cliente',
       variant: 'danger',
     });
@@ -145,7 +145,7 @@ export const ClientsPage = () => {
     <div className="space-y-5">
       <PageHeader
         title="Clientes"
-        description="Gestiona tus contactos y su relaci├│n con cada empresa."
+        description="Gestiona tus contactos y su relación con cada empresa."
         actions={
           <Button onClick={openCreate} leftIcon={<Plus className="h-4 w-4" />}>
             Nuevo cliente
@@ -158,7 +158,7 @@ export const ClientsPage = () => {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Buscar por nombre, correo o tel├®fonoÔÇª"
+            placeholder="Buscar por nombre, correo o teléfono…"
             className="sm:w-80"
           />
           <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -192,7 +192,7 @@ export const ClientsPage = () => {
             ) : null}
             <span className="ml-auto text-xs text-muted">
               {meta ? `${formatNumber(meta.total)} clientes` : ''}
-              {selectedCompany ? ` ┬À ${selectedCompany.name}` : ''}
+              {selectedCompany ? ` · ${selectedCompany.name}` : ''}
             </span>
           </div>
         </div>
@@ -204,10 +204,10 @@ export const ClientsPage = () => {
         ) : clients.length === 0 ? (
           <EmptyState
             icon={UsersRound}
-            title={hasFilters ? 'No encontramos clientes' : 'A├║n no hay clientes'}
+            title={hasFilters ? 'No encontramos clientes' : 'Aún no hay clientes'}
             description={
               hasFilters
-                ? 'Prueba con otros filtros o limpia la b├║squeda.'
+                ? 'Prueba con otros filtros o limpia la búsqueda.'
                 : 'Registra tu primer contacto para empezar a construir tu cartera.'
             }
             action={
@@ -274,7 +274,7 @@ export const ClientsPage = () => {
                         <div className="min-w-0 text-xs">
                           <p className="truncate text-ink">{client.email}</p>
                           <p className="mt-0.5 truncate text-muted">
-                            {client.phone ?? 'Sin tel├®fono'}
+                            {client.phone ?? 'Sin teléfono'}
                           </p>
                         </div>
                       </td>

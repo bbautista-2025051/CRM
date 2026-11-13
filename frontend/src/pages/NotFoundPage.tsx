@@ -4,7 +4,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { buttonStyles } from '@/components/ui/Button';
 
 export const NotFoundPage = () => {
-  usePageTitle('P├ígina no encontrada');
+  usePageTitle('Página no encontrada');
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4">
@@ -16,7 +16,7 @@ export const NotFoundPage = () => {
           Error 404
         </p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">
-          P├ígina no encontrada
+          Página no encontrada
         </h1>
         <p className="mt-2 text-sm leading-6 text-muted">
           La ruta que buscas no existe o fue movida. Vuelve al panel para continuar

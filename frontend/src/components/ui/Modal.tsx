@@ -40,9 +40,9 @@ const focusable =
 
 /**
  * Pila de modales abiertos. Cada modal vive en su propio portal con el mismo
- * z-index, as├¡ que cuando hay varios superpuestos (p. ej. crear una empresa
- * desde el formulario de una oportunidad) solo el ├║ltimo abierto ÔÇöel de
- * encimaÔÇö debe reaccionar a Escape, para no cerrar tambi├®n al que est├í detr├ís.
+ * z-index, así que cuando hay varios superpuestos (p. ej. crear una empresa
+ * desde el formulario de una oportunidad) solo el último abierto —el de
+ * encima— debe reaccionar a Escape, para no cerrar también al que está detrás.
  */
 const modalStack: number[] = [];
 let modalSeq = 0;
@@ -63,7 +63,7 @@ export const Modal = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   // Ref para usar el onClose vigente sin re-ejecutar el efecto de apertura
-  // cuando el padre pasa una funci├│n nueva en cada render (p. ej. al teclear).
+  // cuando el padre pasa una función nueva en cada render (p. ej. al teclear).
   const onCloseRef = useRef(onClose);
   const sidebar = useOptionalSidebar();
 
@@ -90,7 +90,7 @@ export const Modal = ({
     document.body.style.overflow = 'hidden';
 
     const timer = window.setTimeout(() => {
-      // Se enfoca el panel (tabIndex -1) para no resaltar el bot├│n de cerrar
+      // Se enfoca el panel (tabIndex -1) para no resaltar el botón de cerrar
       // al abrir; el ciclo con Tab lo maneja el focus-trap del panel.
       panelRef.current?.focus();
     }, 30);
@@ -113,7 +113,7 @@ export const Modal = ({
       previouslyFocused.current?.focus?.();
     };
     // Solo reacciona a `open`: los cambios de identidad de onClose no deben
-    // reenfocar el modal mientras el usuario escribe dentro de ├®l.
+    // reenfocar el modal mientras el usuario escribe dentro de él.
   }, [open, inline]);
 
   const handlePanelKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {

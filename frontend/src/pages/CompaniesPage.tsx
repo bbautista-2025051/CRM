@@ -93,7 +93,7 @@ export const CompaniesPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo archivar',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -112,7 +112,7 @@ export const CompaniesPage = () => {
     const accepted = await confirm({
       title: `Archivar ${company.name}`,
       description:
-        'La empresa y todo su hist├│rico se conservar├ín. No podr├ís asociarle nuevos clientes, oportunidades o ventas mientras est├® archivada.',
+        'La empresa y todo su histórico se conservarán. No podrás asociarle nuevos clientes, oportunidades o ventas mientras esté archivada.',
       confirmLabel: 'Archivar empresa',
       variant: 'danger',
     });
@@ -140,7 +140,7 @@ export const CompaniesPage = () => {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Buscar por nombre, NIT o correoÔÇª"
+            placeholder="Buscar por nombre, NIT o correo…"
             className="sm:w-80"
           />
           <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -193,10 +193,10 @@ export const CompaniesPage = () => {
         ) : companies.length === 0 ? (
           <EmptyState
             icon={Building2}
-            title={hasFilters ? 'No encontramos empresas' : 'Tu cartera empieza aqu├¡'}
+            title={hasFilters ? 'No encontramos empresas' : 'Tu cartera empieza aquí'}
             description={
               hasFilters
-                ? 'Prueba con otros filtros o limpia la b├║squeda.'
+                ? 'Prueba con otros filtros o limpia la búsqueda.'
                 : 'Registra tu primera empresa para organizar clientes, oportunidades y ventas.'
             }
             action={
@@ -260,8 +260,8 @@ export const CompaniesPage = () => {
                       </td>
                       <td>
                         <div className="min-w-0 text-xs">
-                          <p className="truncate text-ink">{company.email ?? 'ÔÇö'}</p>
-                          <p className="mt-0.5 truncate text-muted">{company.phone ?? 'Sin tel├®fono'}</p>
+                          <p className="truncate text-ink">{company.email ?? '—'}</p>
+                          <p className="mt-0.5 truncate text-muted">{company.phone ?? 'Sin teléfono'}</p>
                         </div>
                       </td>
                       <td className="text-center text-sm tabular-nums text-muted">

@@ -46,7 +46,7 @@ import { Select } from '@/components/ui/Input';
 
 const greeting = (): string => {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Buenos d├¡as';
+  if (hour < 12) return 'Buenos días';
   if (hour < 19) return 'Buenas tardes';
   return 'Buenas noches';
 };
@@ -177,7 +177,7 @@ export const DashboardPage = () => {
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
               Filtros
             </p>
-            <p className="mt-0.5 text-[13px] text-muted">Usuario, rol, mes o a├▒o.</p>
+            <p className="mt-0.5 text-[13px] text-muted">Usuario, rol, mes o año.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Select
@@ -186,7 +186,7 @@ export const DashboardPage = () => {
               onChange={(event) => {
                 setRoleFilter(event.target.value);
                 // Al cambiar el rol se recarga la lista de usuarios: la
-                // selecci├│n previa puede no pertenecer al nuevo rol.
+                // selección previa puede no pertenecer al nuevo rol.
                 setUserFilter('');
               }}
               className="min-w-[180px]"
@@ -212,7 +212,7 @@ export const DashboardPage = () => {
               </option>
               {users.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name} ┬À {ROLE_LABELS[item.role]}
+                  {item.name} · {ROLE_LABELS[item.role]}
                 </option>
               ))}
             </Select>
@@ -229,7 +229,7 @@ export const DashboardPage = () => {
               ))}
             </Select>
             <Select
-              aria-label="Filtrar por a├▒o"
+              aria-label="Filtrar por año"
               value={yearFilter}
               onChange={(event) => setYearFilter(event.target.value)}
               className="min-w-[120px]"
@@ -277,7 +277,7 @@ export const DashboardPage = () => {
                 <p className="mt-1 text-xs text-muted">
                   {data.totals.confirmedSales} ventas confirmadas
                   {otherCurrencies?.length
-                    ? ` ┬À ${otherCurrencies.map((item) => formatMoney(item.total, item.currency)).join(' ┬À ')}`
+                    ? ` · ${otherCurrencies.map((item) => formatMoney(item.total, item.currency)).join(' · ')}`
                     : ''}
                 </p>
               </div>
@@ -300,7 +300,7 @@ export const DashboardPage = () => {
 
             <div className="card p-5">
               <div className="flex items-center justify-between pb-2">
-                <span className="text-sm font-medium text-muted">Tasa de conversi├│n</span>
+                <span className="text-sm font-medium text-muted">Tasa de conversión</span>
                 <ConversionIcon className="h-5 w-5 text-sky-600 dark:text-sky-400" />
               </div>
               <div>
@@ -308,7 +308,7 @@ export const DashboardPage = () => {
                   {formatPercent(data.totals.conversionRate)}
                 </p>
                 <p className="mt-1 text-xs text-muted">
-                  {data.totals.wonOpportunities} ganadas ┬À {data.totals.lostOpportunities} perdidas
+                  {data.totals.wonOpportunities} ganadas · {data.totals.lostOpportunities} perdidas
                 </p>
               </div>
             </div>
@@ -332,7 +332,7 @@ export const DashboardPage = () => {
           <div className="grid gap-6 xl:grid-cols-12">
             <section className="border-t border-line pt-5 xl:col-span-8">
               <SectionHeader
-                title={monthFilter ? `Ingresos del mes ${months.find((item) => item.value === monthFilter)?.label ?? ''}` : `Ingresos del a├▒o ${yearFilter}`}
+                title={monthFilter ? `Ingresos del mes ${months.find((item) => item.value === monthFilter)?.label ?? ''}` : `Ingresos del año ${yearFilter}`}
                 description="Solo ventas con estado confirmada"
                 action={
                   <Badge tone="brand" dot>
@@ -348,7 +348,7 @@ export const DashboardPage = () => {
             <section className="border-t border-line pt-5 xl:col-span-4">
               <SectionHeader
                 title="Embudo de oportunidades"
-                description="Distribuci├│n actual por etapa"
+                description="Distribución actual por etapa"
                 action={
                   <Link
                     to="/opportunities"
@@ -377,7 +377,7 @@ export const DashboardPage = () => {
                 </div>
                 <div className="px-2 py-3 sm:px-4">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                    Conversi├│n
+                    Conversión
                   </p>
                   <p className="metric mt-1 text-base font-semibold text-ink sm:text-lg">
                     {formatPercent(data.totals.conversionRate)}
@@ -394,7 +394,7 @@ export const DashboardPage = () => {
             <section className="border-t border-line pt-5 xl:col-span-7">
               <SectionHeader
                 title="Oportunidades recientes"
-                description="├Ültimas oportunidades creadas"
+                description="Últimas oportunidades creadas"
                 action={
                   <Link
                     to="/opportunities"
@@ -408,7 +408,7 @@ export const DashboardPage = () => {
               {data.recentOpportunities.length === 0 ? (
                 <EmptyState
                   icon={OpportunitiesIcon}
-                  title="Todav├¡a no hay oportunidades"
+                  title="Todavía no hay oportunidades"
                   description="Registra tu primera oportunidad para empezar a medir el pipeline."
                   action={
                     <Link
@@ -449,7 +449,7 @@ export const DashboardPage = () => {
                                     : null,
                                 ]
                                   .filter(Boolean)
-                                  .join(' ┬À ') || 'Sin empresa'}
+                                  .join(' · ') || 'Sin empresa'}
                               </span>
                             </Link>
                           </td>
@@ -479,7 +479,7 @@ export const DashboardPage = () => {
             <section className="border-t border-line pt-5 xl:col-span-5">
               <SectionHeader
                 title="Actividad del equipo"
-                description="├Ültimos movimientos registrados"
+                description="Últimos movimientos registrados"
                 action={
                   <Link
                     to="/activity"
@@ -517,7 +517,7 @@ export const DashboardPage = () => {
             <section className="border-t border-line pt-5 xl:col-span-5">
               <SectionHeader
                 title="Empresas por sector"
-                description="Composici├│n de la cartera activa"
+                description="Composición de la cartera activa"
               />
               <div className="mt-3">
                 <SectorChart data={data.charts.companiesBySector} />
@@ -528,7 +528,7 @@ export const DashboardPage = () => {
           <section className="border-t border-line pt-5">
             <SectionHeader
               title="Ventas recientes"
-              description="├Ültimos registros de venta"
+              description="Últimos registros de venta"
               action={
                 <Link
                   to="/sales"
@@ -542,8 +542,8 @@ export const DashboardPage = () => {
             {data.recentSales.length === 0 ? (
               <EmptyState
                 icon={SalesIcon}
-                title="A├║n no hay ventas registradas"
-                description="Cuando registres una venta aparecer├í aqu├¡ con su estado y responsable."
+                title="Aún no hay ventas registradas"
+                description="Cuando registres una venta aparecerá aquí con su estado y responsable."
                 action={
                   <Link to="/sales?create=1" className={buttonStyles({ size: 'sm' })}>
                     <Plus className="h-4 w-4" /> Registrar venta
@@ -555,7 +555,7 @@ export const DashboardPage = () => {
                 <table className="table-base">
                   <thead>
                     <tr>
-                      <th>N├║mero</th>
+                      <th>Número</th>
                       <th>Cliente</th>
                       <th>Responsable</th>
                       <th>Fecha</th>
@@ -579,7 +579,7 @@ export const DashboardPage = () => {
                             <p className="truncate font-medium text-ink">
                               {sale.client
                                 ? `${sale.client.firstName} ${sale.client.lastName}`
-                                : sale.company?.name ?? 'ÔÇö'}
+                                : sale.company?.name ?? '—'}
                             </p>
                             <p className="truncate text-xs text-muted">
                               {sale.company?.name ?? 'Sin empresa'}
@@ -591,7 +591,7 @@ export const DashboardPage = () => {
                             {sale.owner ? (
                               <Avatar name={sale.owner.name} src={sale.owner.avatarUrl} size="xs" />
                             ) : null}
-                            {sale.owner?.name ?? 'ÔÇö'}
+                            {sale.owner?.name ?? '—'}
                           </span>
                         </td>
                         <td className="whitespace-nowrap text-xs text-muted">
@@ -617,7 +617,7 @@ export const DashboardPage = () => {
               <Building2 className="h-3.5 w-3.5" />
               Datos actualizados en tiempo real
             </span>
-            <span>├Ültima actualizaci├│n: {formatDateTime(new Date())}</span>
+            <span>Última actualización: {formatDateTime(new Date())}</span>
           </div>
         </>
       ) : null}

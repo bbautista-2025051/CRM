@@ -96,7 +96,7 @@ export const ProjectsPage = () => {
     onError: (error) => {
       toastError(
         'No se pudo eliminar',
-        error instanceof ApiError ? error.message : 'Int├®ntalo de nuevo.',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     },
   });
@@ -120,7 +120,7 @@ export const ProjectsPage = () => {
     const accepted = await confirm({
       title: `Eliminar ${project.name}`,
       description:
-        'Se eliminar├ín el proyecto y todas sus tareas asignadas. Esta acci├│n no se puede deshacer.',
+        'Se eliminarán el proyecto y todas sus tareas asignadas. Esta acción no se puede deshacer.',
       confirmLabel: 'Eliminar proyecto',
       variant: 'danger',
     });
@@ -144,7 +144,7 @@ export const ProjectsPage = () => {
       <div className="grid gap-3 sm:grid-cols-3">
         <StatCard
           label="Proyectos"
-          value={counts ? formatNumber(counts.total) : 'ÔÇö'}
+          value={counts ? formatNumber(counts.total) : '—'}
           hint="Total registrados"
           icon={FolderKanban}
           tone="brand"
@@ -152,15 +152,15 @@ export const ProjectsPage = () => {
         />
         <StatCard
           label="Activos"
-          value={counts ? formatNumber(counts.ACTIVE) : 'ÔÇö'}
-          hint="En ejecuci├│n"
+          value={counts ? formatNumber(counts.ACTIVE) : '—'}
+          hint="En ejecución"
           icon={Clock3}
           tone="amber"
           loading={query.isLoading}
         />
         <StatCard
           label="Terminados"
-          value={counts ? formatNumber(counts.COMPLETED) : 'ÔÇö'}
+          value={counts ? formatNumber(counts.COMPLETED) : '—'}
           hint="Completados"
           icon={CheckCircle2}
           tone="emerald"
@@ -184,13 +184,13 @@ export const ProjectsPage = () => {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Buscar proyecto o empresaÔÇª"
+            placeholder="Buscar proyecto o empresa…"
             className="sm:w-80"
           />
           <div className="flex flex-1 items-center gap-2">
             {hasFilters ? (
               <Button variant="ghost" size="sm" onClick={() => setSearch('')}>
-                Limpiar b├║squeda
+                Limpiar búsqueda
               </Button>
             ) : null}
             <span className="ml-auto text-xs text-muted">
@@ -215,14 +215,14 @@ export const ProjectsPage = () => {
                 ? 'No encontramos proyectos'
                 : status === 'ACTIVE'
                   ? 'No hay proyectos activos'
-                  : 'Todav├¡a no hay proyectos terminados'
+                  : 'Todavía no hay proyectos terminados'
             }
             description={
               hasFilters
-                ? 'Prueba con otra b├║squeda.'
+                ? 'Prueba con otra búsqueda.'
                 : admin
                   ? 'Crea un proyecto y asigna tareas al equipo para empezar.'
-                  : 'Cuando el administrador registre proyectos aparecer├ín aqu├¡.'
+                  : 'Cuando el administrador registre proyectos aparecerán aquí.'
             }
             action={
               admin && !hasFilters ? (
@@ -312,7 +312,7 @@ export const ProjectsPage = () => {
                   </div>
 
                   <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-xs leading-5 text-muted">
-                    {project.description ?? 'Sin descripci├│n registrada.'}
+                    {project.description ?? 'Sin descripción registrada.'}
                   </p>
 
                   <div className="mt-3">
