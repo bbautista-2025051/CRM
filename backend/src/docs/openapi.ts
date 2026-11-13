@@ -66,6 +66,8 @@ export const openApiDocument = {
     { name: 'Dashboard' },
     { name: 'Configuración' },
     { name: 'Actividad' },
+    { name: 'Equipo', description: 'Proyectos y tareas asignadas' },
+    { name: 'Notificaciones', description: 'Notificaciones personales de tareas' },
   ],
   components: {
     securitySchemes: {
@@ -812,6 +814,52 @@ export const openApiDocument = {
           { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 50 } },
         ],
         responses: { '200': { description: 'Registros de auditoría' } },
+      },
+    },
+    '/team/overview': {
+      get: {
+        tags: ['Equipo'],
+        summary: 'Resumen de equipo o tareas propias',
+        description:
+          'ADMIN, GERENTE y OPERACIONES ven el equipo completo; los demás roles solo ven sus proyectos y tareas asignadas.',
+        responses: { '200': { description: 'Resumen del equipo' } },
+      },
+    },
+    '/team/members': {
+      get: {
+        tags: ['Equipo'],
+        summary: 'Integrantes activos disponibles para asignación',
+        responses: { '200': { description: 'Integrantes activos' }, '403': { description: 'Permiso insuficiente' } },
+      },
+    },
+    '/notifications': {
+      get: {
+        tags: ['Notificaciones'],
+        summary: 'Notificaciones persistentes del usuario autenticado',
+        responses: { '200': { description: 'Notificaciones recientes y cantidad sin leer' } },
+      },
+    },
+    '/notifications/{id}/read': {
+      patch: {
+        tags: ['Notificaciones'],
+        summary: 'Marcar una notificación como leída',
+        parameters: withCsrf([
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', format: 'uuid' },
+          },
+        ]),
+        responses: { '200': { description: 'Notificación actualizada' }, '404': { description: 'Notificación no encontrada' } },
+      },
+    },
+    '/notifications/read-all': {
+      patch: {
+        tags: ['Notificaciones'],
+        summary: 'Marcar todas las notificaciones como leídas',
+        parameters: withCsrf(),
+        responses: { '200': { description: 'Cantidad de notificaciones actualizadas' } },
       },
     },
   },

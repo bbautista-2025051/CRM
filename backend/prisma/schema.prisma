@@ -99,6 +99,7 @@ model User {
   saleFiles        SaleFile[]      @relation("SaleFileUploader")
   saleComments     SaleComment[]   @relation("SaleCommentAuthor")
   activityLogs     ActivityLog[]
+  notifications    Notification[]
   avatar           UserAvatar?
 
   @@index([role])
@@ -154,6 +155,22 @@ model ActivityLog {
   @@index([createdAt])
   @@index([userId])
   @@map("activity_logs")
+}
+
+model Notification {
+  id          String    @id @default(uuid()) @db.Uuid
+  recipientId String    @map("recipient_id") @db.Uuid
+  taskId      String    @map("task_id") @db.Uuid
+  title       String    @db.VarChar(180)
+  message     String    @db.VarChar(500)
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  recipient User        @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  task      ProjectTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, readAt, createdAt])
+  @@map("notifications")
 }
 
 // ---------------------------------------------------------------------------
@@ -408,6 +425,7 @@ model ProjectTask {
 
   project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  notifications Notification[]
 
   @@index([projectId])
   @@index([assigneeId])
@@ -492,4 +510,3 @@ model CompanyComment {
   @@index([companyId, createdAt])
   @@map("company_comments")
 }
-

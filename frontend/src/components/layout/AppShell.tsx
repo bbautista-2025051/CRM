@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import {
-  Bell,
-  Search,
-} from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +12,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/app-1-utils/sidebar';
 import { App1Sidebar } from '@/components/ui/app-1-utils/app-1-sidebar';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const sectionTitle = (pathname: string): string => {
   if (pathname.startsWith('/companies')) return 'Empresas';
@@ -89,14 +87,7 @@ export const AppShell = () => {
                 <Search className="h-4 w-4" />
               </Button>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Notificaciones"
-                onClick={() => navigate('/activity')}
-              >
-                <Bell className="h-4 w-4" />
-              </Button>
+              <NotificationBell />
 
               <button
                 type="button"

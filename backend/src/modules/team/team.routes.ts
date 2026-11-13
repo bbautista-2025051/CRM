@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import {
-  requireAdmin,
   requireAuth,
   requireTeamTaskManager,
 } from '../../middlewares/auth';
@@ -20,14 +19,13 @@ export const teamRouter = Router();
 
 teamRouter.use(requireAuth);
 
-// Vista general del equipo (proyectos, miembros y tareas). Solo ADMIN y SUPERVISOR
-// ya lo manejaba requireAdmin en el router original; lo mantenemos aquí explícito.
+// Cada integrante ve sus tareas; los responsables de equipo pueden ver el resumen completo.
 teamRouter.get(
   '/overview',
-  requireAdmin,
   validate({ query: teamQuerySchema }),
   controller.overview,
 );
+teamRouter.get('/members', requireTeamTaskManager, controller.members);
 
 // --- Detalle de una tarea (cualquier usuario autenticado puede ver su propia tarea) ---
 // Debe ir ANTES de las rutas con :projectId para evitar que Express haga match
@@ -38,7 +36,7 @@ teamRouter.get(
   controller.getTaskDetail,
 );
 
-// --- Gestión de tareas por proyecto (solo ADMIN y OPERACIONES) ---
+// --- Gestión de tareas por proyecto (ADMIN, GERENTE y OPERACIONES) ---
 
 teamRouter.post(
   '/:projectId/tasks',

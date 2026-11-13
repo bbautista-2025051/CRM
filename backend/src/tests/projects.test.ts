@@ -59,13 +59,35 @@ describe('Proyectos y equipo', () => {
     expect(task.status).toBe(201);
     expect(task.body.data.status).toBe('PENDING');
 
-    const forbidden = await vendor.agent
+    const notifications = await vendor.agent.get('/api/notifications');
+    expect(notifications.status).toBe(200);
+    expect(notifications.body.data.unreadCount).toBe(1);
+    expect(notifications.body.data.notifications[0].taskId).toBe(task.body.data.id);
+
+    await vendor.agent
+      .post('/api/auth/logout')
+      .set('X-CSRF-Token', vendor.csrfToken);
+    const vendorAfterLogin = await loginAs('vendor@test.local');
+    const persistedNotifications = await vendorAfterLogin.agent.get('/api/notifications');
+    expect(persistedNotifications.body.data.unreadCount).toBe(1);
+    expect(persistedNotifications.body.data.notifications[0].id).toBe(
+      notifications.body.data.notifications[0].id,
+    );
+
+    const readNotification = await vendorAfterLogin.agent
+      .patch(`/api/notifications/${notifications.body.data.notifications[0].id}/read`)
+      .set('X-CSRF-Token', vendorAfterLogin.csrfToken!);
+    expect(readNotification.status).toBe(200);
+    const afterRead = await vendorAfterLogin.agent.get('/api/notifications');
+    expect(afterRead.body.data.unreadCount).toBe(0);
+
+    const forbidden = await vendorAfterLogin.agent
       .post('/api/projects')
-      .set('X-CSRF-Token', vendor.csrfToken)
+      .set('X-CSRF-Token', vendorAfterLogin.csrfToken!)
       .send({ name: 'Proyecto no autorizado' });
     expect(forbidden.status).toBe(403);
 
-    const visible = await vendor.agent.get('/api/projects');
+    const visible = await vendorAfterLogin.agent.get('/api/projects');
     expect(visible.status).toBe(200);
     expect(visible.body.meta.total).toBe(1);
     expect(visible.body.counts.ACTIVE).toBe(1);
@@ -87,8 +109,42 @@ describe('Proyectos y equipo', () => {
     expect(team.body.data.summary.completedTasks).toBe(1);
     expect(team.body.data.projects[0].members[0].progress).toBe(100);
 
-    const teamForbidden = await vendor.agent.get('/api/team/overview');
-    expect(teamForbidden.status).toBe(403);
+    const vendorTeam = await vendorAfterLogin.agent.get('/api/team/overview');
+    expect(vendorTeam.status).toBe(200);
+    expect(vendorTeam.body.data.summary.members).toBe(1);
+    expect(vendorTeam.body.data.projects[0].members[0].user.id).toBe(vendorUser?.id);
+  });
+
+  it('notifies the newly assigned member when a task is reassigned', async () => {
+    const admin = await setup('ADMIN', 'admin@test.local');
+    await setup('VENDEDOR', 'first@test.local');
+    await setup('VENDEDOR', 'second@test.local');
+    const firstUser = await prisma.user.findUnique({ where: { email: 'first@test.local' } });
+    const secondUser = await prisma.user.findUnique({ where: { email: 'second@test.local' } });
+    const project = await prisma.project.create({ data: { name: 'Proyecto de prueba' } });
+
+    const createdTask = await admin.agent
+      .post(`/api/team/${project.id}/tasks`)
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ title: 'Revisión de entregables', assigneeId: firstUser?.id });
+    expect(createdTask.status).toBe(201);
+
+    const reassigned = await admin.agent
+      .patch(`/api/team/${project.id}/tasks/${createdTask.body.data.id}`)
+      .set('X-CSRF-Token', admin.csrfToken)
+      .send({ assigneeId: secondUser?.id });
+    expect(reassigned.status).toBe(200);
+
+    const firstNotifications = await loginAs('first@test.local');
+    const firstList = await firstNotifications.agent.get('/api/notifications');
+    expect(firstList.body.data.unreadCount).toBe(1);
+
+    const secondNotifications = await loginAs('second@test.local');
+    const secondList = await secondNotifications.agent.get('/api/notifications');
+    expect(secondList.body.data.unreadCount).toBe(1);
+    expect(secondList.body.data.notifications[0].message).toContain(
+      'Revisión de entregables',
+    );
   });
 
   it('permite al vendedor editar solo los datos comerciales de sus proyectos', async () => {

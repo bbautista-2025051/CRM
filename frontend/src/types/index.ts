@@ -274,6 +274,21 @@ export interface ActivityLog {
   user: { id: string; name: string; avatarUrl: string | null } | null;
 }
 
+export interface Notification {
+  id: string;
+  recipientId: string;
+  taskId: string;
+  title: string;
+  message: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationCenter {
+  notifications: Notification[];
+  unreadCount: number;
+}
+
 export interface ProjectTask {
   id: string;
   projectId: string;

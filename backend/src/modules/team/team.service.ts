@@ -1,6 +1,7 @@
 import { type User } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { logActivity } from '../../utils/activity';
+import { createTaskAssignmentNotification } from '../../utils/notifications';
 import {
   BadRequestError,
   ForbiddenError,
@@ -25,22 +26,49 @@ interface TaskRow {
     avatarUrl: string | null;
     role: string;
     status: string;
-  };
+  } | null;
 }
 
 const progressOf = (completed: number, total: number) =>
   total > 0 ? Math.round((completed / total) * 100) : 0;
 
-export const getTeamOverview = async (query: TeamQuery = {}) => {
+export const getTeamMembers = () =>
+  prisma.user.findMany({
+    where: { status: 'ACTIVE' },
+    orderBy: { name: 'asc' },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      avatarUrl: true,
+    },
+  });
+
+export const getTeamOverview = async (query: TeamQuery = {}, actor: User) => {
+  const canViewAllTasks =
+    actor.role === 'ADMIN' ||
+    actor.role === 'GERENTE' ||
+    actor.role === 'OPERACIONES';
   const projects = await prisma.project.findMany({
     where: {
       ...(query.projectId ? { id: query.projectId } : {}),
       ...(query.status ? { status: query.status } : {}),
+      ...(!canViewAllTasks
+        ? {
+            OR: [
+              { managerId: actor.id },
+              { tasks: { some: { assigneeId: actor.id } } },
+            ],
+          }
+        : {}),
     },
     orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
     include: {
       manager: { select: { id: true, name: true, avatarUrl: true } },
       tasks: {
+        ...(!canViewAllTasks ? { where: { assigneeId: actor.id } } : {}),
         orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { createdAt: 'asc' }],
         include: {
           assignee: {
@@ -96,6 +124,7 @@ export const getTeamOverview = async (query: TeamQuery = {}) => {
         else if (task.status === 'IN_PROGRESS') inProgressTasks += 1;
         else pendingTasks += 1;
 
+        if (!task.assignee) continue;
         uniqueMembers.add(task.assignee.id);
         const member = members.get(task.assignee.id) ?? {
           user: task.assignee,
@@ -183,7 +212,7 @@ export const getTeamOverview = async (query: TeamQuery = {}) => {
 };
 
 /**
- * Crea una tarea dentro de un proyecto. Solo ADMIN y OPERACIONES pueden hacerlo
+ * Crea una tarea dentro de un proyecto. Solo ADMIN, GERENTE y OPERACIONES pueden hacerlo
  * (validado también por el middleware requireTeamTaskManager).
  */
 export const createTask = async (
@@ -212,18 +241,28 @@ export const createTask = async (
     throw new BadRequestError('El responsable seleccionado está inactivo');
   }
 
-  const task = await prisma.projectTask.create({
-    data: {
-      projectId,
-      title: input.title,
-      description: input.description ?? null,
-      assigneeId: input.assigneeId,
-      status: input.status ?? 'PENDING',
-      dueDate: input.dueDate ?? null,
-    },
-    include: {
-      assignee: { select: { id: true, name: true, avatarUrl: true, role: true } },
-    },
+  const task = await prisma.$transaction(async (tx) => {
+    const created = await tx.projectTask.create({
+      data: {
+        projectId,
+        title: input.title,
+        description: input.description ?? null,
+        assigneeId: input.assigneeId,
+        status: input.status ?? 'PENDING',
+        dueDate: input.dueDate ?? null,
+      },
+      include: {
+        assignee: { select: { id: true, name: true, avatarUrl: true, role: true } },
+      },
+    });
+
+    await createTaskAssignmentNotification(tx, {
+      recipientId: input.assigneeId,
+      taskId: created.id,
+      taskTitle: created.title,
+      projectName: project.name,
+    });
+    return created;
   });
 
   await logActivity({
@@ -239,7 +278,7 @@ export const createTask = async (
 };
 
 /**
- * Actualiza una tarea. ADMIN y OPERACIONES pueden editar cualquier campo.
+ * Actualiza una tarea. ADMIN, GERENTE y OPERACIONES pueden editar cualquier campo.
  * El responsable asignado solo puede cambiar su propio estado.
  */
 export const updateTask = async (
@@ -262,7 +301,10 @@ export const updateTask = async (
     throw new NotFoundError('La tarea no existe en este proyecto');
   }
 
-  const isManager = actor.role === 'ADMIN' || actor.role === 'OPERACIONES';
+  const isManager =
+    actor.role === 'ADMIN' ||
+    actor.role === 'GERENTE' ||
+    actor.role === 'OPERACIONES';
   const isAssignee = task.assigneeId === actor.id;
 
   if (!isManager && !isAssignee) {
@@ -291,12 +333,24 @@ export const updateTask = async (
     }
   }
 
-  const updated = await prisma.projectTask.update({
-    where: { id: taskId },
-    data: input,
-    include: {
-      assignee: { select: { id: true, name: true, avatarUrl: true, role: true } },
-    },
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.projectTask.update({
+      where: { id: taskId },
+      data: input,
+      include: {
+        assignee: { select: { id: true, name: true, avatarUrl: true, role: true } },
+      },
+    });
+
+    if (input.assigneeId && input.assigneeId !== task.assigneeId) {
+      await createTaskAssignmentNotification(tx, {
+        recipientId: input.assigneeId,
+        taskId: result.id,
+        taskTitle: result.title,
+        projectName: task.project.name,
+      });
+    }
+    return result;
   });
 
   await logActivity({
@@ -312,7 +366,7 @@ export const updateTask = async (
 };
 
 /**
- * Elimina una tarea. Solo ADMIN y OPERACIONES.
+ * Elimina una tarea. Solo ADMIN, GERENTE y OPERACIONES.
  */
 export const deleteTask = async (
   projectId: string,
@@ -369,7 +423,10 @@ export const getTaskDetail = async (taskId: string, actor: User) => {
   });
   if (!task) throw new NotFoundError('La tarea no existe');
 
-  const isManager = actor.role === 'ADMIN' || actor.role === 'OPERACIONES';
+  const isManager =
+    actor.role === 'ADMIN' ||
+    actor.role === 'GERENTE' ||
+    actor.role === 'OPERACIONES';
   const isAssignee = task.assigneeId === actor.id;
 
   if (!isManager && !isAssignee) {

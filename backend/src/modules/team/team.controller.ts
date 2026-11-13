@@ -5,7 +5,14 @@ import { ForbiddenError } from '../../utils/errors';
 import type { User } from '@prisma/client';
 
 export const overview = asyncHandler(async (req: Request, res: Response) => {
-  res.status(200).json(await teamService.getTeamOverview(req.validated.query));
+  if (!req.auth) return;
+  res.status(200).json(
+    await teamService.getTeamOverview(req.validated.query, req.auth.user),
+  );
+});
+
+export const members = asyncHandler(async (_req: Request, res: Response) => {
+  res.status(200).json({ data: await teamService.getTeamMembers() });
 });
 
 export const createTask = asyncHandler(async (req: Request, res: Response) => {

@@ -5,6 +5,7 @@ import {
   companiesApi,
   opportunitiesApi,
   settingsApi,
+  teamApi,
   usersApi,
   unwrap,
 } from '@/lib/endpoints';
@@ -61,6 +62,14 @@ export const useUserOptions = (enabled = true) => {
     staleTime: 60_000,
   });
 };
+
+export const useTeamMemberOptions = (enabled = true) =>
+  useQuery({
+    queryKey: ['team', 'members'],
+    queryFn: async () => unwrap(await teamApi.members()),
+    enabled,
+    staleTime: 60_000,
+  });
 
 export const useProfile = () =>
   useQuery({

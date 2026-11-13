@@ -10,6 +10,7 @@ import { settingsRouter } from '../modules/settings/settings.routes';
 import { activityRouter } from '../modules/activity/activity.routes';
 import { projectsRouter } from '../modules/projects/projects.routes';
 import { teamRouter } from '../modules/team/team.routes';
+import { notificationsRouter } from '../modules/notifications/notifications.routes';
 
 export const apiRouter = Router();
 
@@ -33,3 +34,4 @@ apiRouter.use('/team', teamRouter);
 apiRouter.use('/dashboard', dashboardRouter);
 apiRouter.use('/settings', settingsRouter);
 apiRouter.use('/activity', activityRouter);
+apiRouter.use('/notifications', notificationsRouter);

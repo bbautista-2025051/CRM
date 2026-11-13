@@ -12,6 +12,8 @@ import type {
   DashboardData,
   GoogleStatus,
   ListResponse,
+  Notification,
+  NotificationCenter,
   Opportunity,
   OpportunityComment,
   OpportunityFile,
@@ -259,6 +261,10 @@ export const projectsApi = {
 export const teamApi = {
   overview: (params: { projectId?: string; status?: string; search?: string } = {}) =>
     api.get<DataEnvelope<TeamOverview>>(`/api/team/overview${buildQuery(params)}`),
+  members: () =>
+    api.get<DataEnvelope<Array<Pick<PublicUser, 'id' | 'name' | 'email' | 'role' | 'status' | 'avatarUrl'>>>>(
+      '/api/team/members',
+    ),
 
   createTask: (projectId: string, payload: Record<string, unknown>) =>
     api.post<DataEnvelope<ProjectTask>>(`/api/team/${projectId}/tasks`, payload),
@@ -342,6 +348,14 @@ export const settingsApi = {
 export const activityApi = {
   list: (params: { entityType?: string; entityId?: string; limit?: number } = {}) =>
     api.get<DataEnvelope<ActivityLog[]>>(`/api/activity${buildQuery({ limit: 50, ...params })}`),
+};
+
+export const notificationsApi = {
+  list: () => api.get<DataEnvelope<NotificationCenter>>('/api/notifications'),
+  markRead: (id: string) =>
+    api.patch<DataEnvelope<Notification>>(`/api/notifications/${id}/read`),
+  markAllRead: () =>
+    api.patch<DataEnvelope<{ updated: number }>>('/api/notifications/read-all'),
 };
 
 export { unwrap };

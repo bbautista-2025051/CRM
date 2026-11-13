@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
   CalendarDays,
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useUserOptions } from '@/hooks/queries';
+import { useTeamMemberOptions } from '@/hooks/queries';
 import { useAuth } from '@/providers/AuthProvider';
 import { teamApi, unwrap } from '@/lib/endpoints';
 import { canManageTeamTasks } from '@/lib/permissions';
@@ -36,8 +36,10 @@ import type { ProjectStatus } from '@/types';
 export const TeamPage = () => {
   usePageTitle('Equipo');
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
-  const usersQuery = useUserOptions(true);
+  const canManageTasks = canManageTeamTasks(user?.role);
+  const usersQuery = useTeamMemberOptions(canManageTasks);
 
   const [search, setSearch] = useState('');
   const [projectId, setProjectId] = useState('');
@@ -97,6 +99,7 @@ export const TeamPage = () => {
       });
       setCreatingTask(null);
       void query.refetch();
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     } catch {
       void query.refetch();
     }
@@ -106,7 +109,11 @@ export const TeamPage = () => {
     <div className="space-y-5">
       <PageHeader
         title="Equipo"
-        description="Consulta quién trabaja en cada proyecto, sus tareas asignadas y el avance individual."
+        description={
+          canManageTasks
+            ? 'Consulta quién trabaja en cada proyecto, sus tareas asignadas y el avance individual.'
+            : 'Consulta los proyectos donde participas y el avance de tus tareas asignadas.'
+        }
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -204,7 +211,7 @@ export const TeamPage = () => {
           <div className="space-y-4 p-4">
             {projects.map((project) => {
               const isCreating = creatingTask === project.id;
-              const users = usersQuery.data?.data ?? [];
+              const users = usersQuery.data ?? [];
 
               return (
                 <section key={project.id} className="rounded-xl border border-line">

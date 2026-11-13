@@ -48,7 +48,7 @@ const navGroups: NavGroup[] = [
     label: "Proyectos & Equipo",
     items: [
       { to: "/projects", label: "Proyectos", icon: FolderKanban },
-      { to: "/team", label: "Equipo", icon: UserCheck, adminOnly: true },
+      { to: "/team", label: "Equipo", icon: UserCheck },
     ],
   },
   {

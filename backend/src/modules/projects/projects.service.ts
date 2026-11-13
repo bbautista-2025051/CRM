@@ -1,6 +1,7 @@
 import { Prisma, type User } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { logActivity } from '../../utils/activity';
+import { createTaskAssignmentNotification } from '../../utils/notifications';
 import { readProjectFile, removeProjectFile } from '../../middlewares/upload';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../utils/errors';
 import {
@@ -330,24 +331,35 @@ export const createTask = async (
   input: TaskInput,
   actor: User,
 ) => {
-  if (!input.title || !input.assigneeId) {
+  const { title, assigneeId } = input;
+  if (!title || !assigneeId) {
     throw new BadRequestError('El título y el responsable son obligatorios');
   }
 
   const project = await prisma.project.findUnique({ where: { id: projectId } });
   if (!project) throw new NotFoundError('El proyecto no existe');
-  await validateAssignee(input.assigneeId);
+  await validateAssignee(assigneeId);
 
-  const task = await prisma.projectTask.create({
-    data: {
-      projectId,
-      title: input.title,
-      description: input.description ?? null,
-      assigneeId: input.assigneeId,
-      status: input.status ?? 'PENDING',
-      dueDate: input.dueDate ?? null,
-    },
-    include: { assignee: { select: { id: true, name: true, avatarUrl: true } } },
+  const task = await prisma.$transaction(async (tx) => {
+    const created = await tx.projectTask.create({
+      data: {
+        projectId,
+        title,
+        description: input.description ?? null,
+        assigneeId,
+        status: input.status ?? 'PENDING',
+        dueDate: input.dueDate ?? null,
+      },
+      include: { assignee: { select: { id: true, name: true, avatarUrl: true } } },
+    });
+
+    await createTaskAssignmentNotification(tx, {
+      recipientId: assigneeId,
+      taskId: created.id,
+      taskTitle: created.title,
+      projectName: project.name,
+    });
+    return created;
   });
 
   await logActivity({
@@ -382,14 +394,26 @@ export const updateTask = async (
   const existing = await findTask(projectId, taskId);
   if (input.assigneeId) await validateAssignee(input.assigneeId);
 
-  const task = await prisma.projectTask.update({
-    where: { id: taskId },
-    data: input,
-    include: {
-      assignee: {
-        select: { id: true, name: true, email: true, avatarUrl: true, role: true },
+  const task = await prisma.$transaction(async (tx) => {
+    const updated = await tx.projectTask.update({
+      where: { id: taskId },
+      data: input,
+      include: {
+        assignee: {
+          select: { id: true, name: true, email: true, avatarUrl: true, role: true },
+        },
       },
-    },
+    });
+
+    if (input.assigneeId && input.assigneeId !== existing.assigneeId) {
+      await createTaskAssignmentNotification(tx, {
+        recipientId: input.assigneeId,
+        taskId: updated.id,
+        taskTitle: updated.title,
+        projectName: existing.project.name,
+      });
+    }
+    return updated;
   });
 
   await logActivity({

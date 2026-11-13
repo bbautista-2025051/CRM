@@ -81,6 +81,7 @@ export const TaskFormModal = ({
       );
       void queryClient.invalidateQueries({ queryKey: ['projects'] });
       void queryClient.invalidateQueries({ queryKey: ['team'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
       onClose();
     },
     onError: (error) => {
