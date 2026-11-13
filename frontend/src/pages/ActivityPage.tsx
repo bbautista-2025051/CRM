@@ -1,125 +1,86 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Activity, RefreshCw } from 'lucide-react';
-import { usePageTitle } from '@/hooks/usePageTitle';
-import { activityApi, unwrap } from '@/lib/endpoints';
-import { ENTITY_LABELS } from '@/lib/labels';
-import { formatNumber } from '@/lib/format';
-import { ActivityFeed } from '@/components/activity/ActivityFeed';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { Card, CardBody, CardHeader } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Input';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { TableSkeleton } from '@/components/ui/Skeleton';
-import { ErrorState } from '@/components/ui/ErrorState';
-
-const ENTITY_TYPES = ['COMPANY', 'CLIENT', 'OPPORTUNITY', 'SALE', 'USER', 'SESSION'];
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useAuth } from "@/providers/AuthProvider"
+import { useToast } from "@/providers/ToastProvider"
+import { usePageTitle } from "@/hooks/usePageTitle"
+import { activityApi, unwrap } from "@/lib/endpoints"
+import { ApiError } from "@/lib/api"
+import { Button } from "@/components/ui/Button"
+import { ErrorState } from "@/components/ui/ErrorState"
+import { Skeleton } from "@/components/ui/Skeleton"
+import { Avatar } from "@/components/ui/Avatar"
+import { Icon } from "@/components/ui/Icon"
 
 export const ActivityPage = () => {
-  usePageTitle('Actividad');
-  const [entityType, setEntityType] = useState('');
-  const [limit, setLimit] = useState('50');
+  usePageTitle("Actividad")
+  const { user } = useAuth()
+  const { success, error: toastError } = useToast()
+  const queryClient = useQueryClient()
 
   const query = useQuery({
-    queryKey: ['activity', 'list', { entityType, limit }],
-    queryFn: async () =>
-      unwrap(
-        await activityApi.list({
-          entityType: entityType || undefined,
-          limit: Number(limit),
-        }),
-      ),
-  });
+    queryKey: ["activity", "list"],
+    queryFn: async () => unwrap(await activityApi.list()),
+    enabled: Boolean(),
+  })
 
-  const items = query.data ?? [];
+  const activityLogs = query.data ?? []
+
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: ["activity"] })
+  }
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Actividad"
-        description="Auditoría de las acciones realizadas por el equipo y el sistema."
-      />
-
-      <Card>
-        <CardHeader
-          title="Registro de actividad"
-          description="Los eventos más recientes aparecen primero."
-          action={
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => void query.refetch()}
-              loading={query.isFetching}
-              leftIcon={<RefreshCw className="h-4 w-4" />}
-            >
-              Actualizar
-            </Button>
-          }
-        />
-        <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center">
-          <Select
-            aria-label="Filtrar por tipo de entidad"
-            value={entityType}
-            onChange={(event) => setEntityType(event.target.value)}
-            className="sm:w-56"
-          >
-            <option value="">Todas las entidades</option>
-            {ENTITY_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {ENTITY_LABELS[type] ?? type}
-              </option>
-            ))}
-          </Select>
-          <Select
-            aria-label="Cantidad de eventos"
-            value={limit}
-            onChange={(event) => setLimit(event.target.value)}
-            className="sm:w-40"
-          >
-            <option value="20">Últimos 20</option>
-            <option value="50">Últimos 50</option>
-          </Select>
-          <span className="ml-auto text-xs text-muted">
-            {formatNumber(items.length)} eventos mostrados
-          </span>
+    <div className="min-h-screen p-6 sm:p-8 lg:p-10">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.03em] text-ink">
+            Historial de actividad
+            <span className="text-zinc-500 dark:text-zinc-400">
+              <Icon name="clock" className="h-4 w-4 mr-1" size={18} />
+              {activityLogs.length} eventos
+            </span>
+          </h1>
         </div>
 
-        {query.isLoading ? (
-          <div className="p-5">
-            <TableSkeleton rows={6} columns={2} />
-          </div>
-        ) : query.isError ? (
-          <ErrorState error={query.error} onRetry={() => void query.refetch()} />
-        ) : items.length === 0 ? (
-          <EmptyState
-            icon={Activity}
-            title="Sin actividad registrada"
-            description={
-              entityType
-                ? 'No hay eventos para la entidad seleccionada.'
-                : 'Las acciones del equipo aparecerán aquí automáticamente.'
-            }
-            action={
-              entityType ? (
-                <Button variant="secondary" size="sm" onClick={() => setEntityType('')}>
-                  Ver toda la actividad
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <CardBody className="py-1">
-            <ActivityFeed items={items} />
-          </CardBody>
-        )}
-      </Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {activityLogs.map((log) => (
+            <div
+              key={log.id}
+              className="group rounded-lg border border-zinc-200/50 dark:border-zinc-700/50 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <Icon
+                  name="calendar"
+                  className="w-8 h-8 shrink-0 bg-zinc-100 dark:bg-zinc-800 rounded flex items-center justify-center flex-shrink-0"
+                  size={20}
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                    {log.action}
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 uppercase font-medium tracking-s tighter">
+                    {log.entityType}
+                  </p>
+                </div>
+              </div>
 
-      <p className="flex items-start gap-1.5 px-1 text-[11px] leading-5 text-muted">
-        <Activity className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-        La auditoría es de solo lectura. Cada evento incluye actor, entidad, acción y fecha;
-        no puede editarse ni eliminarse desde la interfaz.
-      </p>
+              <div className="mt-2 text-right text-zinc-400 dark:text-zinc-300 text-xs">
+                <span>{formatDate(log.createdAt)}</span>
+                <span className="mx-2">|</span>
+                <span>{log.user?.name ?? 'Sistema'}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {activityLogs.length === 0 && (
+          <div className="mt-8 text-center text-zinc-500 dark:text-zinc-400">
+            <Icon name="calendar" className="w-12 h-12 mx-auto mb-3" size={30} />
+            No hay actividad registrada
+          </div>
+        )}
+      </div>
     </div>
-  );
-};
+  )
+}

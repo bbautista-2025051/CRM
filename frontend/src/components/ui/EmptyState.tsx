@@ -1,41 +1,49 @@
-import type { ReactNode } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import type { NexoIcon } from './NexoIcons';
-import { cn } from '@/lib/cn';
+import type React from "react"
+import { Icon } from "@/components/ui/Icon"
+
+export interface EmptyStateProps {
+  icon?: keyof typeof import("@/components/ui/Icon").customIcons
+  title: string
+  description?: string
+  actionLabel?: string
+  onAction?: () => void
+}
 
 export const EmptyState = ({
-  icon: Icon,
+  icon,
   title,
   description,
-  action,
-  className,
-  compact = false,
-}: {
-  icon?: LucideIcon | NexoIcon;
-  title: string;
-  description?: string;
-  action?: ReactNode;
-  className?: string;
-  compact?: boolean;
-}) => (
-  <div
-    className={cn(
-      'flex flex-col gap-4 px-5 sm:flex-row sm:items-center sm:gap-5',
-      compact ? 'py-6' : 'py-9',
-      className,
-    )}
-  >
-    {Icon ? (
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-elevated text-muted">
-        <Icon className="h-5 w-5" />
-      </span>
-    ) : null}
-    <div className="min-w-0 flex-1">
-      <h3 className="text-sm font-semibold tracking-tight text-ink">{title}</h3>
-      {description ? (
-        <p className="mt-1 max-w-md text-[13px] leading-5 text-muted">{description}</p>
-      ) : null}
+  actionLabel,
+  onAction,
+}: EmptyStateProps) => {
+  return (
+    <div className="text-center py-12">
+      {icon && (
+        <Icon
+          name={icon}
+          className="mx-auto mb-4 w-12 h-12 text-zinc-300 dark:text-zinc-700"
+          size={30}
+        />
+      )}
+
+      <h3 className="text-xl font-bold text-zinc-600 dark:text-zinc-400 mb-2">
+        {title}
+      </h3>
+
+      {description && (
+        <p className="text-zinc-500 dark:text-zinc-400 mb-6">
+          {description}
+        </p>
+      )}
+
+      {actionLabel && onAction && (
+        <button
+          onClick={onAction}
+          className="px-6 py-3 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        >
+          {actionLabel}
+        </button>
+      )}
     </div>
-    {action ? <div className="shrink-0">{action}</div> : null}
-  </div>
-);
+  )
+}

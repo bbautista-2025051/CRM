@@ -1,359 +1,101 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Archive,
-  Building2,
-  Eye,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-} from 'lucide-react';
-import { useAuth } from '@/providers/AuthProvider';
-import { useConfirm } from '@/providers/ConfirmProvider';
-import { useToast } from '@/providers/ToastProvider';
-import { usePageTitle } from '@/hooks/usePageTitle';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useSectors } from '@/hooks/queries';
-import { companiesApi } from '@/lib/endpoints';
-import { canArchive } from '@/lib/permissions';
-import { formatNumber, initials } from '@/lib/format';
-import { CompanyFormModal } from '@/components/companies/CompanyFormModal';
-import { CompanyDetailModal } from '@/components/companies/CompanyDetailModal';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { SearchInput } from '@/components/ui/SearchInput';
-import { Select } from '@/components/ui/Input';
-import { Pagination } from '@/components/ui/Pagination';
-import { TableSkeleton } from '@/components/ui/Skeleton';
-import { ErrorState } from '@/components/ui/ErrorState';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { CompanyStatusBadge } from '@/components/ui/StatusBadges';
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownSeparator,
-} from '@/components/ui/Dropdown';
-import type { Company } from '@/types';
-import { ApiError } from '@/lib/api';
+import { useEffect, useState } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useAuth } from "@/providers/AuthProvider"
+import { useConfirm } from "@/providers/ConfirmProvider"
+import { useToast } from "@/providers/ToastProvider"
+import { usePageTitle } from "@/hooks/usePageTitle"
+import { companiesApi, unwrap } from "@/lib/endpoints"
+import { ApiError } from "@/lib/api"
+import { Button } from "@/components/ui/Button"
+import { ErrorState } from "@/components/ui/ErrorState"
+import { Skeleton } from "@/components/ui/Skeleton"
+import { Avatar } from "@/components/ui/Avatar"
+import { formatDate } from "@/lib/format"
+import { Icon } from "@/components/ui/Icon"
 
 export const CompaniesPage = () => {
-  usePageTitle('Empresas');
-  const { user } = useAuth();
-  const { confirm } = useConfirm();
-  const { success, error: toastError } = useToast();
-  const queryClient = useQueryClient();
-  const sectors = useSectors();
-
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-  const [sector, setSector] = useState('');
-  const [page, setPage] = useState(1);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Company | null>(null);
-  const [detailId, setDetailId] = useState<string | null>(null);
-  const debouncedSearch = useDebouncedValue(search, 300);
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  useEffect(() => {
-    if (searchParams.get('create') !== '1') return;
-    setEditing(null);
-    setFormOpen(true);
-    const next = new URLSearchParams(searchParams);
-    next.delete('create');
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, status, sector]);
+  usePageTitle("Empresas")
+  const { user } = useAuth()
+  const { confirm } = useConfirm()
+  const { success, error: toastError } = useToast()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const { id } = useSearchParams()
 
   const query = useQuery({
-    queryKey: ['companies', 'list', { page, search: debouncedSearch, status, sector }],
-    queryFn: () =>
-      companiesApi.list({
-        page,
-        pageSize: 15,
-        search: debouncedSearch || undefined,
-        status: status || undefined,
-        sector: sector || undefined,
-        sortBy: 'name',
-        sortOrder: 'asc',
-      }),
-  });
+    queryKey: ["companies", "list"],
+    queryFn: async () => unwrap(await companiesApi.list()),
+    enabled: Boolean(),
+  })
 
-  const archive = useMutation({
-    mutationFn: (id: string) => companiesApi.archive(id),
-    onSuccess: (response) => {
-      success('Empresa archivada', response.message);
-      void queryClient.invalidateQueries({ queryKey: ['companies'] });
-      void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    },
-    onError: (error) => {
-      toastError(
-        'No se pudo archivar',
-        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
-      );
-    },
-  });
+  const companies = query.data ?? []
 
-  const openCreate = () => {
-    setEditing(null);
-    setFormOpen(true);
-  };
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: ["companies"] })
+    void queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+  }
 
-  const openEdit = (company: Company) => {
-    setEditing(company);
-    setFormOpen(true);
-  };
-
-  const onArchive = async (company: Company) => {
-    const accepted = await confirm({
-      title: `Archivar ${company.name}`,
-      description:
-        'La empresa y todo su histórico se conservarán. No podrás asociarle nuevos clientes, oportunidades o ventas mientras esté archivada.',
-      confirmLabel: 'Archivar empresa',
-      variant: 'danger',
-    });
-    if (accepted) archive.mutate(company.id);
-  };
-
-  const companies = query.data?.data ?? [];
-  const meta = query.data?.meta;
-  const hasFilters = Boolean(debouncedSearch || status || sector);
+  const onCreate = () => {
+    navigate("/empresa/nueva")
+  }
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="Empresas"
-        description="Centraliza las cuentas de tu cartera y consulta su actividad comercial."
-        actions={
-          <Button onClick={openCreate} leftIcon={<Plus className="h-4 w-4" />}>
-            Nueva empresa
-          </Button>
-        }
-      />
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.03em] text-ink">
+          Empresas
+          <span className="text-zinc-500 dark:text-zinc-400">
+            <Icon name="building-2" className="h-4 w-4 mr-1" size={18} />
+            {companies.length} registradas
+          </span>
+        </h1>
+        <Button onClick={onCreate} variant="secondary">
+          <Icon name="plus" className="h-4 w-4 mr-2" size={18} />
+          Nueva empresa
+        </Button>
+      </div>
 
-      <Card>
-        <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar por nombre, NIT o correo…"
-            className="sm:w-80"
-          />
-          <div className="flex flex-1 flex-wrap items-center gap-2">
-            <Select
-              aria-label="Filtrar por estado"
-              value={status}
-              onChange={(event) => setStatus(event.target.value)}
-              className="w-auto min-w-[140px]"
-            >
-              <option value="">Todos los estados</option>
-              <option value="ACTIVE">Activas</option>
-              <option value="ARCHIVED">Archivadas</option>
-            </Select>
-            <Select
-              aria-label="Filtrar por sector"
-              value={sector}
-              onChange={(event) => setSector(event.target.value)}
-              className="w-auto min-w-[150px]"
-            >
-              <option value="">Todos los sectores</option>
-              {sectors.data?.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </Select>
-            {hasFilters ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearch('');
-                  setStatus('');
-                  setSector('');
-                }}
-              >
-                Limpiar filtros
-              </Button>
-            ) : null}
-            <span className="ml-auto text-xs text-muted">
-              {meta ? `${formatNumber(meta.total)} empresas` : ''}
-            </span>
-          </div>
-        </div>
-
-        {query.isLoading ? (
-          <TableSkeleton rows={8} columns={6} />
-        ) : query.isError ? (
-          <ErrorState error={query.error} onRetry={() => void query.refetch()} />
-        ) : companies.length === 0 ? (
-          <EmptyState
-            icon={Building2}
-            title={hasFilters ? 'No encontramos empresas' : 'Tu cartera empieza aquí'}
-            description={
-              hasFilters
-                ? 'Prueba con otros filtros o limpia la búsqueda.'
-                : 'Registra tu primera empresa para organizar clientes, oportunidades y ventas.'
-            }
-            action={
-              hasFilters ? (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setSearch('');
-                    setStatus('');
-                    setSector('');
-                  }}
-                >
-                  Limpiar filtros
-                </Button>
-              ) : (
-                <Button size="sm" onClick={openCreate} leftIcon={<Plus className="h-4 w-4" />}>
-                  Nueva empresa
-                </Button>
-              )
-            }
-          />
-        ) : (
-          <>
-            <div className="table-wrap">
-              <table className="table-base">
-                <thead>
-                  <tr>
-                    <th>Empresa</th>
-                    <th>Contacto</th>
-                    <th className="text-center">Clientes</th>
-                    <th className="text-center">Oportunidades</th>
-                    <th className="text-center">Ventas</th>
-                    <th>Estado</th>
-                    <th className="w-12 text-right">
-                      <span className="sr-only">Acciones</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {companies.map((company) => (
-                    <tr key={company.id}>
-                      <td>
-                        <button
-                          type="button"
-                          onClick={() => setDetailId(company.id)}
-                          className="group flex items-center gap-3 text-left"
-                        >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-xs font-bold text-brand-strong dark:text-brand">
-                            {initials(company.name)}
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block max-w-[240px] truncate font-medium text-ink group-hover:text-brand-strong dark:group-hover:text-brand">
-                              {company.name}
-                            </span>
-                            <span className="mt-0.5 block max-w-[240px] truncate text-xs text-muted">
-                              {company.sector ?? 'Sin sector'}
-                            </span>
-                          </span>
-                        </button>
-                      </td>
-                      <td>
-                        <div className="min-w-0 text-xs">
-                          <p className="truncate text-ink">{company.email ?? '—'}</p>
-                          <p className="mt-0.5 truncate text-muted">{company.phone ?? 'Sin teléfono'}</p>
-                        </div>
-                      </td>
-                      <td className="text-center text-sm tabular-nums text-muted">
-                        {formatNumber(company._count?.clients ?? 0)}
-                      </td>
-                      <td className="text-center text-sm tabular-nums text-muted">
-                        {formatNumber(company._count?.opportunities ?? 0)}
-                      </td>
-                      <td className="text-center text-sm tabular-nums text-muted">
-                        {formatNumber(company._count?.sales ?? 0)}
-                      </td>
-                      <td>
-                        <CompanyStatusBadge status={company.status} />
-                      </td>
-                      <td className="text-right">
-                        <Dropdown
-                          trigger={({ toggle }) => (
-                            <button
-                              type="button"
-                              onClick={toggle}
-                              className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
-                              aria-label={`Acciones para ${company.name}`}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </button>
-                          )}
-                        >
-                          {(close) => (
-                            <>
-                              <DropdownItem
-                                icon={<Eye className="h-4 w-4" />}
-                                onClick={() => {
-                                  close();
-                                  setDetailId(company.id);
-                                }}
-                              >
-                                Ver detalle
-                              </DropdownItem>
-                              <DropdownItem
-                                icon={<Pencil className="h-4 w-4" />}
-                                onClick={() => {
-                                  close();
-                                  openEdit(company);
-                                }}
-                              >
-                                Editar
-                              </DropdownItem>
-                              {canArchive(user?.role) && company.status === 'ACTIVE' ? (
-                                <>
-                                  <DropdownSeparator />
-                                  <DropdownItem
-                                    icon={<Archive className="h-4 w-4" />}
-                                    danger
-                                    disabled={archive.isPending}
-                                    onClick={() => {
-                                      close();
-                                      void onArchive(company);
-                                    }}
-                                  >
-                                    Archivar
-                                  </DropdownItem>
-                                </>
-                              ) : null}
-                            </>
-                          )}
-                        </Dropdown>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {companies.map((company) => (
+          <div
+            key={company.id}
+            className="group rounded-lg border border-zinc-200/50 dark:border-zinc-700/50 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            onClick={() => navigate(`/companies/${company.id}`)}
+          >
+            <div className="flex items-start gap-3">
+              <Icon
+                name="building-2"
+                className="w-8 h-8 shrink-0 bg-zinc-100 dark:bg-zinc-800 rounded flex items-center justify-center"
+                size={20}
+              />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                  {company.name}
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 uppercase font-medium tracking-wider">
+                  {company.legalName ?? 'Sin nombre legal'}
+                </p>
+              </div>
             </div>
-            {meta ? <Pagination meta={meta} onPageChange={setPage} /> : null}
-          </>
-        )}
-      </Card>
 
-      <CompanyFormModal
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        company={editing}
-      />
-
-      <CompanyDetailModal
-        open={Boolean(detailId)}
-        companyId={detailId}
-        onClose={() => setDetailId(null)}
-        onEdit={(comp) => {
-          setDetailId(null);
-          openEdit(comp);
-        }}
-      />
+            <div className="mt-2 flex justify-between items-center">
+              <div>
+                <span className="text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Sector</span>
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  {company.sector ?? 'Sin sector'}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Fundada</span>
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  {company.establishedDate ? formatDate(company.establishedDate) : 'N/A'}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-  );
-};
+  )
+}

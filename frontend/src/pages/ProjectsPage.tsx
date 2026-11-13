@@ -1,391 +1,101 @@
-import { useSearchParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  CalendarDays,
-  CheckCircle2,
-  Clock3,
-  Eye,
-  FolderKanban,
-  ListChecks,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  Trash2,
-} from 'lucide-react';
-import { useAuth } from '@/providers/AuthProvider';
-import { useConfirm } from '@/providers/ConfirmProvider';
-import { useToast } from '@/providers/ToastProvider';
-import { usePageTitle } from '@/hooks/usePageTitle';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { projectsApi } from '@/lib/endpoints';
-import { isAdmin } from '@/lib/permissions';
-import { formatDate, formatNumber } from '@/lib/format';
-import { ApiError } from '@/lib/api';
-import { ProjectFormModal } from '@/components/projects/ProjectFormModal';
-import { ProjectDetailModal } from '@/components/projects/ProjectDetailModal';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { SearchInput } from '@/components/ui/SearchInput';
-import { Pagination } from '@/components/ui/Pagination';
-import { ErrorState } from '@/components/ui/ErrorState';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { Avatar } from '@/components/ui/Avatar';
-import { ProgressBar } from '@/components/ui/ProgressBar';
-import { StatCard } from '@/components/ui/StatCard';
-import { Tabs } from '@/components/ui/Tabs';
-import { ProjectStatusBadge } from '@/components/ui/StatusBadges';
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownSeparator,
-} from '@/components/ui/Dropdown';
-import type { Project, ProjectStatus } from '@/types';
+import { useEffect, useState } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useAuth } from "@/providers/AuthProvider"
+import { useConfirm } from "@/providers/ConfirmProvider"
+import { useToast } from "@/providers/ToastProvider"
+import { usePageTitle } from "@/hooks/usePageTitle"
+import { projectsApi, unwrap } from "@/lib/endpoints"
+import { ApiError } from "@/lib/api"
+import { Button } from "@/components/ui/Button"
+import { ErrorState } from "@/components/ui/ErrorState"
+import { Skeleton } from "@/components/ui/Skeleton"
+import { Avatar } from "@/components/ui/Avatar"
+import { formatDate, formatMoney } from "@/lib/format"
+import { Icon } from "@/components/ui/Icon"
 
 export const ProjectsPage = () => {
-  usePageTitle('Proyectos');
-  const { user } = useAuth();
-  const { confirm } = useConfirm();
-  const { success, error: toastError } = useToast();
-  const queryClient = useQueryClient();
-  const admin = isAdmin(user?.role);
-
-  const [status, setStatus] = useState<ProjectStatus>('ACTIVE');
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Project | null>(null);
-  const [detailId, setDetailId] = useState<string | null>(null);
-  const debouncedSearch = useDebouncedValue(search, 300);
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, status]);
-
-  useEffect(() => {
-    if (searchParams.get('create') !== '1') return;
-    setEditing(null);
-    setFormOpen(true);
-    const next = new URLSearchParams(searchParams);
-    next.delete('create');
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
+  usePageTitle("Proyectos")
+  const { user } = useAuth()
+  const { confirm } = useConfirm()
+  const { success, error: toastError } = useToast()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const { id } = useSearchParams()
 
   const query = useQuery({
-    queryKey: ['projects', 'list', { status, page, search: debouncedSearch }],
-    queryFn: () =>
-      projectsApi.list({
-        page,
-        pageSize: 12,
-        status,
-        search: debouncedSearch || undefined,
-        sortBy: 'updatedAt',
-        sortOrder: 'desc',
-      }),
-  });
+    queryKey: ["projects", "list"],
+    queryFn: async () => unwrap(await projectsApi.list()),
+    enabled: Boolean(),
+  })
 
-  const remove = useMutation({
-    mutationFn: (id: string) => projectsApi.remove(id),
-    onSuccess: () => {
-      success('Proyecto eliminado', 'El proyecto y sus tareas se eliminaron.');
-      void queryClient.invalidateQueries({ queryKey: ['projects'] });
-      void queryClient.invalidateQueries({ queryKey: ['team'] });
-    },
-    onError: (error) => {
-      toastError(
-        'No se pudo eliminar',
-        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
-      );
-    },
-  });
+  const projects = query.data ?? []
 
-  const projects = query.data?.data ?? [];
-  const meta = query.data?.meta;
-  const counts = query.data?.counts;
-  const hasFilters = Boolean(debouncedSearch);
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: ["projects"] })
+    void queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+  }
 
-  const openCreate = () => {
-    setEditing(null);
-    setFormOpen(true);
-  };
-
-  const openEdit = (project: Project) => {
-    setEditing(project);
-    setFormOpen(true);
-  };
-
-  const onDelete = async (project: Project) => {
-    const accepted = await confirm({
-      title: `Eliminar ${project.name}`,
-      description:
-        'Se eliminarán el proyecto y todas sus tareas asignadas. Esta acción no se puede deshacer.',
-      confirmLabel: 'Eliminar proyecto',
-      variant: 'danger',
-    });
-    if (accepted) remove.mutate(project.id);
-  };
+  const onCreate = () => {
+    navigate("/proyecto/nuevo")
+  }
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="Proyectos"
-        description="Organiza el trabajo del equipo, separa proyectos activos y terminados, y revisa su avance."
-        actions={
-          admin ? (
-            <Button onClick={openCreate} leftIcon={<Plus className="h-4 w-4" />}>
-              Nuevo proyecto
-            </Button>
-          ) : undefined
-        }
-      />
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard
-          label="Proyectos"
-          value={counts ? formatNumber(counts.total) : '—'}
-          hint="Total registrados"
-          icon={FolderKanban}
-          tone="brand"
-          loading={query.isLoading}
-        />
-        <StatCard
-          label="Activos"
-          value={counts ? formatNumber(counts.ACTIVE) : '—'}
-          hint="En ejecución"
-          icon={Clock3}
-          tone="amber"
-          loading={query.isLoading}
-        />
-        <StatCard
-          label="Terminados"
-          value={counts ? formatNumber(counts.COMPLETED) : '—'}
-          hint="Completados"
-          icon={CheckCircle2}
-          tone="emerald"
-          loading={query.isLoading}
-        />
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.03em] text-ink">
+          Proyectos
+          <span className="text-zinc-500 dark:text-zinc-400">
+            <Icon name="grid" className="h-4 w-4 mr-1" size={18} />
+            5 activos
+          </span>
+        </h1>
+        <Button onClick={onCreate} variant="secondary">
+          <Icon name="plus" className="h-4 w-4 mr-2" size={18} />
+          Nuevo proyecto
+        </Button>
       </div>
 
-      <Card>
-        <div className="border-b border-line px-4 pt-1">
-          <Tabs
-            value={status}
-            onChange={setStatus}
-            items={[
-              { value: 'ACTIVE', label: 'Activos', count: counts?.ACTIVE },
-              { value: 'COMPLETED', label: 'Terminados', count: counts?.COMPLETED },
-            ]}
-          />
-        </div>
-
-        <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar proyecto o empresa…"
-            className="sm:w-80"
-          />
-          <div className="flex flex-1 items-center gap-2">
-            {hasFilters ? (
-              <Button variant="ghost" size="sm" onClick={() => setSearch('')}>
-                Limpiar búsqueda
-              </Button>
-            ) : null}
-            <span className="ml-auto text-xs text-muted">
-              {meta ? `${formatNumber(meta.total)} proyectos` : ''}
-            </span>
-          </div>
-        </div>
-
-        {query.isLoading ? (
-          <div className="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="h-56 animate-pulse rounded-xl bg-elevated" />
-            ))}
-          </div>
-        ) : query.isError ? (
-          <ErrorState error={query.error} onRetry={() => void query.refetch()} />
-        ) : projects.length === 0 ? (
-          <EmptyState
-            icon={FolderKanban}
-            title={
-              hasFilters
-                ? 'No encontramos proyectos'
-                : status === 'ACTIVE'
-                  ? 'No hay proyectos activos'
-                  : 'Todavía no hay proyectos terminados'
-            }
-            description={
-              hasFilters
-                ? 'Prueba con otra búsqueda.'
-                : admin
-                  ? 'Crea un proyecto y asigna tareas al equipo para empezar.'
-                  : 'Cuando el administrador registre proyectos aparecerán aquí.'
-            }
-            action={
-              admin && !hasFilters ? (
-                <Button size="sm" onClick={openCreate} leftIcon={<Plus className="h-4 w-4" />}>
-                  Nuevo proyecto
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <>
-            <div className="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3">
-              {projects.map((project) => (
-                <article
-                  key={project.id}
-                  className="group flex flex-col rounded-xl border border-line bg-surface p-4 transition hover:border-brand/30 hover:shadow-sm"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-strong dark:text-brand">
-                      <FolderKanban className="h-5 w-5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <button
-                        type="button"
-                        onClick={() => setDetailId(project.id)}
-                        className="block max-w-full truncate text-left text-sm font-semibold text-ink hover:text-brand-strong dark:hover:text-brand"
-                      >
-                        {project.name}
-                      </button>
-                      <p className="mt-0.5 truncate text-xs text-muted">
-                        {project.company?.name ?? 'Sin empresa'}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <ProjectStatusBadge status={project.status} />
-                      {admin ? (
-                        <Dropdown
-                          align="right"
-                          trigger={({ toggle }) => (
-                            <button
-                              type="button"
-                              onClick={toggle}
-                              className="focus-ring rounded-lg p-1 text-muted transition hover:bg-elevated hover:text-ink"
-                              aria-label={`Acciones para ${project.name}`}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </button>
-                          )}
-                        >
-                          {(close) => (
-                            <>
-                              <DropdownItem
-                                icon={<Eye className="h-4 w-4" />}
-                                onClick={() => {
-                                  close();
-                                  setDetailId(project.id);
-                                }}
-                              >
-                                Ver detalle
-                              </DropdownItem>
-                              <DropdownItem
-                                icon={<Pencil className="h-4 w-4" />}
-                                onClick={() => {
-                                  close();
-                                  openEdit(project);
-                                }}
-                              >
-                                Editar
-                              </DropdownItem>
-                              <DropdownSeparator />
-                              <DropdownItem
-                                icon={<Trash2 className="h-4 w-4" />}
-                                danger
-                                disabled={remove.isPending}
-                                onClick={() => {
-                                  close();
-                                  void onDelete(project);
-                                }}
-                              >
-                                Eliminar
-                              </DropdownItem>
-                            </>
-                          )}
-                        </Dropdown>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-xs leading-5 text-muted">
-                    {project.description ?? 'Sin descripción registrada.'}
-                  </p>
-
-                  <div className="mt-3">
-                    <div className="mb-1.5 flex items-center justify-between text-xs">
-                      <span className="text-muted">Progreso</span>
-                      <span className="font-semibold text-ink">
-                        {project.taskCounts.progress}%
-                      </span>
-                    </div>
-                    <ProgressBar
-                      value={project.taskCounts.progress}
-                      tone={project.taskCounts.progress === 100 ? 'success' : 'brand'}
-                      label={`Progreso de ${project.name}`}
-                    />
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-muted">
-                    <span className="inline-flex items-center gap-1">
-                      <ListChecks className="h-3.5 w-3.5" />
-                      {project.taskCounts.completed}/{project.taskCounts.total} tareas
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      {formatDate(project.dueDate)}
-                    </span>
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-line pt-3">
-                    <div className="flex min-w-0 items-center gap-2">
-                      {project.manager ? (
-                        <>
-                          <Avatar
-                            name={project.manager.name}
-                            src={project.manager.avatarUrl}
-                            size="xs"
-                          />
-                          <span className="truncate text-xs text-muted">
-                            {project.manager.name}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-xs text-muted">Sin responsable</span>
-                      )}
-                    </div>
-                    <Button
-                      size="xs"
-                      variant="secondary"
-                      onClick={() => setDetailId(project.id)}
-                    >
-                      Ver detalle
-                    </Button>
-                  </div>
-                </article>
-              ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {projects.map((project) => (
+          <div
+            key={project.id}
+            className="group rounded-lg border border-zinc-200/50 dark:border-zinc-700/50 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            onClick={() => navigate(`/proyecto/${project.id}`)}
+          >
+            <div className="flex items-start gap-3">
+              <Icon
+                name="folder-kanban"
+                className="w-8 h-8 shrink-0 bg-zinc-100 dark:bg-zinc-800 rounded flex items-center justify-center"
+                size={20}
+              />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                  {project.name}
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 uppercase font-medium tracking-wider">
+                  {project.code ?? 'S/P'}
+                </p>
+              </div>
             </div>
-            {meta ? <Pagination meta={meta} onPageChange={setPage} /> : null}
-          </>
-        )}
-      </Card>
 
-      {admin ? (
-        <ProjectFormModal
-          open={formOpen}
-          onClose={() => setFormOpen(false)}
-          project={editing}
-        />
-      ) : null}
-
-      <ProjectDetailModal
-        open={Boolean(detailId)}
-        onClose={() => setDetailId(null)}
-        projectId={detailId}
-      />
+            <div className="mt-2 flex justify-between items-center">
+              <div>
+                <span className="text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Gerente</span>
+                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  {project.manager?.name ?? 'Sin asignar'}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Monto</span>
+                <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                  ${formatMoney(project.amount ?? 0)}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-  );
-};
+  )
+}

@@ -1,49 +1,67 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { RefreshCw, TriangleAlert } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import type React from "react"
+import { Icon } from "@/components/ui/Icon"
 
-interface State {
-  hasError: boolean;
-  message: string;
+interface ErrorBoundaryState {
+  hasError: boolean
+  error: Error | null
+  errorInfo: React.ErrorInfo | null
 }
 
-export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
-  state: State = { hasError: false, message: '' };
+interface ErrorBoundaryProps {
+  fallback?: React.ReactNode
+  onError?: (error: Error) => void
+}
 
-  static getDerivedStateFromError(error: unknown): State {
-    return {
-      hasError: true,
-      message: error instanceof Error ? error.message : 'Error inesperado',
-    };
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    }
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error('Error de interfaz', error, info.componentStack);
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return {
+      hasError: true,
+      error,
+    }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    if (this.props.onError) {
+      this.props.onError(error)
+    }
+    // Log the error to an error reporting service
+    console.error("Error capturado:", error, errorInfo)
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-svh items-center justify-center bg-canvas p-6">
-          <div className="card w-full max-w-md p-8 text-center">
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
-              <TriangleAlert className="h-6 w-6" />
-            </span>
-            <h1 className="mt-4 text-lg font-semibold text-ink">La interfaz encontró un problema</h1>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              {this.state.message || 'Recarga la página para continuar.'}
-            </p>
-            <Button
-              className="mt-6"
-              onClick={() => window.location.reload()}
-              leftIcon={<RefreshCw className="h-4 w-4" />}
-            >
-              Recargar página
-            </Button>
-          </div>
+        <div className="min-h-screen flex items-center justify-center p-6">
+          <Icon
+            name="server-crash"
+            className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-4"
+            size={36}
+          />
+          <h2 className="text-2xl font-bold text-zinc-600 dark:text-zinc-400 mb-4">
+            Algo salió mal
+          </h2>
+          <p className="text-zinc-500 dark:text-zinc-400">
+            Ha ocurrido un error inesperado. Por favor, inténtalo de nuevo más tarde.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-6 py-3 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <Icon name="refresh-cw" className="h-4 w-4 mr-2" size={16} /> Reintentar
+          </button>
         </div>
-      );
+      )
     }
-    return this.props.children;
+
+    return this.props.fallback ?? null
   }
 }

@@ -1,53 +1,52 @@
-import type { LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
-import type { NexoIcon } from './NexoIcons';
-import { cn } from '@/lib/cn';
+import type React from "react"
+import { Icon } from "@/components/ui/Icon"
 
-const tones = {
-  brand: 'text-brand',
-  emerald: 'text-emerald-600 dark:text-emerald-400',
-  amber: 'text-amber-600 dark:text-amber-400',
-  rose: 'text-rose-600 dark:text-rose-400',
-  sky: 'text-sky-600 dark:text-sky-400',
-  slate: 'text-muted',
-} as const;
+export interface StatCardProps {
+  title: string
+  value: string | number
+  change?: number
+  changePositive?: boolean
+  icon?: keyof typeof import("@/components/ui/Icon").customIcons
+}
 
 export const StatCard = ({
-  label,
+  title,
   value,
-  hint,
-  icon: Icon,
-  tone = 'brand',
-  loading = false,
-  flat = false,
-  className,
-}: {
-  label: string;
-  value: ReactNode;
-  hint?: ReactNode;
-  icon: LucideIcon | NexoIcon;
-  tone?: keyof typeof tones;
-  loading?: boolean;
-  /** Sin caja: la métrica vive dentro de una tira dividida. */
-  flat?: boolean;
-  className?: string;
-}) => (
-  <div className={cn(!flat && 'card', 'px-5 py-4 sm:py-5', className)}>
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-          {label}
-        </p>
-        {loading ? (
-          <div className="mt-3 h-8 w-28 animate-pulse rounded-md bg-elevated" />
-        ) : (
-          <p className="metric mt-2 truncate text-[28px] font-bold leading-none text-ink">
-            {value}
-          </p>
-        )}
-        {hint ? <div className="mt-2.5 text-xs text-muted">{hint}</div> : null}
+  change,
+  changePositive = true,
+  icon,
+}: StatCardProps) => {
+  const changeClass = changePositive
+    ? "text-emerald-600 dark:text-emerald-400"
+    : "text-rose-600 dark:text-rose-400"
+  const changeArrow = changePositive ? "↗" : "↘"
+
+  return (
+    <div className="p-4 rounded-lg border border-zinc-200/50 dark:border-zinc-700/50 bg-zinc-50 dark:bg-zinc-900/80">
+      <div className="flex items-start justify-between">
+        <div>
+          <Icon
+            name={icon}
+            className="w-5 h-5 text-zinc-400 dark:text-zinc-300 mb-1"
+            size={18}
+          />{/* fallback rendering */}
+          <span className="text-zinc-500 dark:text-zinc-400">{title}</span>
+        </div>
+
+        <div className="text-right">
+          <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            {typeof value === "number" ? value.toLocaleString() : value}
+          </span>
+          {change !== undefined && (
+            <div className={changeClass}>
+              <span className="text-[10px]">
+                {changeArrow}{" "}
+                {Math.abs(change)}%
+              </span>
+            </div>
+          )}
+        </div>
       </div>
-      <Icon className={cn('h-4 w-4 shrink-0', tones[tone])} aria-hidden />
     </div>
-  </div>
-);
+  )
+}

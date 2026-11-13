@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { BackgroundPlus } from '@/components/background-plus/BackgroundPlus';
 import {
   Bell,
   Search,
@@ -50,6 +51,7 @@ export const AppShell = () => {
   const firstName = user.name.split(' ')[0];
 
   return (
+    <BackgroundPlus plusColor="#3b82f6" plusSize={80} fade={true} className="z-10" />
     <SidebarProvider defaultOpen={true}>
       <App1Sidebar />
 

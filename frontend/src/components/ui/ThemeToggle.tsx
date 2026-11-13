@@ -1,22 +1,50 @@
-import { Moon, Sun } from 'lucide-react';
-import { useTheme } from '@/providers/ThemeProvider';
-import { cn } from '@/lib/cn';
+import { Icon } from "@/components/ui/Icon"
 
-export const ThemeToggle = ({ className }: { className?: string }) => {
-  const { resolved, setPreference } = useTheme();
-  const next = resolved === 'dark' ? 'LIGHT' : 'DARK';
+export const ThemeToggle = () => {
+  const { themePreference, setThemePreference } = useThemePreference()
+
   return (
     <button
-      type="button"
-      onClick={() => setPreference(next)}
-      className={cn(
-        'focus-ring flex h-9 w-9 items-center justify-center rounded-lg text-muted transition hover:bg-elevated hover:text-ink',
-        className,
-      )}
-      aria-label={resolved === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-      title={resolved === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+      onClick={() => setThemePreference((prev) => (prev === "DARK" ? "LIGHT" : "DARK"))}
+      className="rounded-full p-2 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+      aria-label="Cambiar tema"
     >
-      {resolved === 'dark' ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+      <Icon
+        name={themePreference === "DARK" ? "sun" : "moon"}
+        className="h-4 w-4"
+        size={18}
+      />
     </button>
-  );
-};
+  )
+}
+
+function useThemePreference() {
+  const [themePreference, setThemePreference] = React.useState<
+    "LIGHT" | "DARK" | "SYSTEM"
+  >("SYSTEM")
+
+  React.useEffect(() => {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+    const stored = localStorage.getItem("theme")
+    if (stored) {
+      setThemePreference(stored as "LIGHT" | "DARK" | "SYSTEM")
+    } else if (prefersDark) {
+      setThemePreference("DARK")
+    } else {
+      setThemePreference("LIGHT")
+    }
+  }, [])
+
+  React.useEffect(() => {
+    const root = window.document.documentElement
+    const setTheme = (theme: "LIGHT" | "DARK" | "SYSTEM") => {
+      root.classList.remove("light", "dark")
+      if (theme === "DARK") root.classList.add("dark")
+      else if (theme !== "SYSTEM") root.classList.add("light")
+      localStorage.setItem("theme", theme)
+    }
+    setTheme(themePreference)
+  }, [themePreference])
+
+  return { themePreference, setThemePreference }
+}
