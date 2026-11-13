@@ -289,47 +289,6 @@ export const ClientDetailPage = () => {
               </div>
             </CardBody>
           </Card>
-
-          <Card>
-            <CardHeader title="Acciones rápidas" />
-            <CardBody className="grid gap-2">
-              <Link
-                to={`/opportunities?create=1&clientId=${client.id}${client.companyId ? `&companyId=${client.companyId}` : ''}`}
-                className={buttonStyles({
-                  variant: 'secondary',
-                  size: 'sm',
-                  fullWidth: true,
-                  className: 'justify-start',
-                })}
-              >
-                <Target className="h-4 w-4" /> Nueva oportunidad
-              </Link>
-              <Link
-                to={`/sales?create=1&clientId=${client.id}${client.companyId ? `&companyId=${client.companyId}` : ''}`}
-                className={buttonStyles({
-                  variant: 'secondary',
-                  size: 'sm',
-                  fullWidth: true,
-                  className: 'justify-start',
-                })}
-              >
-                <Handshake className="h-4 w-4" /> Registrar venta
-              </Link>
-              {client.company ? (
-                <Link
-                  to={`/companies/${client.company.id}`}
-                  className={buttonStyles({
-                    variant: 'secondary',
-                    size: 'sm',
-                    fullWidth: true,
-                    className: 'justify-start',
-                  })}
-                >
-                  <Building2 className="h-4 w-4" /> Ver empresa
-                </Link>
-              ) : null}
-            </CardBody>
-          </Card>
         </div>
       </div>
 

@@ -321,30 +321,6 @@ export const CompanyDetailPage = () => {
               </div>
             </CardBody>
           </Card>
-
-          <Card>
-            <CardHeader title="Acciones rápidas" />
-            <CardBody className="grid gap-2">
-              <Link
-                to={`/clients?create=1&companyId=${company.id}`}
-                className={buttonStyles({ variant: 'secondary', size: 'sm', fullWidth: true, className: 'justify-start' })}
-              >
-                <Plus className="h-4 w-4" /> Añadir cliente
-              </Link>
-              <Link
-                to={`/opportunities?create=1&companyId=${company.id}`}
-                className={buttonStyles({ variant: 'secondary', size: 'sm', fullWidth: true, className: 'justify-start' })}
-              >
-                <Target className="h-4 w-4" /> Nueva oportunidad
-              </Link>
-              <Link
-                to={`/sales?create=1&companyId=${company.id}`}
-                className={buttonStyles({ variant: 'secondary', size: 'sm', fullWidth: true, className: 'justify-start' })}
-              >
-                <Handshake className="h-4 w-4" /> Registrar venta
-              </Link>
-            </CardBody>
-          </Card>
         </div>
       </div>
 

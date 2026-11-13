@@ -149,22 +149,13 @@ export const DashboardPage = () => {
           </span>
         }
         actions={
-          <>
-            <Link
-              to="/sales?create=1"
-              className={buttonStyles({ variant: 'secondary', size: 'md' })}
-            >
-              <SalesIcon className="h-4 w-4" />
-              Registrar venta
-            </Link>
-            <Link
-              to="/opportunities?create=1"
-              className={buttonStyles({ variant: 'primary', size: 'md' })}
-            >
-              <Plus className="h-4 w-4" />
-              Nueva oportunidad
-            </Link>
-          </>
+          <Link
+            to="/opportunities?create=1"
+            className={buttonStyles({ variant: 'primary', size: 'md' })}
+          >
+            <Plus className="h-4 w-4" />
+            Nueva oportunidad
+          </Link>
         }
       />
 
