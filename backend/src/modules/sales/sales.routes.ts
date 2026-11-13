@@ -1,12 +1,18 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth';
 import { csrfProtection } from '../../middlewares/csrf';
+import { saleFileUpload } from '../../middlewares/upload';
 import { validate } from '../../middlewares/validate';
 import { idParamSchema } from '../../utils/zod';
 import * as controller from './sales.controller';
-import { saleBodySchema, saleListQuerySchema, saleSummaryQuerySchema, updateSaleSchema } from './sales.schemas';
-import { listSaleComments, createSaleComment, uploadSaleFile, getFileForDownload, deleteFile } from './sale-files.service';
-import { asyncHandler } from '../../utils/asyncHandler';
+import {
+  saleBodySchema,
+  saleCommentBodySchema,
+  saleFileParamsSchema,
+  saleListQuerySchema,
+  saleSummaryQuerySchema,
+  updateSaleSchema,
+} from './sales.schemas';
 
 export const salesRouter = Router();
 
@@ -42,61 +48,34 @@ salesRouter.post(
 salesRouter.get(
   '/:id/comments',
   validate({ params: idParamSchema }),
-  asyncHandler(listSaleComments),
+  controller.listComments,
 );
 
 salesRouter.post(
   '/:id/comments',
   csrfProtection,
   validate({ params: idParamSchema, body: saleCommentBodySchema }),
-  asyncHandler(async (req, res) => {
-    const comment = await createSaleComment(
-      req.validated.params.id,
-      req.validated.body.body,
-      req.validated.body.fileIds ?? [],
-      req.auth.user,
-    );
-    res.status(201).json({ data: comment });
-  }),
+  controller.createComment,
 );
 
 // File routes
 salesRouter.post(
   '/:id/files',
   csrfProtection,
-  asyncHandler(async (req, res) => {
-    const { originalName, storedName, mimeType, size, data } = req.body;
-    const file = await uploadSaleFile(
-      req.validated.params.id,
-      {
-        originalName,
-        storedName,
-        mimeType,
-        size,
-        data: Buffer.from(data as string, 'base64'),
-      },
-      req.auth.user,
-    );
-    res.status(201).json({ data: file });
-  }),
+  validate({ params: idParamSchema }),
+  saleFileUpload.single('file'),
+  controller.uploadFile,
 );
 
 salesRouter.get(
-  '/:id/files/:fileId',
-  validate({ params: { fileId: idParamSchema } }),
-  asyncHandler(async (req, res) => {
-    const file = await getFileForDownload(req.validated.params.id, req.validated.params.fileId);
-    res.set('Content-Type', file.mimeType || 'application/octet-stream');
-    res.set('Content-Disposition', `attachment; filename="${file.originalName}"`);
-    res.send(file.data);
-  }),
+  '/:id/files/:fileId/download',
+  validate({ params: saleFileParamsSchema }),
+  controller.downloadFile,
 );
 
 salesRouter.delete(
   '/:id/files/:fileId',
-  validate({ params: { fileId: idParamSchema } }),
-  asyncHandler(async (req, res) => {
-    await deleteFile(req.validated.params.id, req.validated.params.fileId, req.auth.user);
-    res.status(204).send();
-  }),
+  csrfProtection,
+  validate({ params: saleFileParamsSchema }),
+  controller.removeFile,
 );

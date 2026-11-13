@@ -55,6 +55,11 @@ export const saleCommentBodySchema = z.object({
     .optional(),
 });
 
+export const saleFileParamsSchema = z.object({
+  id: z.string().uuid('El identificador de la venta no es válido'),
+  fileId: z.string().uuid('El identificador del archivo no es válido'),
+});
+
 export const updateSaleSchema = z
   .object({
     companyId: optionalId(),

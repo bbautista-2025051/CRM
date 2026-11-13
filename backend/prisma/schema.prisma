@@ -96,6 +96,8 @@ model User {
   opportunityComments OpportunityComment[] @relation("OpportunityCommentAuthor")
   companyFiles     CompanyFile[]   @relation("CompanyFileUploader")
   companyComments  CompanyComment[] @relation("CompanyCommentAuthor")
+  saleFiles        SaleFile[]      @relation("SaleFileUploader")
+  saleComments     SaleComment[]   @relation("SaleCommentAuthor")
   activityLogs     ActivityLog[]
   avatar           UserAvatar?
 
@@ -311,8 +313,8 @@ model Sale {
   client      Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
   opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
   owner       User        @relation("SaleOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  comments    SaleComment[] @relation("SaleComment", fields: [id], references: [sale_id], onDelete: Cascade)
-  files       SaleFile[] @relation("SaleFile", fields: [id], references: [sale_id], onDelete: Cascade)
+  comments    SaleComment[]
+  files       SaleFile[]
 
   @@index([companyId])
   @@index([clientId])
@@ -324,32 +326,40 @@ model Sale {
 
 model SaleComment {
   id        String   @id @default(uuid()) @db.Uuid
-  sale_id   String   @db.Uuid
-  author_id String?  @db.Uuid
+  saleId    String   @map("sale_id") @db.Uuid
+  authorId  String?  @map("author_id") @db.Uuid
   body      String   @db.Text
-  created_at DateTime @default(now()) @map("created_at")
-  updated_at DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  sale      Sale     @relation("SaleComment", fields: [sale_id], references: [id], onDelete: Cascade)
-  author    User?    @relation("SaleCommentAuthor", fields: [author_id], references: [id], onDelete: SetNull)
+  sale   Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  author User?     @relation("SaleCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  files  SaleFile[] @relation("SaleFileComment")
+
+  @@index([saleId, createdAt])
+  @@map("sale_comments")
 }
 
 model SaleFile {
-  id          String   @id @default(uuid()) @db.Uuid
-  sale_id     String   @db.Uuid
-  comment_id  String?  @db.Uuid
-  original_name String @db.VarChar(255)
-  stored_name String @db.VarChar(255)
-  mime_type   String @db.VarChar(120)
-  size        Int
-  data        Bytes
-  uploaded_by_id String? @db.Uuid
-  created_at  DateTime @default(now()) @map("created_at")
-  updated_at  DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid()) @db.Uuid
+  saleId       String   @map("sale_id") @db.Uuid
+  commentId    String?  @map("comment_id") @db.Uuid
+  originalName String   @map("original_name") @db.VarChar(255)
+  storedName   String   @map("stored_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(120)
+  size         Int
+  data         Bytes    @db.ByteA
+  uploadedById String?  @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
 
-  sale      Sale     @relation("SaleFile", fields: [sale_id], references: [id], onDelete: Cascade)
-  comment   SaleComment? @relation("SaleFileComment")
-  uploader  User?    @relation("SaleFileUploader")
+  sale       Sale         @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  comment    SaleComment? @relation("SaleFileComment", fields: [commentId], references: [id], onDelete: SetNull)
+  uploadedBy User?        @relation("SaleFileUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([saleId])
+  @@index([commentId])
+  @@index([uploadedById])
+  @@map("sale_files")
 }
 
 model Project {
