@@ -1,25 +1,33 @@
-import { Icon } from "@/components/ui/Icon"
+import { Link } from 'react-router-dom';
+import { Compass, LayoutDashboard } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { buttonStyles } from '@/components/ui/Button';
 
 export const NotFoundPage = () => {
+  usePageTitle('P├ígina no encontrada');
+
   return (
-    <div className="min-h-screen flex items-center justify-center flex-col pt-12">
-      <Icon
-        name="compass"
-        className="w-24 h-24 text-zinc-300 dark:text-zinc-700 mb-4"
-        size={48}
-      />
-      <h2 className="text-2xl font-bold text-zinc-600 dark:text-zinc-400 mb-2">
-        Página no encontrada
-      </h2>
-      <p className="text-zinc-500 dark:text-zinc-400 mb-8">
-        Lo sentimos, la página que buscas no existe o ha sido movida.
-      </p>
-      <Button
-        onClick={() => window.history.back()}
-        className="px-6 py-3 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-      >
-        <Icon name="arrow-left" className="h-4 w-4 mr-2" size={16} /> Volver atrás
-      </Button>
+    <div className="flex min-h-[70vh] items-center justify-center px-4">
+      <div className="w-full max-w-md text-center">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-elevated text-muted">
+          <Compass className="h-6 w-6" />
+        </span>
+        <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+          Error 404
+        </p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">
+          P├ígina no encontrada
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          La ruta que buscas no existe o fue movida. Vuelve al panel para continuar
+          trabajando.
+        </p>
+        <div className="mt-6 flex justify-center">
+          <Link to="/dashboard" className={buttonStyles({ size: 'md' })}>
+            <LayoutDashboard className="h-4 w-4" /> Ir al panel
+          </Link>
+        </div>
+      </div>
     </div>
-  )
-}
+  );
+};

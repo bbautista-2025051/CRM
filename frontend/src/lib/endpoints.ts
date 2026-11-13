@@ -24,6 +24,8 @@ import type {
   ProjectTask,
   PublicUser,
   Sale,
+  SaleComment,
+  SaleFile,
   SalesSummary,
   SessionPayload,
   TeamOverview,
@@ -188,6 +190,19 @@ export const salesApi = {
   get: (id: string) => api.get<DataEnvelope<Sale>>(`/api/sales/${id}`),
   summary: (params: { ownerId?: string; dateFrom?: string; dateTo?: string } = {}) =>
     api.get<DataEnvelope<SalesSummary>>(`/api/sales/summary${buildQuery(params)}`),
+  listComments: (id: string) =>
+    api.get<DataEnvelope<SaleComment[]>>(`/api/sales/${id}/comments`),
+  createComment: (id: string, body: string, fileIds: string[] = []) =>
+    api.post<DataEnvelope<SaleComment>>(`/api/sales/${id}/comments`, { body, fileIds }),
+  uploadFile: (id: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<DataEnvelope<SaleFile>>(`/api/sales/${id}/files`, form);
+  },
+  removeFile: (id: string, fileId: string) =>
+    api.delete<void>(`/api/sales/${id}/files/${fileId}`),
+  downloadFile: (id: string, fileId: string) =>
+    download(`/api/sales/${id}/files/${fileId}/download`),
   create: (payload: Record<string, unknown>) =>
     api.post<DataEnvelope<Sale>>('/api/sales', payload),
   update: (id: string, payload: Record<string, unknown>) =>
@@ -258,6 +273,11 @@ export const teamApi = {
     api.delete<void>(`/api/team/${projectId}/tasks/${taskId}`),
 
   getTask: (taskId: string) =>
+    api.get<DataEnvelope<ProjectTask>>(`/api/team/tasks/${taskId}`),
+};
+
+export const tasksApi = {
+  get: (taskId: string) =>
     api.get<DataEnvelope<ProjectTask>>(`/api/team/tasks/${taskId}`),
 };
 

@@ -1,4 +1,5 @@
 import { Icon } from "@/components/ui/Icon"
+import { Button } from "@/components/ui/Button"
 
 export const RegisterPage = () => {
   return (

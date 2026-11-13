@@ -157,7 +157,7 @@ export const SaleDetailModal = ({
         stagedFilesRef.current = [];
         void Promise.all(
           filesToRemove.map((file) =>
-            salesApi.removeFile(file.opportunityId, file.id).then(() => null, (error: unknown) => error),
+            salesApi.removeFile(saleId!, file.id).then(() => null, (error: unknown) => error),
           ),
         ).then((results) => {
           const failures = results.filter((result) => result !== null);
@@ -225,11 +225,11 @@ export const SaleDetailModal = ({
 
   const onDownloadFile = async (file: SaleFile) => {
     try {
-      const blob = await salesApi.downloadFile(file.sale_id, file.id);
+      const blob = await salesApi.downloadFile(file.saleId, file.id);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = file.original_name;
+      link.download = file.originalName;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -273,7 +273,7 @@ export const SaleDetailModal = ({
   };
 
   const canManageFile = (file: SaleFile) =>
-    user?.role === 'ADMIN' || file.uploaded_by_id === user?.id;
+    user?.role === 'ADMIN' || file.uploadedById === user?.id;
 
   const canManage = sale
     ? user?.role === 'ADMIN' || (sale.ownerId && sale.ownerId === user?.id)
@@ -587,7 +587,7 @@ export const SaleDetailModal = ({
                               ? Image
                               : FileIcon;
                             const canDeleteFile =
-                              user?.role === 'ADMIN' || file.uploaded_by_id === user?.id;
+                              user?.role === 'ADMIN' || file.uploadedById === user?.id;
                             return (
                               <li
                                 key={file.id}

@@ -1,77 +1,75 @@
-import type React from "react"
-import { Icon } from "@/components/ui/Icon"
-
-export interface PaginationProps extends React.HTMLAttributes<HTMLDivElement> {
-  currentPage: number
-  totalPages: number
-  onPageChange: (page: number) => void
-}
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/cn';
+import { formatNumber } from '@/lib/format';
+import type { PaginationMeta } from '@/types';
+import { Button } from './Button';
 
 export const Pagination = ({
-  currentPage,
-  totalPages,
+  meta,
   onPageChange,
-  ...props
-}: PaginationProps) => {
-  const pages: number[] = []
-  const totalPagesNum = totalPages || 1
+  className,
+}: {
+  meta: PaginationMeta;
+  onPageChange: (page: number) => void;
+  className?: string;
+}) => {
+  if (meta.total === 0) return null;
+  const from = (meta.page - 1) * meta.pageSize + 1;
+  const to = Math.min(meta.page * meta.pageSize, meta.total);
 
-  // Calculate page range
-  const siblingCount = 1
-  const totalLeft = siblingCount + 1
-  const totalRight = siblingCount + 1
-
-  for (let i = 1; i <= totalPagesNum; i++) {
-    pages.push(i)
-  }
+  const pages: number[] = [];
+  const start = Math.max(1, Math.min(meta.page - 2, meta.totalPages - 4));
+  const end = Math.min(meta.totalPages, start + 4);
+  for (let page = start; page <= end; page += 1) pages.push(page);
 
   return (
-    <nav aria-label="Page navigation" className="flex items-center gap-2">
-      {currentPage > 1 && (
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          className="rounded-l-md px-3 py-1 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          aria-label="Página anterior"
-        >
-          <Icon
-            name="chevron-left"
-            className="h-4 w-4"
-            size={18}
-          />
-        </button>
+    <div
+      className={cn(
+        'flex flex-col gap-3 border-t border-line px-4 py-3 sm:flex-row sm:items-center sm:justify-between',
+        className,
       )}
-
-      {pages.map((page) => {
-        const isCurrent = page === currentPage
-        return (
+    >
+      <p className="text-xs text-muted">
+        Mostrando <span className="font-medium text-ink">{formatNumber(from)}</span>ÔÇô
+        <span className="font-medium text-ink">{formatNumber(to)}</span> de{' '}
+        <span className="font-medium text-ink">{formatNumber(meta.total)}</span> registros
+      </p>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={() => onPageChange(meta.page - 1)}
+          disabled={meta.page <= 1}
+          aria-label="P├ígina anterior"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        {pages.map((page) => (
           <button
             key={page}
+            type="button"
             onClick={() => onPageChange(page)}
+            aria-current={page === meta.page ? 'page' : undefined}
             className={cn(
-              "rounded-md px-3 py-1 border border-zinc-300 dark:border-zinc-700",
-              isCurrent
-                ? "bg-zinc-300 dark:bg-zinc-700 text-zinc-950 dark:text-zinc-950"
-                : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              'focus-ring h-9 min-w-9 rounded-lg px-2 text-[13px] font-medium transition',
+              page === meta.page
+                ? 'bg-brand text-brand-ink'
+                : 'text-muted hover:bg-elevated hover:text-ink',
             )}
           >
             {page}
           </button>
-        )
-      })}
-
-      {currentPage < totalPages && (
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          className="rounded-r-md px-3 py-1 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          aria-label="Página siguiente"
+        ))}
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={() => onPageChange(meta.page + 1)}
+          disabled={meta.page >= meta.totalPages}
+          aria-label="P├ígina siguiente"
         >
-          <Icon
-            name="chevron-right"
-            className="h-4 w-4"
-            size={18}
-          />
-        </button>
-      )}
-    </nav>
-  )
-}
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};

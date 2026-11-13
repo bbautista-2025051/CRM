@@ -2,6 +2,7 @@ import type {
   ClientStatus,
   CompanyStatus,
   OpportunityStage,
+  OpportunityStatus,
   ProjectStatus,
   SaleStatus,
   TaskStatus,
@@ -10,6 +11,7 @@ import type {
 import {
   CLIENT_STATUS_LABELS,
   COMPANY_STATUS_LABELS,
+  OPPORTUNITY_STATUS_LABELS,
   PROJECT_STATUS_LABELS,
   SALE_STATUS_LABELS,
   SALE_STATUS_TONES,
@@ -63,6 +65,15 @@ export const StageBadge = ({
   >
     {label ?? STAGE_LABELS[stage] ?? stage}
   </span>
+);
+
+export const OpportunityStatusBadge = ({ status }: { status: OpportunityStatus }) => (
+  <Badge
+    tone={status === 'WON' ? 'success' : status === 'LOST' ? 'danger' : 'info'}
+    dot
+  >
+    {OPPORTUNITY_STATUS_LABELS[status]}
+  </Badge>
 );
 
 export const ProjectStatusBadge = ({ status }: { status: ProjectStatus }) => (

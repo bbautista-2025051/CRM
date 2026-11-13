@@ -174,30 +174,27 @@ export interface OpportunityFile {
 
 export interface SaleComment {
   id: string;
-  sale_id: string;
-  author_id: string | null;
+  saleId: string;
+  authorId: string | null;
   body: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   author?: { id: string; name: string; avatarUrl: string | null } | null;
-  files?: SaleFile[] | undefined;
+  files?: SaleFile[];
 }
 
 export interface SaleFile {
   id: string;
-  sale_id: string;
-  comment_id: string | null;
-  original_name: string;
-  stored_name: string;
-  mime_type: string;
+  saleId: string;
+  commentId: string | null;
+  originalName: string;
+  storedName: string;
+  mimeType: string;
   size: number;
-  data: string | ArrayBuffer | null;
-  uploaded_by_id: string | null;
-  created_at: string;
-  updated_at: string;
-  sale?: Sale | undefined;
-  comment?: SaleComment | undefined;
-  uploader?: { id: string; name: string; avatarUrl: string | null } | null;
+  uploadedById: string | null;
+  createdAt: string;
+  updatedAt: string;
+  uploadedBy?: { id: string; name: string; avatarUrl: string | null } | null;
 }
 
 export interface Sale {

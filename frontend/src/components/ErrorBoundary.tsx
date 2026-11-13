@@ -1,4 +1,4 @@
-import type React from "react"
+import React from "react"
 import { Icon } from "@/components/ui/Icon"
 
 interface ErrorBoundaryState {
@@ -8,6 +8,7 @@ interface ErrorBoundaryState {
 }
 
 interface ErrorBoundaryProps {
+  children?: React.ReactNode
   fallback?: React.ReactNode
   onError?: (error: Error) => void
 }
@@ -26,6 +27,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     return {
       hasError: true,
       error,
+      errorInfo: null,
     }
   }
 
@@ -62,6 +64,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       )
     }
 
-    return this.props.fallback ?? null
+    return this.props.children ?? this.props.fallback ?? null
   }
 }
