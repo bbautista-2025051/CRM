@@ -33,7 +33,7 @@ export const RegisterPage = () => {
 
           <div>
             <Icon
-              name "user"
+              name="user"
               className="w-5 h-5 inline-block mr-2 text-zinc-400 dark:text-zinc-300"
               size={18}
             /> correo electrónico

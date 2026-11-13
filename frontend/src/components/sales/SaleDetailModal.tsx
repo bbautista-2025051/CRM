@@ -225,11 +225,11 @@ export const SaleDetailModal = ({
 
   const onDownloadFile = async (file: SaleFile) => {
     try {
-      const blob = await salesApi.downloadFile(file.saleId, file.id);
+      const blob = await salesApi.downloadFile(file.sale_id, file.id);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = file.originalName;
+      link.download = file.original_name;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -273,7 +273,7 @@ export const SaleDetailModal = ({
   };
 
   const canManageFile = (file: SaleFile) =>
-    user?.role === 'ADMIN' || file.uploadedById === user?.id;
+    user?.role === 'ADMIN' || file.uploaded_by_id === user?.id;
 
   const canManage = sale
     ? user?.role === 'ADMIN' || (sale.ownerId && sale.ownerId === user?.id)
@@ -587,7 +587,7 @@ export const SaleDetailModal = ({
                               ? Image
                               : FileIcon;
                             const canDeleteFile =
-                              user?.role === 'ADMIN' || file.uploadedById === user?.id;
+                              user?.role === 'ADMIN' || file.uploaded_by_id === user?.id;
                             return (
                               <li
                                 key={file.id}

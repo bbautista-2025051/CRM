@@ -338,18 +338,18 @@ model SaleFile {
   id          String   @id @default(uuid()) @db.Uuid
   sale_id     String   @db.Uuid
   comment_id  String?  @db.Uuid
-  original_name VARCHAR(255) NOT NULL
-  stored_name VARCHAR(255) NOT NULL
-  mime_type   VARCHAR(120) NOT NULL
-  size        INTEGER  NOT NULL
-  data        ByteArray @db.ByteA
+  original_name String @db.VarChar(255)
+  stored_name String @db.VarChar(255)
+  mime_type   String @db.VarChar(120)
+  size        Int
+  data        Bytes
   uploaded_by_id String? @db.Uuid
   created_at  DateTime @default(now()) @map("created_at")
   updated_at  DateTime @updatedAt @map("updated_at")
 
   sale      Sale     @relation("SaleFile", fields: [sale_id], references: [id], onDelete: Cascade)
-  comment   SaleComment? @relation("SaleFileComment", fields: [comment_id], references: [id], onDelete: SetNull)
-  uploader  User?    @relation("SaleFileUploader", fields: [uploaded_by_id], references: [id], onDelete: SetNull)
+  comment   SaleComment? @relation("SaleFileComment")
+  uploader  User?    @relation("SaleFileUploader")
 }
 
 model Project {
