@@ -3,15 +3,8 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Bell,
   Search,
-  Plus,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import {
-  UsersAdminIcon,
-} from '@/components/ui/NexoIcons';
-import type { NexoIcon } from '@/components/ui/NexoIcons';
 import { useAuth } from '@/providers/AuthProvider';
-import { isAdmin } from '@/lib/permissions';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
@@ -22,21 +15,6 @@ import {
   SidebarTrigger,
 } from '@/components/ui/app-1-utils/sidebar';
 import { App1Sidebar } from '@/components/ui/app-1-utils/app-1-sidebar';
-
-const contextualAction = (
-  pathname: string,
-  isAdminUser: boolean,
-): { to: string; label: string; icon: LucideIcon | NexoIcon } | null => {
-  if (pathname.startsWith('/companies'))
-    return { to: '/companies?create=1', label: 'Nueva empresa', icon: Plus };
-  if (pathname.startsWith('/clients'))
-    return { to: '/clients?create=1', label: 'Nuevo cliente', icon: Plus };
-  if (pathname.startsWith('/projects'))
-    return { to: '/projects?create=1', label: 'Nuevo proyecto', icon: Plus };
-  if (pathname.startsWith('/users') && isAdminUser)
-    return { to: '/users?create=1', label: 'Nuevo usuario', icon: UsersAdminIcon };
-  return null;
-};
 
 const sectionTitle = (pathname: string): string => {
   if (pathname.startsWith('/companies')) return 'Empresas';
@@ -69,7 +47,6 @@ export const AppShell = () => {
 
   if (!user) return null;
 
-  const headerAction = contextualAction(location.pathname, isAdmin(user.role));
   const firstName = user.name.split(' ')[0];
 
   return (
@@ -95,16 +72,6 @@ export const AppShell = () => {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            {headerAction ? (
-              <Link
-                to={headerAction.to}
-                className="hidden items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 sm:inline-flex"
-              >
-                <headerAction.icon className="h-3.5 w-3.5" />
-                {headerAction.label}
-              </Link>
-            ) : null}
-
             <ThemeToggle />
 
             <Button
