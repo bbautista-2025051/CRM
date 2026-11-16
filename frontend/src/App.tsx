@@ -71,6 +71,11 @@ const OpportunityFormPage = lazy(() =>
 const UsersPage = lazy(() =>
   import('@/pages/UsersPage').then((module) => ({ default: module.UsersPage })),
 );
+const UserDetailPage = lazy(() =>
+  import('@/pages/UserDetailPage').then((module) => ({
+    default: module.UserDetailPage,
+  })),
+);
 const SettingsPage = lazy(() =>
   import('@/pages/SettingsPage').then((module) => ({ default: module.SettingsPage })),
 );
@@ -164,6 +169,14 @@ export const App = () => (
             element={
               <AdminRoute>
                 <UsersPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="users/:id"
+            element={
+              <AdminRoute>
+                <UserDetailPage />
               </AdminRoute>
             }
           />

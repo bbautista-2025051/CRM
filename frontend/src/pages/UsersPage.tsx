@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -50,6 +50,7 @@ const ROLE_OPTIONS: Role[] = [
 export const UsersPage = () => {
   usePageTitle('Usuarios');
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
   const [status, setStatus] = useState('');
@@ -240,14 +241,18 @@ export const UsersPage = () => {
                           <div className="flex items-center gap-3">
                             <Avatar name={item.name} src={item.avatarUrl} size="sm" />
                             <div className="min-w-0">
-                              <p className="flex items-center gap-1.5 truncate font-medium text-ink">
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/users/${item.id}`)}
+                                className="flex items-center gap-1.5 truncate font-medium text-ink hover:text-brand-strong dark:hover:text-brand underline-offset-4 hover:underline"
+                              >
                                 {item.name}
                                 {isSelf ? (
                                   <span className="rounded bg-elevated px-1.5 py-0.5 text-[10px] font-semibold text-muted">
                                     Tú
                                   </span>
                                 ) : null}
-                              </p>
+                              </button>
                               <p className="truncate text-xs text-muted">{item.email}</p>
                             </div>
                           </div>
