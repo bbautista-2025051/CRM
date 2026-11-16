@@ -252,16 +252,16 @@ export const ProjectsPage = () => {
                 </thead>
                 <tbody>
                   {projects.map((project) => (
-                    <tr
-                      key={project.id}
-                      onClick={() => setDetailId(project.id)}
-                      className="cursor-pointer hover:bg-elevated/50 transition-colors"
-                    >
+                    <tr key={project.id}>
                       <td>
                         <div className="min-w-0">
-                          <span className="block truncate text-sm font-semibold text-ink hover:text-brand-strong dark:hover:text-brand">
+                          <button
+                            type="button"
+                            onClick={() => setDetailId(project.id)}
+                            className="block truncate text-left text-sm font-semibold text-ink hover:text-brand-strong dark:hover:text-brand"
+                          >
                             {project.name}
-                          </span>
+                          </button>
                           {project.description ? (
                             <p className="mt-0.5 truncate text-xs text-muted">
                               {project.description}
@@ -313,10 +313,7 @@ export const ProjectsPage = () => {
                           trigger={({ toggle }) => (
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e?.stopPropagation();
-                                toggle();
-                              }}
+                              onClick={toggle}
                               className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
                               aria-label={`Acciones para ${project.name}`}
                             >
@@ -328,8 +325,7 @@ export const ProjectsPage = () => {
                             <>
                               <DropdownItem
                                 icon={<Eye className="h-4 w-4" />}
-                                onClick={(e) => {
-                                  e?.stopPropagation();
+                                onClick={() => {
                                   close();
                                   setDetailId(project.id);
                                 }}
@@ -340,8 +336,7 @@ export const ProjectsPage = () => {
                                 <>
                                   <DropdownItem
                                     icon={<Pencil className="h-4 w-4" />}
-                                    onClick={(e) => {
-                                      e?.stopPropagation();
+                                    onClick={() => {
                                       close();
                                       openEdit(project);
                                     }}
@@ -353,8 +348,7 @@ export const ProjectsPage = () => {
                                     icon={<Trash2 className="h-4 w-4" />}
                                     danger
                                     disabled={remove.isPending}
-                                    onClick={(e) => {
-                                      e?.stopPropagation();
+                                    onClick={() => {
                                       close();
                                       void onDelete(project);
                                     }}

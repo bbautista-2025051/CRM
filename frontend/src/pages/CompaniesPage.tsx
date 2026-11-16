@@ -238,13 +238,13 @@ export const CompaniesPage = () => {
                 </thead>
                 <tbody>
                   {companies.map((company) => (
-                    <tr
-                      key={company.id}
-                      onClick={() => setDetailId(company.id)}
-                      className="cursor-pointer hover:bg-elevated/50 transition-colors"
-                    >
+                    <tr key={company.id}>
                       <td>
-                        <div className="group flex items-center gap-3 text-left">
+                        <button
+                          type="button"
+                          onClick={() => setDetailId(company.id)}
+                          className="group flex items-center gap-3 text-left"
+                        >
                           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-xs font-bold text-brand-strong dark:text-brand">
                             {initials(company.name)}
                           </span>
@@ -256,7 +256,7 @@ export const CompaniesPage = () => {
                               {company.sector ?? 'Sin sector'}
                             </span>
                           </span>
-                        </div>
+                        </button>
                       </td>
                       <td>
                         <div className="min-w-0 text-xs">
@@ -281,10 +281,7 @@ export const CompaniesPage = () => {
                           trigger={({ toggle }) => (
                             <button
                               type="button"
-                              onClick={(e) => {
-                                e?.stopPropagation();
-                                toggle();
-                              }}
+                              onClick={toggle}
                               className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
                               aria-label={`Acciones para ${company.name}`}
                             >
@@ -296,8 +293,7 @@ export const CompaniesPage = () => {
                             <>
                               <DropdownItem
                                 icon={<Eye className="h-4 w-4" />}
-                                onClick={(e) => {
-                                  e?.stopPropagation();
+                                onClick={() => {
                                   close();
                                   setDetailId(company.id);
                                 }}
@@ -306,8 +302,7 @@ export const CompaniesPage = () => {
                               </DropdownItem>
                               <DropdownItem
                                 icon={<Pencil className="h-4 w-4" />}
-                                onClick={(e) => {
-                                  e?.stopPropagation();
+                                onClick={() => {
                                   close();
                                   openEdit(company);
                                 }}
@@ -321,8 +316,7 @@ export const CompaniesPage = () => {
                                     icon={<Archive className="h-4 w-4" />}
                                     danger
                                     disabled={archive.isPending}
-                                    onClick={(e) => {
-                                      e?.stopPropagation();
+                                    onClick={() => {
                                       close();
                                       void onArchive(company);
                                     }}

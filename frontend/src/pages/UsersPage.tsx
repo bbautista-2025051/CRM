@@ -236,23 +236,23 @@ export const UsersPage = () => {
                   {users.map((item) => {
                     const isSelf = item.id === currentUser?.id;
                     return (
-                      <tr
-                        key={item.id}
-                        onClick={() => navigate(`/users/${item.id}`)}
-                        className="cursor-pointer hover:bg-elevated/50 transition-colors"
-                      >
+                      <tr key={item.id}>
                         <td>
                           <div className="flex items-center gap-3">
                             <Avatar name={item.name} src={item.avatarUrl} size="sm" />
                             <div className="min-w-0">
-                              <p className="flex items-center gap-1.5 truncate font-medium text-ink">
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/users/${item.id}`)}
+                                className="flex items-center gap-1.5 truncate font-medium text-ink hover:text-brand-strong dark:hover:text-brand underline-offset-4 hover:underline"
+                              >
                                 {item.name}
                                 {isSelf ? (
                                   <span className="rounded bg-elevated px-1.5 py-0.5 text-[10px] font-semibold text-muted">
                                     Tú
                                   </span>
                                 ) : null}
-                              </p>
+                              </button>
                               <p className="truncate text-xs text-muted">{item.email}</p>
                             </div>
                           </div>
@@ -286,10 +286,7 @@ export const UsersPage = () => {
                             trigger={({ toggle }) => (
                               <button
                                 type="button"
-                                onClick={(e) => {
-                                  e?.stopPropagation();
-                                  toggle();
-                                }}
+                                onClick={toggle}
                                 className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
                                 aria-label={`Acciones para ${item.name}`}
                               >
@@ -301,8 +298,7 @@ export const UsersPage = () => {
                               <>
                                 <DropdownItem
                                   icon={<Pencil className="h-4 w-4" />}
-                                  onClick={(e) => {
-                                    e?.stopPropagation();
+                                  onClick={() => {
                                     close();
                                     setEditing(item);
                                   }}
@@ -314,8 +310,7 @@ export const UsersPage = () => {
                                     <DropdownSeparator />
                                     <DropdownItem
                                       icon={<KeyRound className="h-4 w-4" />}
-                                      onClick={(e) => {
-                                        e?.stopPropagation();
+                                      onClick={() => {
                                         close();
                                         setResetting(item);
                                       }}

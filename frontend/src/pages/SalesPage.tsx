@@ -445,15 +445,15 @@ export const SalesPage = () => {
                     const confirmable =
                       sale.status === 'PENDING' && canConfirmSales(user?.role);
                     return (
-                      <tr
-                        key={sale.id}
-                        onClick={() => navigate(`/negocio/venta/${sale.id}`)}
-                        className="cursor-pointer hover:bg-elevated/50 transition-colors"
-                      >
+                      <tr key={sale.id}>
                         <td>
-                          <span className="font-mono text-xs font-semibold text-brand-strong hover:underline dark:text-brand">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/negocio/venta/${sale.id}`)}
+                            className="font-mono text-xs font-semibold text-brand-strong hover:underline dark:text-brand"
+                          >
                             {sale.saleNumber}
-                          </span>
+                          </button>
                           {sale.opportunity ? (
                             <span className="mt-0.5 block max-w-[170px] truncate text-[11px] text-muted">
                               {sale.opportunity.name}
@@ -494,10 +494,7 @@ export const SalesPage = () => {
                             trigger={({ toggle }) => (
                               <button
                                 type="button"
-                                onClick={(e) => {
-                                  e?.stopPropagation();
-                                  toggle();
-                                }}
+                                onClick={toggle}
                                 className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
                                 aria-label={`Acciones para la venta ${sale.saleNumber}`}
                               >
@@ -509,8 +506,7 @@ export const SalesPage = () => {
                               <>
                                 <DropdownItem
                                   icon={<Eye className="h-4 w-4" />}
-                                  onClick={(e) => {
-                                    e?.stopPropagation();
+                                  onClick={() => {
                                     close();
                                     navigate(`/negocio/venta/${sale.id}`);
                                   }}
@@ -520,8 +516,7 @@ export const SalesPage = () => {
                                 {editable ? (
                                   <DropdownItem
                                     icon={<Pencil className="h-4 w-4" />}
-                                    onClick={(e) => {
-                                      e?.stopPropagation();
+                                    onClick={() => {
                                       close();
                                       navigate(`/negocio/venta/${sale.id}/editar`);
                                     }}
@@ -535,8 +530,7 @@ export const SalesPage = () => {
                                 {confirmable ? (
                                   <DropdownItem
                                     icon={<CheckCircle2 className="h-4 w-4" />}
-                                    onClick={(e) => {
-                                      e?.stopPropagation();
+                                    onClick={() => {
                                       close();
                                       void onConfirm(sale);
                                     }}
@@ -548,8 +542,7 @@ export const SalesPage = () => {
                                   <DropdownItem
                                     icon={<Ban className="h-4 w-4" />}
                                     danger
-                                    onClick={(e) => {
-                                      e?.stopPropagation();
+                                    onClick={() => {
                                       close();
                                       void onCancel(sale);
                                     }}
