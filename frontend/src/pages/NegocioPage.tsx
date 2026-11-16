@@ -2,7 +2,6 @@ import { useSearchParams } from 'react-router-dom';
 import { Wallet, Settings } from 'lucide-react';
 import { SalesPage } from '@/pages/SalesPage';
 import { OpportunityStageManager } from '@/components/opportunities/OpportunityStageManager';
-import { SaleStatusManager } from '@/components/sales/SaleStatusManager';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { cn } from '@/lib/cn';
 import { isAdmin } from '@/lib/permissions';
@@ -43,7 +42,7 @@ export const NegocioPage = () => {
       <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm text-muted">
-            Administra las ventas, las etapas de oportunidad y los estados de venta.
+            Administra las ventas y las etapas del proceso comercial.
           </p>
         </div>
         <div
@@ -79,14 +78,7 @@ export const NegocioPage = () => {
         role="tabpanel"
         aria-labelledby={`business-tab-${view}`}
       >
-        {view === 'sales' ? (
-          <SalesPage />
-        ) : (
-          <div className="space-y-8">
-            <OpportunityStageManager />
-            <SaleStatusManager />
-          </div>
-        )}
+        {view === 'sales' ? <SalesPage /> : <OpportunityStageManager />}
       </div>
     </div>
   );
