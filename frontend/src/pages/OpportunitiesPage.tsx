@@ -463,13 +463,13 @@ export const OpportunitiesPage = () => {
                       opportunity.ownerId,
                     );
                     return (
-                      <tr key={opportunity.id}>
+                      <tr
+                        key={opportunity.id}
+                        onClick={() => navigate(`/negocio/oportunidad/${opportunity.id}`)}
+                        className="cursor-pointer hover:bg-elevated/50 transition-colors"
+                      >
                         <td>
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/negocio/oportunidad/${opportunity.id}`)}
-                            className="group block max-w-[260px] text-left"
-                          >
+                          <span className="group block max-w-[260px] text-left">
                             <span className="block truncate font-medium text-ink group-hover:text-brand-strong dark:group-hover:text-brand">
                               {opportunity.name}
                             </span>
@@ -477,7 +477,7 @@ export const OpportunitiesPage = () => {
                               <Building2 className="h-3 w-3 shrink-0" />
                               {opportunity.company?.name ?? 'Sin empresa'}
                             </span>
-                          </button>
+                          </span>
                         </td>
                         <td className="max-w-[180px] truncate text-xs text-muted">
                           {opportunity.client
@@ -512,7 +512,10 @@ export const OpportunitiesPage = () => {
                             trigger={({ toggle }) => (
                               <button
                                 type="button"
-                                onClick={toggle}
+                                onClick={(e) => {
+                                  e?.stopPropagation();
+                                  toggle();
+                                }}
                                 className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
                                 aria-label={`Acciones para ${opportunity.name}`}
                               >
@@ -524,7 +527,8 @@ export const OpportunitiesPage = () => {
                               <>
                                 <DropdownItem
                                   icon={<Eye className="h-4 w-4" />}
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e?.stopPropagation();
                                     close();
                                     navigate(`/negocio/oportunidad/${opportunity.id}`);
                                   }}
@@ -534,7 +538,8 @@ export const OpportunitiesPage = () => {
                                 {manageable ? (
                                   <DropdownItem
                                     icon={<Pencil className="h-4 w-4" />}
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      e?.stopPropagation();
                                       close();
                                       navigate(`/negocio/oportunidad/${opportunity.id}/editar`);
                                     }}
@@ -549,7 +554,8 @@ export const OpportunitiesPage = () => {
                                     <DropdownSeparator />
                                     <DropdownItem
                                       icon={<Handshake className="h-4 w-4" />}
-                                      onClick={() => {
+                                      onClick={(e) => {
+                                        e?.stopPropagation();
                                         close();
                                         navigate(`/negocio/nuevo?view=sales&opportunityId=${opportunity.id}`);
                                       }}
