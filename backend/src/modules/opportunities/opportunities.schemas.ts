@@ -92,3 +92,7 @@ export const opportunityStageBodySchema = z.object({
     .min(2, 'El nombre de la etapa debe tener al menos 2 caracteres')
     .max(60, 'El nombre de la etapa no puede superar 60 caracteres'),
 });
+
+export const opportunityStageParamsSchema = z.object({
+  id: z.string().uuid('El identificador de la etapa no es válido'),
+});

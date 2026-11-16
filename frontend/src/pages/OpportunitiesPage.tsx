@@ -11,8 +11,10 @@ import {
   Pencil,
   Plus,
   Target,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
+import { useConfirm } from '@/providers/ConfirmProvider';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import {
@@ -56,6 +58,7 @@ export const OpportunitiesPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { success, error: toastError } = useToast();
+  const { confirm } = useConfirm();
   const [searchParams, setSearchParams] = useSearchParams();
   const companies = useCompanyOptions('', true);
   const users = useUserOptions(user?.role === 'ADMIN');
@@ -93,6 +96,20 @@ export const OpportunitiesPage = () => {
     },
   });
 
+  const deleteStage = useMutation({
+    mutationFn: (id: string) => opportunitiesApi.deleteStage(id),
+    onSuccess: (response) => {
+      success('Etapa eliminada', `${response.data.name} se eliminó correctamente.`);
+      void queryClient.invalidateQueries({ queryKey: ['opportunities', 'stages'] });
+    },
+    onError: (error) => {
+      toastError(
+        'No se pudo eliminar la etapa',
+        error instanceof Error ? error.message : 'Inténtalo de nuevo.',
+      );
+    },
+  });
+
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, stage, status, ownerId, companyId, view]);
@@ -106,6 +123,17 @@ export const OpportunitiesPage = () => {
   const cancelAddStage = () => {
     setAddingStage(false);
     setNewStageName('');
+  };
+
+  const handleDeleteStage = async (id: string, name: string) => {
+    const accepted = await confirm({
+      title: `Eliminar etapa "${name}"`,
+      description:
+        'No se podrán eliminar etapas que estén en uso por alguna oportunidad. Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar etapa',
+      variant: 'danger',
+    });
+    if (accepted) deleteStage.mutate(id);
   };
 
   useEffect(() => {
@@ -179,6 +207,7 @@ export const OpportunitiesPage = () => {
           : 'Perdida',
     isCustom: false,
   }));
+  const customStages = (stages.data ?? []).filter((item) => item.isCustom);
   const stageLabel = (value: OpportunityStage) =>
     stageOptions.find((option) => option.value === value)?.label ?? value;
 
@@ -261,6 +290,44 @@ export const OpportunitiesPage = () => {
           </form>
         </Card>
       ) : null}
+
+      {user?.role === 'ADMIN' && (
+        <Card className="p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                Etapas personalizadas
+              </p>
+              <p className="text-xs text-muted">
+                Solo se pueden eliminar etapas que no estén en uso por oportunidades.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {customStages.length ? (
+                customStages.map((stage) => (
+                  <div
+                    key={stage.value}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-line bg-elevated"
+                  >
+                    <span className="text-sm text-ink">{stage.label}</span>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDeleteStage(stage.value, stage.label)}
+                      disabled={deleteStage.isPending}
+                      className="h-7 w-7 p-0"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted">Sin etapas personalizadas.</p>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card>
         <div className="flex flex-col gap-3 border-b border-line p-4 xl:flex-row xl:items-center">

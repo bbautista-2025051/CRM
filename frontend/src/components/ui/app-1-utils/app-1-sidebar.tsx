@@ -1,8 +1,9 @@
-import { NavLink, Link, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Briefcase,
   Building2,
   CalendarDays,
+  ChevronDown,
   FolderKanban,
   LayoutDashboard,
   LogOut,
@@ -18,15 +19,27 @@ import { Logo } from "@/components/ui/Logo";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/cn";
 import { useSidebar } from "./sidebar";
+import {
+  Dropdown,
+  DropdownItem,
+} from "@/components/ui/Dropdown";
+
+interface NavChild {
+  to: string;
+  label: string;
+}
+
+interface NavItem {
+  to?: string;
+  label: string;
+  icon?: any;
+  adminOnly?: boolean;
+  children?: NavChild[];
+}
 
 interface NavGroup {
   label: string;
-  items: Array<{
-    to: string;
-    label: string;
-    icon: any;
-    adminOnly?: boolean;
-  }>;
+  items: NavItem[];
 }
 
 const navGroups: NavGroup[] = [
@@ -39,7 +52,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Comercial",
     items: [
-      { to: "/negocio", label: "Negocio", icon: Briefcase },
+      { to: "/negocio", label: "Ventas", icon: Briefcase },
       { to: "/companies", label: "Empresas", icon: Building2 },
       { to: "/clients", label: "Contacto", icon: Users },
     ],
@@ -47,14 +60,27 @@ const navGroups: NavGroup[] = [
   {
     label: "Proyectos & Equipo",
     items: [
-      { to: "/projects", label: "Proyectos", icon: FolderKanban },
+      {
+        label: "Proyectos",
+        icon: FolderKanban,
+        children: [
+          { to: "/projects", label: "Ver proyectos" },
+        ],
+      },
       { to: "/team", label: "Equipo", icon: UserCheck },
     ],
   },
   {
     label: "Administración",
     items: [
-      { to: "/users", label: "Usuarios", icon: ShieldCheck, adminOnly: true },
+      {
+        label: "Usuarios",
+        icon: ShieldCheck,
+        adminOnly: true,
+        children: [
+          { to: "/users", label: "Ver usuarios" },
+        ],
+      },
       { to: "/activity", label: "Actividad", icon: CalendarDays },
     ],
   },
@@ -63,9 +89,16 @@ const navGroups: NavGroup[] = [
 export function App1Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { open, openMobile, setOpenMobile, isMobile } = useSidebar();
 
   if (!user) return null;
+
+  const isActive = (to: string) =>
+    location.pathname === to || location.pathname.startsWith(`${to}/`);
+
+  const isGroupActive = (children: NavChild[]) =>
+    children.some((child) => isActive(child.to));
 
   const sidebarContent = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -96,26 +129,94 @@ export function App1Sidebar() {
                 </p>
               )}
               <div className="space-y-1">
-                {items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => isMobile && setOpenMobile(false)}
-                    title={!open && !isMobile ? item.label : undefined}
-                    className={({ isActive }) =>
-                      cn(
-                        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm"
-                          : "text-muted hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                        !open && !isMobile && "justify-center px-2",
-                      )
-                    }
-                  >
-                    <item.icon className="h-4 w-4 shrink-0 transition-transform group-hover:scale-105" />
-                    {(open || isMobile) && <span className="truncate">{item.label}</span>}
-                  </NavLink>
-                ))}
+                {items.map((item) => {
+                  const hasChildren = Boolean(item.children?.length);
+                  const active = hasChildren
+                    ? isGroupActive(item.children!)
+                    : isActive(item.to!);
+                  return (
+                    <div
+                      key={item.to ?? item.label}
+                      className="relative"
+                    >
+                      {hasChildren ? (
+                        <Dropdown
+                          align="right"
+                          trigger={({ open: isOpen, toggle }) => (
+                            <button
+                              type="button"
+                              onClick={toggle}
+                              className={cn(
+                                "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                                active
+                                  ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm"
+                                  : "text-muted hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                                !open && !isMobile && "justify-center px-2",
+                              )}
+                              aria-label={item.label}
+                              aria-expanded={isOpen}
+                            >
+                              <item.icon
+                                className={cn(
+                                  "h-4 w-4 shrink-0 transition-transform group-hover:scale-105",
+                                  isOpen && "rotate-180",
+                                )}
+                              />
+                              {(open || isMobile) && (
+                                <span className="truncate">{item.label}</span>
+                              )}
+                              <ChevronDown
+                                className={cn(
+                                  "h-3 w-3 shrink-0 text-muted transition-transform ml-auto",
+                                  isOpen && "rotate-180",
+                                )}
+                              />
+                            </button>
+                          )}
+                        >
+                          {(close) => (
+                            <>
+                              {item.children?.map((child) => (
+                                <DropdownItem
+                                  key={child.to}
+                                  icon={item.icon}
+                                  onClick={() => {
+                                    close();
+                                    if (isMobile) setOpenMobile(false);
+                                    navigate(child.to);
+                                  }}
+                                >
+                                  {child.label}
+                                </DropdownItem>
+                              ))}
+                            </>
+                          )}
+                        </Dropdown>
+                      ) : (
+                        <NavLink
+                          key={item.to}
+                          to={item.to!}
+                          onClick={() => isMobile && setOpenMobile(false)}
+                          title={!open && !isMobile ? item.label : undefined}
+                          className={({ isActive: linkActive }) =>
+                            cn(
+                              "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                              linkActive
+                                ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm"
+                                : "text-muted hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                              !open && !isMobile && "justify-center px-2",
+                            )
+                          }
+                        >
+                          <item.icon
+                            className="h-4 w-4 shrink-0 transition-transform group-hover:scale-105"
+                          />
+                          {(open || isMobile) && <span className="truncate">{item.label}</span>}
+                        </NavLink>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );

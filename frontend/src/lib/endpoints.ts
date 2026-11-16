@@ -137,6 +137,10 @@ export const opportunitiesApi = {
     api.get<DataEnvelope<OpportunityStageOption[]>>('/api/opportunities/stages'),
   createStage: (name: string) =>
     api.post<DataEnvelope<OpportunityStageOption>>('/api/opportunities/stages', { name }),
+  deleteStage: (id: string) =>
+    api.delete<DataEnvelope<{ id: string; name: string }>>(
+      `/api/opportunities/stages/${id}`,
+    ),
   list: (params: {
     page?: number;
     pageSize?: number;

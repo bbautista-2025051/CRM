@@ -234,38 +234,87 @@ export const ProjectsPage = () => {
           />
         ) : (
           <>
-            <div className="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3">
-              {projects.map((project) => (
-                <article
-                  key={project.id}
-                  className="group flex flex-col rounded-xl border border-line bg-surface p-4 transition hover:border-brand/30 hover:shadow-sm"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-strong dark:text-brand">
-                      <FolderKanban className="h-5 w-5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <button
-                        type="button"
-                        onClick={() => setDetailId(project.id)}
-                        className="block max-w-full truncate text-left text-sm font-semibold text-ink hover:text-brand-strong dark:hover:text-brand"
-                      >
-                        {project.name}
-                      </button>
-                      <p className="mt-0.5 truncate text-xs text-muted">
-                        {project.company?.name ?? 'Sin empresa'}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <ProjectStatusBadge status={project.status} />
-                      {admin ? (
+            <div className="table-wrap overflow-x-auto">
+              <table className="table-base">
+                <thead>
+                  <tr>
+                    <th>Proyecto</th>
+                    <th>Empresa</th>
+                    <th>Responsable</th>
+                    <th className="text-center">Progreso</th>
+                    <th className="text-center">Tareas</th>
+                    <th>Estado</th>
+                    <th className="text-center">Cierre</th>
+                    <th className="w-16 text-right">
+                      <span className="sr-only">Acciones</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projects.map((project) => (
+                    <tr key={project.id}>
+                      <td>
+                        <div className="min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => setDetailId(project.id)}
+                            className="block truncate text-left text-sm font-semibold text-ink hover:text-brand-strong dark:hover:text-brand"
+                          >
+                            {project.name}
+                          </button>
+                          {project.description ? (
+                            <p className="mt-0.5 truncate text-xs text-muted">
+                              {project.description}
+                            </p>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="max-w-[180px] truncate text-xs text-muted">
+                        {project.company?.name ?? '—'}
+                      </td>
+                      <td>
+                        <span className="inline-flex items-center gap-2 text-xs text-muted">
+                          {project.manager ? (
+                            <>
+                              <Avatar name={project.manager.name} src={project.manager.avatarUrl} size="xs" />
+                              {project.manager.name}
+                            </>
+                          ) : (
+                            '—'
+                          )}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-[10px] font-semibold text-muted">
+                            {project.taskCounts.progress}%
+                          </span>
+                          <ProgressBar
+                            value={project.taskCounts.progress}
+                            tone={
+                              project.taskCounts.progress === 100 ? 'success' : 'brand'
+                            }
+                            label={`Progreso de ${project.name}`}
+                            className="h-1.5 w-[120px]"
+                          />
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap text-center text-xs tabular-nums text-muted">
+                        {project.taskCounts.completed}/{project.taskCounts.total}
+                      </td>
+                      <td>
+                        <ProjectStatusBadge status={project.status} />
+                      </td>
+                      <td className="whitespace-nowrap text-center text-xs text-muted">
+                        {formatDate(project.dueDate) ?? '—'}
+                      </td>
+                      <td className="text-right">
                         <Dropdown
-                          align="right"
                           trigger={({ toggle }) => (
                             <button
                               type="button"
                               onClick={toggle}
-                              className="focus-ring rounded-lg p-1 text-muted transition hover:bg-elevated hover:text-ink"
+                              className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
                               aria-label={`Acciones para ${project.name}`}
                             >
                               <MoreHorizontal className="h-4 w-4" />
@@ -283,90 +332,39 @@ export const ProjectsPage = () => {
                               >
                                 Ver detalle
                               </DropdownItem>
-                              <DropdownItem
-                                icon={<Pencil className="h-4 w-4" />}
-                                onClick={() => {
-                                  close();
-                                  openEdit(project);
-                                }}
-                              >
-                                Editar
-                              </DropdownItem>
-                              <DropdownSeparator />
-                              <DropdownItem
-                                icon={<Trash2 className="h-4 w-4" />}
-                                danger
-                                disabled={remove.isPending}
-                                onClick={() => {
-                                  close();
-                                  void onDelete(project);
-                                }}
-                              >
-                                Eliminar
-                              </DropdownItem>
+                              {admin ? (
+                                <>
+                                  <DropdownItem
+                                    icon={<Pencil className="h-4 w-4" />}
+                                    onClick={() => {
+                                      close();
+                                      openEdit(project);
+                                    }}
+                                  >
+                                    Editar
+                                  </DropdownItem>
+                                  <DropdownSeparator />
+                                  <DropdownItem
+                                    icon={<Trash2 className="h-4 w-4" />}
+                                    danger
+                                    disabled={remove.isPending}
+                                    onClick={() => {
+                                      close();
+                                      void onDelete(project);
+                                    }}
+                                  >
+                                    Eliminar
+                                  </DropdownItem>
+                                </>
+                              ) : null}
                             </>
                           )}
                         </Dropdown>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-xs leading-5 text-muted">
-                    {project.description ?? 'Sin descripción registrada.'}
-                  </p>
-
-                  <div className="mt-3">
-                    <div className="mb-1.5 flex items-center justify-between text-xs">
-                      <span className="text-muted">Progreso</span>
-                      <span className="font-semibold text-ink">
-                        {project.taskCounts.progress}%
-                      </span>
-                    </div>
-                    <ProgressBar
-                      value={project.taskCounts.progress}
-                      tone={project.taskCounts.progress === 100 ? 'success' : 'brand'}
-                      label={`Progreso de ${project.name}`}
-                    />
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] text-muted">
-                    <span className="inline-flex items-center gap-1">
-                      <ListChecks className="h-3.5 w-3.5" />
-                      {project.taskCounts.completed}/{project.taskCounts.total} tareas
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      {formatDate(project.dueDate)}
-                    </span>
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-line pt-3">
-                    <div className="flex min-w-0 items-center gap-2">
-                      {project.manager ? (
-                        <>
-                          <Avatar
-                            name={project.manager.name}
-                            src={project.manager.avatarUrl}
-                            size="xs"
-                          />
-                          <span className="truncate text-xs text-muted">
-                            {project.manager.name}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-xs text-muted">Sin responsable</span>
-                      )}
-                    </div>
-                    <Button
-                      size="xs"
-                      variant="secondary"
-                      onClick={() => setDetailId(project.id)}
-                    >
-                      Ver detalle
-                    </Button>
-                  </div>
-                </article>
-              ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
             {meta ? <Pagination meta={meta} onPageChange={setPage} /> : null}
           </>

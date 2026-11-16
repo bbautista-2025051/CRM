@@ -71,6 +71,40 @@ export const listOpportunityStages = async () => {
   ];
 };
 
+export const deleteOpportunityStage = async (
+  id: string,
+  actor: User,
+): Promise<{ id: string; name: string }> => {
+  if (isBuiltInStage(id)) {
+    throw new BadRequestError('No se puede eliminar una etapa predeterminada');
+  }
+  const stage = await prisma.customOpportunityStage.findUnique({ where: { id } });
+  if (!stage) throw new NotFoundError('La etapa no existe');
+
+  const inUse = await prisma.opportunity.findFirst({
+    where: { stage: id },
+    select: { id: true, name: true },
+  });
+  if (inUse) {
+    throw new ConflictError(
+      `No se puede eliminar la etapa porque está en uso por la oportunidad "${inUse.name}".`,
+    );
+  }
+
+  await prisma.customOpportunityStage.delete({ where: { id } });
+
+  await logActivity({
+    userId: actor.id,
+    action: 'DELETE',
+    entityType: 'OPPORTUNITY_STAGE',
+    entityId: id,
+    description: `Etapa de oportunidad eliminada: ${stage.name}`,
+    metadata: { stageId: id },
+  });
+
+  return { id: stage.id, name: stage.name };
+};
+
 export const createOpportunityStage = async (name: string, actor: User) => {
   const normalizedName = name.trim();
   const normalizedKey = normalizedName.toLowerCase();

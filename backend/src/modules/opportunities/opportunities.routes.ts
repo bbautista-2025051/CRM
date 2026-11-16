@@ -11,6 +11,7 @@ import {
   opportunityFileParamsSchema,
   opportunityListQuerySchema,
   opportunityStageBodySchema,
+  opportunityStageParamsSchema,
   updateOpportunitySchema,
 } from './opportunities.schemas';
 
@@ -30,6 +31,13 @@ opportunitiesRouter.post(
   csrfProtection,
   validate({ body: opportunityStageBodySchema }),
   controller.createStage,
+);
+opportunitiesRouter.delete(
+  '/stages/:id',
+  requireAdmin,
+  csrfProtection,
+  validate({ params: opportunityStageParamsSchema }),
+  controller.removeStage,
 );
 opportunitiesRouter.get('/:id', validate({ params: idParamSchema }), controller.getById);
 opportunitiesRouter.post(

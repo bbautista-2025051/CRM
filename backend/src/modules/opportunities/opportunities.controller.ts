@@ -27,6 +27,15 @@ export const createStage = asyncHandler(async (req: Request, res: Response) => {
   res.status(201).json({ data: stage });
 });
 
+export const removeStage = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  const stage = await opportunitiesService.deleteOpportunityStage(
+    req.validated.params.id,
+    req.auth.user,
+  );
+  res.status(200).json({ data: stage, message: 'Etapa eliminada correctamente' });
+});
+
 export const getById = asyncHandler(async (req: Request, res: Response) => {
   const opportunity = await opportunitiesService.getOpportunity(req.validated.params.id);
   res.status(200).json({ data: opportunity });

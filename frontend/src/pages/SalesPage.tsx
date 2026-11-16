@@ -129,7 +129,7 @@ export const SalesPage = () => {
         companyId: companyId || undefined,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
-        sortBy: 'saleDate',
+        sortBy: 'saleNumber',
         sortOrder: 'desc',
       }),
   });
