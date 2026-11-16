@@ -66,15 +66,17 @@ export const SalesPage = () => {
 
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const ownSalesId = user?.id ?? '';
+  const isAdminUser = user?.role === 'ADMIN';
   // Cada usuario ve por defecto únicamente sus propias ventas; los
-  // administradores pueden ampliar el alcance con el filtro de responsable.
-  const [ownerId, setOwnerId] = useState(user?.id ?? '');
+  // administradores ven todas las ventas por defecto y pueden filtrar por
+  // responsable si lo desean.
+  const [ownerId, setOwnerId] = useState(isAdminUser ? '' : ownSalesId);
   const [companyId, setCompanyId] = useState(companyParam);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search, 300);
-  const ownSalesId = user?.id ?? '';
 
   useEffect(() => {
     setPage(1);
@@ -210,7 +212,7 @@ export const SalesPage = () => {
   const clearFilters = () => {
     setSearch('');
     setStatus('');
-    setOwnerId(ownSalesId);
+    setOwnerId(isAdminUser ? '' : ownSalesId);
     setCompanyId('');
     setDateFrom('');
     setDateTo('');
@@ -225,8 +227,9 @@ export const SalesPage = () => {
       companyId ||
       dateFrom ||
       dateTo ||
-      // Ver las ventas propias es el alcance por defecto, no un filtro activo.
-      ownerId !== ownSalesId,
+      // Para los administradores, ver todas las ventas es el alcance por
+      // defecto; elegir un responsable sí es un filtro activo.
+      isAdminUser ? ownerId !== '' : ownerId !== ownSalesId,
   );
   const confirmedTotals = summary?.byCurrency ?? [];
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Ban, CheckCircle2, Pencil } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
@@ -23,12 +23,13 @@ export const SaleDetailPage = () => {
   const { success, error: toastError } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { id: routeId } = useParams<{ id?: string }>();
   const [searchParams] = useSearchParams();
-  const saleId = searchParams.get('id');
+  const saleId = routeId ?? searchParams.get('id') ?? '';
 
   const query = useQuery({
     queryKey: ['sales', 'detail', saleId],
-    queryFn: async () => unwrap(await salesApi.get(saleId!)),
+    queryFn: async () => unwrap(await salesApi.get(saleId)),
     enabled: Boolean(saleId),
   });
 
