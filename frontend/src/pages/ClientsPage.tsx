@@ -241,12 +241,13 @@ export const ClientsPage = () => {
                 </thead>
                 <tbody>
                   {clients.map((client) => (
-                    <tr key={client.id}>
+                    <tr
+                      key={client.id}
+                      onClick={() => navigate(`/clients/${client.id}`)}
+                      className="cursor-pointer hover:bg-elevated/50 transition-colors"
+                    >
                       <td>
-                        <Link
-                          to={`/clients/${client.id}`}
-                          className="group flex items-center gap-3"
-                        >
+                        <div className="group flex items-center gap-3">
                           <Avatar name={`${client.firstName} ${client.lastName}`} size="sm" />
                           <span className="min-w-0">
                             <span className="block max-w-[220px] truncate font-medium text-ink group-hover:text-brand-strong dark:group-hover:text-brand">
@@ -256,7 +257,7 @@ export const ClientsPage = () => {
                               {client.jobTitle ?? 'Sin cargo'}
                             </span>
                           </span>
-                        </Link>
+                        </div>
                       </td>
                       <td>
                         {client.company ? (
@@ -292,7 +293,10 @@ export const ClientsPage = () => {
                           trigger={({ toggle }) => (
                             <button
                               type="button"
-                              onClick={toggle}
+                              onClick={(e) => {
+                                e?.stopPropagation();
+                                toggle();
+                              }}
                               className="focus-ring rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
                               aria-label={`Acciones para ${client.firstName} ${client.lastName}`}
                             >
@@ -304,7 +308,8 @@ export const ClientsPage = () => {
                             <>
                               <DropdownItem
                                 icon={<Eye className="h-4 w-4" />}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e?.stopPropagation();
                                   close();
                                   navigate(`/clients/${client.id}`);
                                 }}
@@ -313,7 +318,8 @@ export const ClientsPage = () => {
                               </DropdownItem>
                               <DropdownItem
                                 icon={<Pencil className="h-4 w-4" />}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e?.stopPropagation();
                                   close();
                                   openEdit(client);
                                 }}
@@ -327,7 +333,8 @@ export const ClientsPage = () => {
                                     icon={<Archive className="h-4 w-4" />}
                                     danger
                                     disabled={archive.isPending}
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      e?.stopPropagation();
                                       close();
                                       void onArchive(client);
                                     }}

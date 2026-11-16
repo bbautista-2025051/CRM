@@ -1,10 +1,8 @@
-import { useState } from 'react';
-import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import {
   Briefcase,
   Building2,
   CalendarDays,
-  ChevronDown,
   FolderKanban,
   LayoutDashboard,
   LogOut,
@@ -21,17 +19,11 @@ import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/cn";
 import { useSidebar } from "./sidebar";
 
-interface NavChild {
-  to: string;
-  label: string;
-}
-
 interface NavItem {
-  to?: string;
+  to: string;
   label: string;
   icon: any;
   adminOnly?: boolean;
-  children?: NavChild[];
 }
 
 interface NavGroup {
@@ -57,27 +49,14 @@ const navGroups: NavGroup[] = [
   {
     label: "Proyectos & Equipo",
     items: [
-      {
-        label: "Proyectos",
-        icon: FolderKanban,
-        children: [
-          { to: "/projects", label: "Ver proyectos" },
-        ],
-      },
+      { to: "/projects", label: "Proyectos", icon: FolderKanban },
       { to: "/team", label: "Equipo", icon: UserCheck },
     ],
   },
   {
     label: "Administración",
     items: [
-      {
-        label: "Usuarios",
-        icon: ShieldCheck,
-        adminOnly: true,
-        children: [
-          { to: "/users", label: "Ver usuarios" },
-        ],
-      },
+      { to: "/users", label: "Usuarios", icon: ShieldCheck, adminOnly: true },
       { to: "/activity", label: "Actividad", icon: CalendarDays },
     ],
   },
@@ -86,24 +65,9 @@ const navGroups: NavGroup[] = [
 export function App1Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { open, openMobile, setOpenMobile, isMobile } = useSidebar();
 
   if (!user) return null;
-
-  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
-
-  const isActive = (to: string) =>
-    location.pathname === to || location.pathname.startsWith(`${to}/`);
-
-  const isItemActive = (item: NavItem) =>
-    item.to ? isActive(item.to) : Boolean(item.children?.some((c) => isActive(c.to)));
-
-  const toggleSubmenu = (label: string) => {
-    setOpenSubmenus((prev) => ({ ...prev, [label]: !prev[label] }));
-  };
-
-  const isSubmenuOpen = (label: string) => Boolean(openSubmenus[label]);
 
   const sidebarContent = (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -134,94 +98,26 @@ export function App1Sidebar() {
                 </p>
               )}
               <div className="space-y-1">
-                {items.map((item) => {
-                  const hasChildren = Boolean(item.children?.length);
-                  const active = isItemActive(item);
-                  return (
-                    <div
-                      key={item.to ?? item.label}
-                      className="relative"
-                    >
-                      {hasChildren ? (
-                        <div className="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors">
-                          <button
-                            type="button"
-                            onClick={() => toggleSubmenu(item.label)}
-                            className={cn(
-                              "flex w-full items-center gap-3",
-                              active
-                                ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm"
-                                : "text-muted hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                              !open && !isMobile && "justify-center px-2",
-                            )}
-                            aria-label={item.label}
-                            aria-expanded={isSubmenuOpen(item.label)}
-                          >
-                            <item.icon
-                              className={cn(
-                                "h-4 w-4 shrink-0 transition-transform",
-                                isSubmenuOpen(item.label) && "rotate-180",
-                              )}
-                            />
-                            {(open || isMobile) && <span className="truncate">{item.label}</span>}
-                            <ChevronDown
-                              className={cn(
-                                "h-3 w-3 shrink-0 text-muted transition-transform ml-auto",
-                                isSubmenuOpen(item.label) && "rotate-180",
-                              )}
-                            />
-                          </button>
-                          {isSubmenuOpen(item.label) && (
-                            <div className="ml-3 pl-4 border-l border-sidebar-border/50 space-y-1">
-                              {item.children?.map((child) => (
-                                <NavLink
-                                  key={child.to}
-                                  to={child.to}
-                                  onClick={() => {
-                                    setOpenSubmenus((prev) => ({ ...prev, [item.label]: false }));
-                                    if (isMobile) setOpenMobile(false);
-                                    navigate(child.to);
-                                  }}
-                                  className={({ isActive: linkActive }) =>
-                                    cn(
-                                      "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                                      linkActive
-                                        ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm"
-                                        : "text-muted hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                                      !open && !isMobile && "justify-center px-2",
-                                    )
-                                  }
-                                >
-                                  {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
-                                  {(open || isMobile) && <span className="truncate">{child.label}</span>}
-                                </NavLink>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <NavLink
-                          key={item.to}
-                          to={item.to!}
-                          onClick={() => isMobile && setOpenMobile(false)}
-                          title={!open && !isMobile ? item.label : undefined}
-                          className={({ isActive: linkActive }) =>
-                            cn(
-                              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                              linkActive
-                                ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm"
-                                : "text-muted hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                              !open && !isMobile && "justify-center px-2",
-                            )
-                          }
-                        >
-                          <item.icon className="h-4 w-4 shrink-0 transition-transform group-hover:scale-105" />
-                          {(open || isMobile) && <span className="truncate">{item.label}</span>}
-                        </NavLink>
-                      )}
-                    </div>
-                  );
-                })}
+                {items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => isMobile && setOpenMobile(false)}
+                    title={!open && !isMobile ? item.label : undefined}
+                    className={({ isActive }) =>
+                      cn(
+                        "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm"
+                          : "text-muted hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                        !open && !isMobile && "justify-center px-2",
+                      )
+                    }
+                  >
+                    <item.icon className="h-4 w-4 shrink-0 transition-transform group-hover:scale-105" />
+                    {(open || isMobile) && <span className="truncate">{item.label}</span>}
+                  </NavLink>
+                ))}
               </div>
             </div>
           );

@@ -63,7 +63,7 @@ export const DropdownItem = ({
 }: {
   children: ReactNode;
   icon?: ReactNode;
-  onClick?: () => void;
+  onClick?: (event?: React.MouseEvent) => void;
   danger?: boolean;
   disabled?: boolean;
 }) => (
@@ -71,7 +71,9 @@ export const DropdownItem = ({
     type="button"
     role="menuitem"
     disabled={disabled}
-    onClick={onClick}
+    onClick={(event) => {
+      onClick?.(event);
+    }}
     className={cn(
       'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition disabled:cursor-not-allowed disabled:opacity-40',
       danger
