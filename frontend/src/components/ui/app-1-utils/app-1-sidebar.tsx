@@ -52,7 +52,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Comercial",
     items: [
-      { to: "/negocio", label: "Ventas", icon: Briefcase },
+      { to: "/negocio", label: "Negocio", icon: Briefcase },
       { to: "/companies", label: "Empresas", icon: Building2 },
       { to: "/clients", label: "Contacto", icon: Users },
     ],
