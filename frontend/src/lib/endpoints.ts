@@ -196,6 +196,16 @@ export const salesApi = {
   get: (id: string) => api.get<DataEnvelope<Sale>>(`/api/sales/${id}`),
   summary: (params: { ownerId?: string; dateFrom?: string; dateTo?: string } = {}) =>
     api.get<DataEnvelope<SalesSummary>>(`/api/sales/summary${buildQuery(params)}`),
+  listStatuses: () =>
+    api.get<DataEnvelope<Array<{ id: string; name: string }>>>('/api/sales/statuses'),
+  createStatus: (name: string) =>
+    api.post<DataEnvelope<{ id: string; name: string }>>('/api/sales/statuses', {
+      name,
+    }),
+  deleteStatus: (id: string) =>
+    api.delete<DataEnvelope<{ id: string; name: string }>>(
+      `/api/sales/statuses/${id}`,
+    ),
   listComments: (id: string) =>
     api.get<DataEnvelope<SaleComment[]>>(`/api/sales/${id}/comments`),
   createComment: (id: string, body: string, fileIds: string[] = []) =>

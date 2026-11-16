@@ -90,3 +90,15 @@ export const saleSummaryQuerySchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener formato AAAA-MM-DD')
     .optional(),
 });
+
+export const customSaleStatusBodySchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, 'El nombre del estado debe tener al menos 2 caracteres')
+    .max(60, 'El nombre del estado no puede superar 60 caracteres'),
+});
+
+export const customSaleStatusParamsSchema = z.object({
+  id: z.string().uuid('El identificador del estado no es válido'),
+});

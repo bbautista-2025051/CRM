@@ -273,6 +273,15 @@ model CustomOpportunityStage {
   @@map("custom_opportunity_stages")
 }
 
+model CustomSaleStatus {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String   @db.VarChar(60)
+  normalizedName String   @unique @map("normalized_name") @db.VarChar(60)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("custom_sale_statuses")
+}
+
 model OpportunityFile {
   id              String   @id @default(uuid()) @db.Uuid
   opportunityId   String   @map("opportunity_id") @db.Uuid

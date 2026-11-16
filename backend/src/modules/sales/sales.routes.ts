@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth } from '../../middlewares/auth';
+import { requireAdmin, requireAuth } from '../../middlewares/auth';
 import { csrfProtection } from '../../middlewares/csrf';
 import { saleFileUpload } from '../../middlewares/upload';
 import { validate } from '../../middlewares/validate';
@@ -8,6 +8,8 @@ import * as controller from './sales.controller';
 import {
   saleBodySchema,
   saleCommentBodySchema,
+  customSaleStatusBodySchema,
+  customSaleStatusParamsSchema,
   saleFileParamsSchema,
   saleListQuerySchema,
   saleSummaryQuerySchema,
@@ -78,4 +80,25 @@ salesRouter.delete(
   csrfProtection,
   validate({ params: saleFileParamsSchema }),
   controller.removeFile,
+);
+
+// --- Estados de venta personalizados (solo ADMIN puede crear/eliminar) ---
+salesRouter.get(
+  '/statuses',
+  validate({ query: saleListQuerySchema }),
+  controller.listSaleStatuses,
+);
+salesRouter.post(
+  '/statuses',
+  requireAdmin,
+  csrfProtection,
+  validate({ body: customSaleStatusBodySchema }),
+  controller.createSaleStatus,
+);
+salesRouter.delete(
+  '/statuses/:id',
+  requireAdmin,
+  csrfProtection,
+  validate({ params: customSaleStatusParamsSchema }),
+  controller.removeSaleStatus,
 );

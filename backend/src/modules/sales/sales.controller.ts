@@ -7,6 +7,7 @@ import {
 } from '../../middlewares/upload';
 import * as saleFilesService from './sale-files.service';
 import * as salesService from './sales.service';
+import * as customSaleStatusService from './customSaleStatus.service';
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
   const result = await salesService.listSales(req.validated.query);
@@ -106,4 +107,29 @@ export const removeFile = asyncHandler(async (req: Request, res: Response) => {
     req.auth.user,
   );
   res.status(204).send();
+});
+
+// --- Estados de venta personalizados ---
+
+export const listSaleStatuses = asyncHandler(async (_req: Request, res: Response) => {
+  const statuses = await customSaleStatusService.listSaleStatuses();
+  res.status(200).json({ data: statuses });
+});
+
+export const createSaleStatus = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  const status = await customSaleStatusService.createSaleStatus(
+    req.validated.body.name,
+    req.auth.user,
+  );
+  res.status(201).json({ data: status });
+});
+
+export const removeSaleStatus = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  const status = await customSaleStatusService.deleteSaleStatus(
+    req.validated.params.id,
+    req.auth.user,
+  );
+  res.status(200).json({ data: status, message: 'Estado eliminado correctamente' });
 });
