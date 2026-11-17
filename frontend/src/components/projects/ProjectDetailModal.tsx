@@ -81,7 +81,7 @@ const SheetHeader = ({
   company: string;
   amount: string;
 }) => (
-  <header className="px-4 text-center">
+  <header className="text-left">
     <h2 className="font-display text-[22px] font-bold tracking-[-0.02em] text-ink">{title}</h2>
     <p className="mt-1 font-display text-[16px] font-semibold tracking-[-0.01em] text-ink">
       {company}
@@ -352,6 +352,7 @@ export const ProjectDetailModal = ({
       onClose={onCloseInternal}
       size="xl"
       fullWindow
+      hideHeader
       title="Detalle del proyecto"
       description="Ficha comercial y seguimiento del proyecto."
       footer={
@@ -368,7 +369,6 @@ export const ProjectDetailModal = ({
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       ) : project ? (
         <div className="space-y-5">
-          {/* Encabezado del wireframe: TITULO / EMPRESA / MONTO */}
           <SheetHeader
             title={project.name}
             company={project.company?.name ?? 'Sin empresa'}
