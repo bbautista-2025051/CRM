@@ -64,7 +64,7 @@ const FILE_STYLES: Record<string, { icon: typeof FileIcon; tone: string }> = {
 const fileStyle = (file: CompanyFile) =>
   FILE_STYLES[extFromName(file.originalName)] ?? { icon: FileIcon, tone: 'bg-elevated text-muted' };
 
-/** Encabezado centrado con el formato de Detalle de Proyecto: NOMBRE / SECTOR / NIT */
+/** Nombre y datos principales de la empresa. */
 const SheetHeader = ({
   name,
   sector,
@@ -74,7 +74,7 @@ const SheetHeader = ({
   sector: string;
   taxId: string;
 }) => (
-  <header className="px-4 text-center">
+  <header className="text-left">
     <h2 className="font-display text-[22px] font-bold tracking-[-0.02em] text-ink">{name}</h2>
     <p className="mt-1 font-display text-[16px] font-semibold tracking-[-0.01em] text-ink">
       {sector}
@@ -310,6 +310,7 @@ export const CompanyDetailModal = ({
       onClose={onCloseInternal}
       size="xl"
       fullWindow
+      hideHeader
       title="Detalle de la empresa"
       description="Ficha comercial y seguimiento de la empresa."
       footer={
@@ -358,7 +359,6 @@ export const CompanyDetailModal = ({
         <ErrorState error={query.error} onRetry={() => void query.refetch()} />
       ) : company ? (
         <div className="space-y-5">
-          {/* Encabezado centrado del wireframe */}
           <SheetHeader
             name={company.name}
             sector={company.sector ?? 'Sin sector definido'}

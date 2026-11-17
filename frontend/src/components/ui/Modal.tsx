@@ -32,6 +32,7 @@ interface ModalProps {
   /** Ventana completa: ocupa todo el viewport, sin marco flotante. */
   fullWindow?: boolean;
   inline?: boolean;
+  hideHeader?: boolean;
   className?: string;
 }
 
@@ -58,6 +59,7 @@ export const Modal = ({
   closeOnBackdrop = true,
   fullWindow = true,
   inline = false,
+  hideHeader = false,
   className,
 }: ModalProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -188,8 +190,9 @@ export const Modal = ({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={description ? descriptionId : undefined}
+        aria-labelledby={hideHeader ? undefined : titleId}
+        aria-label={hideHeader && typeof title === 'string' ? title : undefined}
+        aria-describedby={!hideHeader && description ? descriptionId : undefined}
         tabIndex={-1}
         onKeyDown={handlePanelKeyDown}
         className={cn(
@@ -200,37 +203,39 @@ export const Modal = ({
           className,
         )}
       >
-        <div
-          className={cn(
-            'flex items-start gap-4 border-b border-line bg-surface px-5 py-4 sm:px-6',
-            fullWindow && 'shrink-0 px-6',
-          )}
-        >
-          <div className="min-w-0 flex-1">
-            <h2
-              id={titleId}
-              className={cn(
-                'text-base font-semibold text-ink',
-                fullWindow && 'font-display text-[16px] font-bold tracking-[-0.01em]',
-              )}
-            >
-              {title}
-            </h2>
-            {description ? (
-              <p id={descriptionId} className="mt-1 text-[13px] leading-5 text-muted">
-                {description}
-              </p>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="focus-ring -mr-1 rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
-            aria-label="Cerrar"
+        {!hideHeader ? (
+          <div
+            className={cn(
+              'flex items-start gap-4 border-b border-line bg-surface px-5 py-4 sm:px-6',
+              fullWindow && 'shrink-0 px-6',
+            )}
           >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+            <div className="min-w-0 flex-1">
+              <h2
+                id={titleId}
+                className={cn(
+                  'text-base font-semibold text-ink',
+                  fullWindow && 'font-display text-[16px] font-bold tracking-[-0.01em]',
+                )}
+              >
+                {title}
+              </h2>
+              {description ? (
+                <p id={descriptionId} className="mt-1 text-[13px] leading-5 text-muted">
+                  {description}
+                </p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="focus-ring -mr-1 rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-ink"
+              aria-label="Cerrar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        ) : null}
 
         <div
           className={cn(
