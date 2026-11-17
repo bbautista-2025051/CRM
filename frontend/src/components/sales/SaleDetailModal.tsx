@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Building2,
@@ -92,7 +92,9 @@ export const SaleDetailModal = ({
   saleId,
   onClose,
   onEdit,
+  actions,
 }: {
+  actions?: ReactNode;
   saleId: string | null;
   onClose: () => void;
   onEdit: (sale: Sale) => void;
@@ -285,13 +287,13 @@ export const SaleDetailModal = ({
       onClose={onClose}
       inline
       size="lg"
-      title={sale?.saleNumber ?? 'Venta'}
+      title={sale ? `Venta ${sale.saleNumber}` : 'Venta'}
       description={
         sale
           ? `${sale.client?.firstName} ${sale.client?.lastName} · ${sale.company?.name ?? 'Sin empresa'}`
           : 'Detalle de la venta'
       }
-      footer={
+      footer={actions ?? (
         <>
           <Button variant="secondary" onClick={onClose}>
             Cerrar
@@ -302,7 +304,7 @@ export const SaleDetailModal = ({
             </Button>
           ) : null}
         </>
-      }
+      )}
     >
       {query.isLoading ? (
         <div className="space-y-4">
@@ -312,12 +314,9 @@ export const SaleDetailModal = ({
       ) : query.isError || !sale ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} compact />
       ) : (
-        <div className="mx-auto max-w-4xl space-y-5">
+        <div className="max-w-4xl space-y-5">
           <div className="flex flex-wrap items-center gap-2">
             <SaleStatusBadge status={sale?.status} />
-            <span className="text-xs text-muted">
-              {sale?.saleNumber ?? ''}
-            </span>
           </div>
 
           <div className="border-y border-line py-3.5">

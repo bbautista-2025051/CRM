@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Ban, CheckCircle2, Pencil } from 'lucide-react';
@@ -12,9 +11,7 @@ import { SaleDetailModal } from '@/components/sales/SaleDetailModal';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { Avatar } from '@/components/ui/Avatar';
-import { SaleStatusBadge } from '@/components/ui/StatusBadges';
-import { formatMoney, formatDate, formatDateTime } from '@/lib/format';
+import { formatMoney } from '@/lib/format';
 
 export const SaleDetailPage = () => {
   usePageTitle('Detalle de venta');
@@ -105,60 +102,47 @@ export const SaleDetailPage = () => {
   const canConfirm = sale?.status === 'PENDING';
   const pending = confirmSale.isPending || cancelSale.isPending;
 
+  const actions = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button variant="secondary" onClick={() => navigate(-1)}>
+        <ArrowLeft className="h-4 w-4" /> Volver
+      </Button>
+      {sale && canCancel ? (
+        <Button
+          variant="danger"
+          onClick={() => void onCancel()}
+          loading={cancelSale.isPending}
+          disabled={pending}
+          leftIcon={<Ban className="h-4 w-4" />}
+        >
+          Cancelar venta
+        </Button>
+      ) : null}
+      {sale && canConfirm ? (
+        <Button
+          variant="success"
+          onClick={() => void onConfirm()}
+          loading={confirmSale.isPending}
+          disabled={pending}
+          leftIcon={<CheckCircle2 className="h-4 w-4" />}
+        >
+          Confirmar
+        </Button>
+      ) : null}
+      {sale && canEdit ? (
+        <Button
+          onClick={() => navigate(`/negocio/venta/${sale.id}/editar`)}
+          disabled={pending}
+          leftIcon={<Pencil className="h-4 w-4" />}
+        >
+          Editar
+        </Button>
+      ) : null}
+    </div>
+  );
+
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.03em] text-ink sm:text-[30px]">
-            Venta {sale?.saleNumber ?? ''}
-            {sale ? <SaleStatusBadge status={sale.status} /> : null}
-          </h1>
-          <p className="mt-1 text-[13px] leading-6 text-muted">
-            {sale
-              ? sale.client
-                ? `${sale.client.firstName} ${sale.client.lastName} · ${sale.company?.name ?? 'Sin empresa'}`
-                : `Sin cliente · ${sale.company?.name ?? 'Sin empresa'}`
-              : 'Detalle de la venta'}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" /> Volver
-          </Button>
-          {sale && canCancel ? (
-            <Button
-              variant="danger"
-              onClick={() => void onCancel()}
-              loading={cancelSale.isPending}
-              disabled={pending}
-              leftIcon={<Ban className="h-4 w-4" />}
-            >
-              Cancelar venta
-            </Button>
-          ) : null}
-          {sale && canConfirm ? (
-            <Button
-              variant="success"
-              onClick={() => void onConfirm()}
-              loading={confirmSale.isPending}
-              disabled={pending}
-              leftIcon={<CheckCircle2 className="h-4 w-4" />}
-            >
-              Confirmar
-            </Button>
-          ) : null}
-          {sale && canEdit ? (
-            <Button
-              onClick={() => navigate(`/negocio/venta/${sale.id}/editar`)}
-              disabled={pending}
-              leftIcon={<Pencil className="h-4 w-4" />}
-            >
-              Editar
-            </Button>
-          ) : null}
-        </div>
-      </div>
-
       {query.isLoading ? (
         <div className="space-y-4">
           <Skeleton className="h-20 w-full" />
@@ -168,6 +152,7 @@ export const SaleDetailPage = () => {
         <ErrorState error={query.error} onRetry={() => void query.refetch()} compact />
       ) : (
         <SaleDetailModal
+          actions={actions}
           saleId={saleId ?? ''}
           onClose={() => {}}
           onEdit={(sale) => navigate(`/negocio/venta/${sale.id}/editar`)}
