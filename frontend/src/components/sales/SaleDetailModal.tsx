@@ -287,10 +287,22 @@ export const SaleDetailModal = ({
       onClose={onClose}
       inline
       size="lg"
-      title={sale ? `Venta ${sale.saleNumber}` : 'Venta'}
+      title={
+        sale
+          ? sale.opportunity?.name ?? `Venta ${sale.saleNumber}`
+          : 'Venta'
+      }
       description={
         sale
-          ? `${sale.client?.firstName} ${sale.client?.lastName} · ${sale.company?.name ?? 'Sin empresa'}`
+          ? [
+              sale.opportunity ? sale.saleNumber : null,
+              sale.client
+                ? `${sale.client.firstName} ${sale.client.lastName}`
+                : 'Sin cliente',
+              sale.company?.name ?? 'Sin empresa',
+            ]
+              .filter(Boolean)
+              .join(' · ')
           : 'Detalle de la venta'
       }
       footer={actions ?? (

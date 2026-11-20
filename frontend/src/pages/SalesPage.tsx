@@ -189,8 +189,9 @@ export const SalesPage = () => {
   };
 
   const onConfirm = async (sale: Sale) => {
+    const saleLabel = sale.opportunity?.name ?? sale.saleNumber;
     const accepted = await confirm({
-      title: `Confirmar la venta ${sale.saleNumber}`,
+      title: `Confirmar la venta ${saleLabel}`,
       description: `${formatMoney(sale.amount, sale.currency)} pasará a contar como ingreso confirmado. Después solo un administrador podrá modificarla.`,
       confirmLabel: 'Confirmar venta',
     });
@@ -198,8 +199,9 @@ export const SalesPage = () => {
   };
 
   const onCancel = async (sale: Sale) => {
+    const saleLabel = sale.opportunity?.name ?? sale.saleNumber;
     const accepted = await confirm({
-      title: `Cancelar la venta ${sale.saleNumber}`,
+      title: `Cancelar la venta ${saleLabel}`,
       description:
         'La venta se conservará en el histórico con estado cancelada. Esta acción no se puede revertir.',
       confirmLabel: 'Cancelar venta',
@@ -310,7 +312,7 @@ export const SalesPage = () => {
           <SearchInput
             value={search}
             onChange={setSearch}
-            placeholder="Buscar por número, cliente o empresa…"
+            placeholder="Buscar por nombre, número, cliente o empresa…"
             className="xl:w-72"
           />
           <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -417,7 +419,7 @@ export const SalesPage = () => {
               <table className="table-base">
                 <thead>
                   <tr>
-                    <th>Número</th>
+                    <th>Venta</th>
                     <th>Cliente / Empresa</th>
                     <th>Responsable</th>
                     <th>Fecha</th>
@@ -451,14 +453,20 @@ export const SalesPage = () => {
                         className="cursor-pointer hover:bg-elevated/50 transition-colors"
                       >
                         <td>
-                          <span className="font-mono text-xs font-semibold text-brand-strong hover:underline dark:text-brand">
-                            {sale.saleNumber}
-                          </span>
                           {sale.opportunity ? (
-                            <span className="mt-0.5 block max-w-[170px] truncate text-[11px] text-muted">
-                              {sale.opportunity.name}
+                            <div className="min-w-0 max-w-[220px]">
+                              <span className="block truncate text-sm font-semibold text-brand-strong hover:underline dark:text-brand">
+                                {sale.opportunity.name}
+                              </span>
+                              <span className="mt-0.5 block font-mono text-[11px] text-muted">
+                                {sale.saleNumber}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="font-mono text-xs font-semibold text-brand-strong hover:underline dark:text-brand">
+                              {sale.saleNumber}
                             </span>
-                          ) : null}
+                          )}
                         </td>
                         <td>
                           <div className="min-w-0 max-w-[230px]">

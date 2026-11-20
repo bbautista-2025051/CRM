@@ -223,7 +223,13 @@ export const SaleFormModal = ({
       onClose={onClose}
       inline={inline}
       size="xl"
-      title={editing ? `Editar venta ${sale?.saleNumber ?? ''}` : 'Registrar venta'}
+      title={
+        editing
+          ? sale?.opportunity?.name
+            ? `Editar ${sale.opportunity.name}`
+            : `Editar venta ${sale?.saleNumber ?? ''}`
+          : 'Registrar venta'
+      }
       description={
         editing
           ? 'Actualiza los datos de la venta. Las ventas confirmadas requieren permisos de administrador.'

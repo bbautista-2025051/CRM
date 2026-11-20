@@ -58,6 +58,9 @@ export const listSales = async (params: ListParams) => {
           OR: [
             { saleNumber: { contains: params.search, mode: 'insensitive' } },
             {
+              opportunity: { name: { contains: params.search, mode: 'insensitive' } },
+            },
+            {
               client: {
                 OR: [
                   { firstName: { contains: params.search, mode: 'insensitive' } },

@@ -49,6 +49,7 @@ export const SaleFormPage = () => {
   const { id } = useParams<{ id: string }>();
   const formId = useId().replace(/:/g, '');
   const [formError, setFormError] = useState<string | null>(null);
+  const [loadedSale, setLoadedSale] = useState<Sale | null>(null);
   const saleId = id;
   const editing = Boolean(saleId);
   const admin = isAdmin(user?.role);
@@ -97,6 +98,7 @@ export const SaleFormPage = () => {
     if (saleId) {
       void salesApi.get(saleId).then((response) => {
         const sale = unwrap(response);
+        setLoadedSale(sale);
         reset(
           defaults(
             sale,
@@ -109,6 +111,7 @@ export const SaleFormPage = () => {
         setFormError(null);
       });
     } else {
+      setLoadedSale(null);
       reset(defaults(undefined, user?.id));
       setFormError(null);
     }
@@ -169,7 +172,7 @@ export const SaleFormPage = () => {
   const companyOptions = companies.data ?? [];
   const clientOptions = clients.data ?? [];
   const userOptions = users.data?.data ?? [];
-  const linkedOpportunity = editing ? (getValues('opportunityId') ? { name: 'Vinculada', id: getValues('opportunityId') } : null) : null;
+  const linkedOpportunity = editing ? (loadedSale?.opportunity ?? null) : null;
   const opportunityLocked = Boolean(selectedOpportunityId || linkedOpportunity);
 
   const syncedClientRef = useRef<string | null>(null);
@@ -190,7 +193,13 @@ export const SaleFormPage = () => {
       <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.03em] text-ink sm:text-[30px]">
-            {editing ? 'Editar venta' : 'Registrar venta'}
+            {editing
+              ? loadedSale?.opportunity?.name
+                ? `Editar ${loadedSale.opportunity.name}`
+                : loadedSale
+                  ? `Editar venta ${loadedSale.saleNumber}`
+                  : 'Editar venta'
+              : 'Registrar venta'}
           </h1>
           <p className="mt-1 text-[13px] leading-6 text-muted">
             {editing

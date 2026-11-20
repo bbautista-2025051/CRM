@@ -14,7 +14,6 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { formatMoney } from '@/lib/format';
 
 export const SaleDetailPage = () => {
-  usePageTitle('Detalle de venta');
   const { user } = useAuth();
   const { confirm } = useConfirm();
   const { success, error: toastError } = useToast();
@@ -31,6 +30,9 @@ export const SaleDetailPage = () => {
   });
 
   const sale = query.data;
+  usePageTitle(
+    sale?.opportunity?.name ?? (sale ? `Venta ${sale.saleNumber}` : 'Detalle de venta'),
+  );
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ['sales'] });
@@ -72,8 +74,9 @@ export const SaleDetailPage = () => {
 
   const onConfirm = async () => {
     if (!sale) return;
+    const saleLabel = sale.opportunity?.name ?? sale.saleNumber;
     const accepted = await confirm({
-      title: `Confirmar la venta ${sale.saleNumber}`,
+      title: `Confirmar la venta ${saleLabel}`,
       description: `${formatMoney(sale.amount, sale.currency)} pasará a contar como ingreso confirmado. Después solo un administrador podrá modificarla.`,
       confirmLabel: 'Confirmar venta',
     });
@@ -82,8 +85,9 @@ export const SaleDetailPage = () => {
 
   const onCancel = async () => {
     if (!sale) return;
+    const saleLabel = sale.opportunity?.name ?? sale.saleNumber;
     const accepted = await confirm({
-      title: `Cancelar la venta ${sale.saleNumber}`,
+      title: `Cancelar la venta ${saleLabel}`,
       description:
         'La venta se conservará en el histórico con estado cancelada. Esta acción no se puede revertir.',
       confirmLabel: 'Cancelar venta',
