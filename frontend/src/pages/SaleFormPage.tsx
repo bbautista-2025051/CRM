@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Handshake, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, Select, Textarea } from '@/components/ui/Input';
@@ -14,11 +14,16 @@ import {
   useCompanyOptions,
   useUserOptions,
 } from '@/hooks/queries';
-import { opportunitiesApi, salesApi, unwrap } from '@/lib/endpoints';
+import { salesApi, unwrap } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
 import { isAdmin } from '@/lib/permissions';
-import { formatMoney, todayISO } from '@/lib/format';
-import { emptyToNull, saleFormSchema, type SaleFormValues } from '@/lib/validation';
+import { todayISO } from '@/lib/format';
+import {
+  emptyToNull,
+  saleEditFormSchema,
+  saleFormSchema,
+  type SaleFormValues,
+} from '@/lib/validation';
 import type { Sale } from '@/types';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -30,6 +35,7 @@ const defaults = (
   opportunityId?: string,
 ): SaleFormValues => ({
   opportunityId: sale?.opportunityId ?? opportunityId ?? '',
+  opportunityName: sale?.opportunity?.name ?? '',
   clientId: sale?.clientId ?? clientId ?? '',
   companyId: sale?.companyId ?? companyId ?? '',
   ownerId: sale?.ownerId ?? ownerId ?? '',
@@ -50,6 +56,9 @@ export const SaleFormPage = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const defaultCompanyId = searchParams.get('companyId') ?? undefined;
+  const defaultClientId = searchParams.get('clientId') ?? undefined;
   const formId = useId().replace(/:/g, '');
   const [formError, setFormError] = useState<string | null>(null);
   const [loadedSale, setLoadedSale] = useState<Sale | null>(null);
@@ -66,37 +75,16 @@ export const SaleFormPage = () => {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<SaleFormValues>({
-    resolver: zodResolver(saleFormSchema),
-    defaultValues: defaults(undefined, user?.id),
+    resolver: zodResolver(editing ? saleEditFormSchema : saleFormSchema),
+    defaultValues: defaults(undefined, user?.id, defaultCompanyId, defaultClientId),
   });
 
   const companyId = watch('companyId');
-  const opportunityId = watch('opportunityId');
   const hasTicket = watch('hasTicket');
-  const selectedOpportunityId = opportunityId;
 
   const companies = useCompanyOptions('', true);
   const clients = useClientOptions({ companyId: companyId || undefined }, true);
   const users = useUserOptions(admin);
-
-  const wonOpportunities = useQuery({
-    queryKey: ['opportunities', 'won-options', admin ? 'all' : user?.id],
-    queryFn: async () =>
-      opportunitiesApi.list({
-        pageSize: 100,
-        stage: 'GANADA',
-        status: 'WON',
-        ownerId: admin ? undefined : user?.id,
-        sortBy: 'updatedAt',
-        sortOrder: 'desc',
-      }),
-    enabled: !editing,
-    staleTime: 30_000,
-  });
-
-  const availableOpportunities = (wonOpportunities.data?.data ?? []).filter(
-    (item) => !item.sale && item.clientId,
-  );
 
   useEffect(() => {
     if (saleId) {
@@ -116,19 +104,10 @@ export const SaleFormPage = () => {
       });
     } else {
       setLoadedSale(null);
-      reset(defaults(undefined, user?.id));
+      reset(defaults(undefined, user?.id, defaultCompanyId, defaultClientId));
       setFormError(null);
     }
-  }, [saleId, user?.id, reset]);
-
-  const applyOpportunity = (nextId: string) => {
-    const selected = availableOpportunities.find((item) => item.id === nextId);
-    if (!selected) return;
-    setValue('clientId', selected.clientId ?? '');
-    setValue('companyId', selected.companyId ?? '');
-    setValue('ownerId', selected.ownerId);
-    setValue('amount', selected.value);
-  };
+  }, [saleId, user?.id, defaultCompanyId, defaultClientId, reset]);
 
   const mutation = useMutation({
     mutationFn: async (values: SaleFormValues) => {
@@ -152,7 +131,7 @@ export const SaleFormPage = () => {
       return unwrap(
         await salesApi.create({
           ...common,
-          opportunityId: emptyToNull(values.opportunityId),
+          opportunityName: values.opportunityName.trim(),
           ownerId: values.ownerId || user?.id,
         }),
       );
@@ -160,7 +139,7 @@ export const SaleFormPage = () => {
     onSuccess: (saved) => {
       success(
         editing ? 'Venta actualizada' : 'Venta registrada',
-        `${saved.saleNumber} se guardó correctamente.`,
+        `${saved.opportunity?.name ?? saved.saleNumber} se guardó correctamente.`,
       );
       void queryClient.invalidateQueries({ queryKey: ['sales'] });
       void queryClient.invalidateQueries({ queryKey: ['opportunities'] });
@@ -180,7 +159,7 @@ export const SaleFormPage = () => {
   const clientOptions = clients.data ?? [];
   const userOptions = users.data?.data ?? [];
   const linkedOpportunity = editing ? (loadedSale?.opportunity ?? null) : null;
-  const opportunityLocked = Boolean(selectedOpportunityId || linkedOpportunity);
+  const opportunityLocked = Boolean(editing && linkedOpportunity);
 
   const syncedClientRef = useRef<string | null>(null);
   useEffect(() => {
@@ -211,7 +190,7 @@ export const SaleFormPage = () => {
           <p className="mt-1 text-[13px] leading-6 text-muted">
             {editing
               ? 'Actualiza los datos de la venta. Las ventas confirmadas requieren permisos de administrador.'
-              : 'Registra una venta manualmente o vincúlala a una oportunidad ganada.'}
+              : 'Registra una venta indicando el nombre de la oportunidad ganada, el cliente y el importe.'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -247,24 +226,21 @@ export const SaleFormPage = () => {
 
         {!editing ? (
           <Field
-            label="Oportunidad ganada (opcional)"
-            htmlFor="sale-opportunity"
-            error={errors.opportunityId?.message}
-            hint="Al vincularla se completan el cliente, la empresa y el importe."
+            label="Oportunidad ganada"
+            htmlFor="sale-opportunity-name"
+            error={errors.opportunityName?.message}
+            hint="Escribe el nombre de la oportunidad ganada; este nombre identificará la venta."
+            required
           >
-            <Select
-              id="sale-opportunity"
-              {...register('opportunityId', {
-                onChange: (event) => applyOpportunity(event.target.value),
-              })}
-            >
-              <option value="">Venta manual sin oportunidad</option>
-              {availableOpportunities.map((opportunity) => (
-                <option key={opportunity.id} value={opportunity.id}>
-                  {opportunity.name} · {formatMoney(opportunity.value)}
-                </option>
-              ))}
-            </Select>
+            <Input
+              id="sale-opportunity-name"
+              type="text"
+              maxLength={180}
+              placeholder="Ej. Implementación CRM anual"
+              invalid={Boolean(errors.opportunityName)}
+              required
+              {...register('opportunityName')}
+            />
           </Field>
         ) : linkedOpportunity ? (
           <div className="rounded-xl border border-line bg-elevated/40 p-4">
@@ -276,12 +252,6 @@ export const SaleFormPage = () => {
               La oportunidad de una venta no puede modificarse.
             </p>
           </div>
-        ) : null}
-
-        {opportunityLocked && !editing ? (
-          <Alert variant="info">
-            La venta heredará el cliente, la empresa y el responsable de la oportunidad seleccionada.
-          </Alert>
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -305,7 +275,8 @@ export const SaleFormPage = () => {
             label="Cliente"
             htmlFor="sale-client"
             error={errors.clientId?.message}
-            hint="Obligatorio si no vinculas una oportunidad."
+            hint="Obligatorio para registrar la venta."
+            required={!editing}
           >
             <Select
               id="sale-client"

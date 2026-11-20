@@ -39,25 +39,35 @@ export const saleListQuerySchema = paginationQuerySchema.extend({
     .optional(),
 });
 
-export const saleBodySchema = z.object({
-  companyId: optionalId(),
-  clientId: optionalId(),
-  opportunityId: optionalId(),
-  ownerId: z.string().uuid('El responsable no es válido').optional(),
-  saleDate: requiredDateOnly('La fecha de venta'),
-  amount: moneySchema,
-  currency: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .regex(/^[A-Z]{3}$/, 'La moneda debe ser un código ISO de 3 letras (ej. GTQ)')
-    .default('GTQ'),
-  status: z.nativeEnum(SaleStatus).optional().default(SaleStatus.PENDING),
-  notes: optionalText(2000, 'Las observaciones'),
-  hasTicket: z.boolean().optional().default(false),
-  ticketNumber: optionalText(60, 'El número de ticket'),
-  ticketStage: z.nativeEnum(TicketStage).nullable().optional(),
-});
+export const saleBodySchema = z
+  .object({
+    companyId: optionalId(),
+    clientId: optionalId(),
+    opportunityId: optionalId(),
+    opportunityName: optionalText(180, 'La oportunidad ganada'),
+    ownerId: z.string().uuid('El responsable no es válido').optional(),
+    saleDate: requiredDateOnly('La fecha de venta'),
+    amount: moneySchema,
+    currency: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{3}$/, 'La moneda debe ser un código ISO de 3 letras (ej. GTQ)')
+      .default('GTQ'),
+    status: z.nativeEnum(SaleStatus).optional().default(SaleStatus.PENDING),
+    notes: optionalText(2000, 'Las observaciones'),
+    hasTicket: z.boolean().optional().default(false),
+    ticketNumber: optionalText(60, 'El número de ticket'),
+    ticketStage: z.nativeEnum(TicketStage).nullable().optional(),
+  })
+  .refine((data) => Boolean(data.opportunityId || data.opportunityName), {
+    message: 'La oportunidad ganada es obligatoria',
+    path: ['opportunityName'],
+  })
+  .refine((data) => !data.opportunityName || data.opportunityName.length >= 2, {
+    message: 'La oportunidad ganada debe tener al menos 2 caracteres',
+    path: ['opportunityName'],
+  });
 
 export const saleCommentBodySchema = z.object({
   body: z

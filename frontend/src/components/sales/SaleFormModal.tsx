@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Handshake } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -14,11 +14,16 @@ import {
   useCompanyOptions,
   useUserOptions,
 } from '@/hooks/queries';
-import { opportunitiesApi, salesApi, unwrap } from '@/lib/endpoints';
+import { salesApi, unwrap } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
 import { isAdmin } from '@/lib/permissions';
-import { formatMoney, todayISO } from '@/lib/format';
-import { emptyToNull, saleFormSchema, type SaleFormValues } from '@/lib/validation';
+import { todayISO } from '@/lib/format';
+import {
+  emptyToNull,
+  saleEditFormSchema,
+  saleFormSchema,
+  type SaleFormValues,
+} from '@/lib/validation';
 import type { Sale } from '@/types';
 
 const defaults = (
@@ -29,6 +34,7 @@ const defaults = (
   opportunityId?: string,
 ): SaleFormValues => ({
   opportunityId: sale?.opportunityId ?? opportunityId ?? '',
+  opportunityName: sale?.opportunity?.name ?? '',
   clientId: sale?.clientId ?? clientId ?? '',
   companyId: sale?.companyId ?? companyId ?? '',
   ownerId: sale?.ownerId ?? ownerId ?? '',
@@ -78,7 +84,7 @@ export const SaleFormModal = ({
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<SaleFormValues>({
-    resolver: zodResolver(saleFormSchema),
+    resolver: zodResolver(editing ? saleEditFormSchema : saleFormSchema),
     defaultValues: defaults(
       sale,
       user?.id,
@@ -89,32 +95,11 @@ export const SaleFormModal = ({
   });
 
   const companyId = watch('companyId');
-  const opportunityId = watch('opportunityId');
   const hasTicket = watch('hasTicket');
-  const selectedOpportunityId = opportunityId;
 
   const companies = useCompanyOptions('', open);
   const clients = useClientOptions({ companyId: companyId || undefined }, open);
   const users = useUserOptions(admin && open);
-
-  const wonOpportunities = useQuery({
-    queryKey: ['opportunities', 'won-options', admin ? 'all' : user?.id],
-    queryFn: async () =>
-      opportunitiesApi.list({
-        pageSize: 100,
-        stage: 'GANADA',
-        status: 'WON',
-        ownerId: admin ? undefined : user?.id,
-        sortBy: 'updatedAt',
-        sortOrder: 'desc',
-      }),
-    enabled: open && !editing,
-    staleTime: 30_000,
-  });
-
-  const availableOpportunities = (wonOpportunities.data?.data ?? []).filter(
-    (item) => !item.sale && item.clientId,
-  );
 
   useEffect(() => {
     if (open) {
@@ -139,15 +124,6 @@ export const SaleFormModal = ({
     reset,
   ]);
 
-  const applyOpportunity = (nextId: string) => {
-    const selected = availableOpportunities.find((item) => item.id === nextId);
-    if (!selected) return;
-    setValue('clientId', selected.clientId ?? '');
-    setValue('companyId', selected.companyId ?? '');
-    setValue('ownerId', selected.ownerId);
-    setValue('amount', selected.value);
-  };
-
   const mutation = useMutation({
     mutationFn: async (values: SaleFormValues) => {
       const common = {
@@ -170,7 +146,7 @@ export const SaleFormModal = ({
       return unwrap(
         await salesApi.create({
           ...common,
-          opportunityId: emptyToNull(values.opportunityId),
+          opportunityName: values.opportunityName.trim(),
           ownerId: values.ownerId || user?.id,
         }),
       );
@@ -178,7 +154,7 @@ export const SaleFormModal = ({
     onSuccess: (saved) => {
       success(
         editing ? 'Venta actualizada' : 'Venta registrada',
-        `${saved.saleNumber} se guardó correctamente.`,
+        `${saved.opportunity?.name ?? saved.saleNumber} se guardó correctamente.`,
       );
       void queryClient.invalidateQueries({ queryKey: ['sales'] });
       void queryClient.invalidateQueries({ queryKey: ['opportunities'] });
@@ -199,7 +175,7 @@ export const SaleFormModal = ({
   const clientOptions = clients.data ?? [];
   const userOptions = users.data?.data ?? [];
   const linkedOpportunity = sale?.opportunity;
-  const opportunityLocked = Boolean(selectedOpportunityId || linkedOpportunity);
+  const opportunityLocked = Boolean(editing && linkedOpportunity);
 
   // El <select> de cliente no está controlado: si la oportunidad fija el
   // cliente antes de que la lista filtrada por empresa haya cargado, el
@@ -240,7 +216,7 @@ export const SaleFormModal = ({
       description={
         editing
           ? 'Actualiza los datos de la venta. Las ventas confirmadas requieren permisos de administrador.'
-          : 'Registra una venta manualmente o vincúlala a una oportunidad ganada.'
+          : 'Registra una venta indicando el nombre de la oportunidad ganada, el cliente y el importe.'
       }
       footer={
         <>
@@ -272,24 +248,21 @@ export const SaleFormModal = ({
 
         {!editing ? (
           <Field
-            label="Oportunidad ganada (opcional)"
-            htmlFor="sale-opportunity"
-            error={errors.opportunityId?.message}
-            hint="Al vincularla se completan el cliente, la empresa y el importe."
+            label="Oportunidad ganada"
+            htmlFor="sale-opportunity-name"
+            error={errors.opportunityName?.message}
+            hint="Escribe el nombre de la oportunidad ganada; este nombre identificará la venta."
+            required
           >
-            <Select
-              id="sale-opportunity"
-              {...register('opportunityId', {
-                onChange: (event) => applyOpportunity(event.target.value),
-              })}
-            >
-              <option value="">Venta manual sin oportunidad</option>
-              {availableOpportunities.map((opportunity) => (
-                <option key={opportunity.id} value={opportunity.id}>
-                  {opportunity.name} · {formatMoney(opportunity.value)}
-                </option>
-              ))}
-            </Select>
+            <Input
+              id="sale-opportunity-name"
+              type="text"
+              maxLength={180}
+              placeholder="Ej. Implementación CRM anual"
+              invalid={Boolean(errors.opportunityName)}
+              required
+              {...register('opportunityName')}
+            />
           </Field>
         ) : linkedOpportunity ? (
           <div className="rounded-xl border border-line bg-elevated/40 p-4">
@@ -301,13 +274,6 @@ export const SaleFormModal = ({
               La oportunidad de una venta no puede modificarse.
             </p>
           </div>
-        ) : null}
-
-        {opportunityLocked && !editing ? (
-          <Alert variant="info">
-            La venta heredará el cliente, la empresa y el responsable de la oportunidad
-            seleccionada.
-          </Alert>
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -334,7 +300,8 @@ export const SaleFormModal = ({
             label="Cliente"
             htmlFor="sale-client"
             error={errors.clientId?.message}
-            hint="Obligatorio si no vinculas una oportunidad."
+            hint="Obligatorio para registrar la venta."
+            required={!editing}
           >
             <Select
               id="sale-client"

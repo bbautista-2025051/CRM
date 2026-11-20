@@ -131,6 +131,7 @@ export type OpportunityFormValues = z.infer<typeof opportunityFormSchema>;
 
 export const saleFormSchema = z.object({
   opportunityId: z.string(),
+  opportunityName: requiredText('La oportunidad ganada', 180, 2),
   clientId: z.string(),
   companyId: z.string(),
   ownerId: z.string(),
@@ -148,6 +149,10 @@ export const saleFormSchema = z.object({
   ticketStage: z.enum(['IN_PROGRESS', 'ACCEPTED', 'REJECTED']),
 });
 export type SaleFormValues = z.infer<typeof saleFormSchema>;
+
+export const saleEditFormSchema = saleFormSchema.extend({
+  opportunityName: z.string().trim().max(180),
+});
 
 export const projectFormSchema = z
   .object({

@@ -211,15 +211,16 @@ export const generateSaleNumber = async (tx: Prisma.TransactionClient): Promise<
 };
 
 interface SaleInput {
-  companyId: string | null;
-  clientId: string | null;
-  opportunityId: string | null;
+  companyId?: string | null;
+  clientId?: string | null;
+  opportunityId?: string | null;
+  opportunityName?: string | null;
   ownerId?: string;
   saleDate: Date;
   amount: string;
   currency: string;
   status: SaleStatus;
-  notes: string | null;
+  notes?: string | null;
   hasTicket?: boolean;
   ticketNumber?: string | null;
   ticketStage?: TicketStage | null;
@@ -233,12 +234,15 @@ interface ResolvedRelations {
 }
 
 const resolveRelations = async (
-  input: Pick<SaleInput, 'companyId' | 'clientId' | 'opportunityId' | 'ownerId'>,
+  input: Pick<
+    SaleInput,
+    'companyId' | 'clientId' | 'opportunityId' | 'opportunityName' | 'ownerId'
+  >,
   actor: User,
 ): Promise<ResolvedRelations> => {
-  let companyId = input.companyId;
-  let clientId = input.clientId;
-  let opportunityId = input.opportunityId;
+  let companyId = input.companyId ?? null;
+  let clientId = input.clientId ?? null;
+  let opportunityId = input.opportunityId ?? null;
   let ownerId = input.ownerId ?? actor.id;
 
   if (actor.role !== 'ADMIN' && ownerId !== actor.id) {
@@ -284,9 +288,13 @@ const resolveRelations = async (
     ownerId = opportunity.ownerId;
   }
 
+  if (!opportunityId && !input.opportunityName) {
+    throw new BadRequestError('La oportunidad ganada es obligatoria para registrar la venta');
+  }
+
   if (!clientId) {
     throw new BadRequestError(
-      'Selecciona un cliente o una oportunidad ganada para registrar la venta',
+      'Selecciona un cliente para registrar la venta',
     );
   }
 
@@ -328,19 +336,38 @@ export const createSale = async (input: SaleInput, actor: User) => {
 
   const sale = await prisma.$transaction(
     async (tx) => {
+      let opportunityId = relations.opportunityId;
+
+      if (!opportunityId && input.opportunityName) {
+        const createdOpportunity = await tx.opportunity.create({
+          data: {
+            name: input.opportunityName,
+            companyId: relations.companyId,
+            clientId: relations.clientId,
+            ownerId: relations.ownerId,
+            value: input.amount,
+            probability: 100,
+            stage: 'GANADA',
+            status: 'WON',
+            wonAt: new Date(),
+          },
+        });
+        opportunityId = createdOpportunity.id;
+      }
+
       const saleNumber = await generateSaleNumber(tx);
       return tx.sale.create({
         data: {
           saleNumber,
           companyId: relations.companyId,
           clientId: relations.clientId,
-          opportunityId: relations.opportunityId,
+          opportunityId,
           ownerId: relations.ownerId,
           saleDate: input.saleDate,
           amount: input.amount,
           currency: input.currency,
           status: input.status,
-          notes: input.notes,
+          notes: input.notes ?? null,
           hasTicket,
           ticketNumber: hasTicket ? input.ticketNumber ?? null : null,
           ticketStage: hasTicket ? input.ticketStage ?? 'IN_PROGRESS' : null,

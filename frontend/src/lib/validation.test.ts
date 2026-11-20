@@ -26,6 +26,7 @@ const company = {
 
 const sale = {
   opportunityId: '',
+  opportunityName: 'Renovación anual',
   clientId: '',
   companyId: '',
   ownerId: '',
@@ -34,6 +35,9 @@ const sale = {
   currency: 'gtq',
   status: 'PENDING' as const,
   notes: '',
+  hasTicket: false,
+  ticketNumber: '',
+  ticketStage: 'IN_PROGRESS' as const,
 };
 
 describe('loginSchema', () => {
@@ -147,6 +151,14 @@ describe('saleFormSchema', () => {
     expect(saleFormSchema.safeParse({ ...sale, saleDate: '30-10-2026' }).success).toBe(false);
     expect(saleFormSchema.safeParse({ ...sale, amount: '0' }).success).toBe(false);
     expect(saleFormSchema.safeParse({ ...sale, amount: '-5' }).success).toBe(false);
+  });
+
+  it('exige el nombre de la oportunidad ganada', () => {
+    expect(saleFormSchema.safeParse({ ...sale, opportunityName: '' }).success).toBe(false);
+    expect(saleFormSchema.safeParse({ ...sale, opportunityName: '   ' }).success).toBe(false);
+    expect(saleFormSchema.safeParse({ ...sale, opportunityName: 'A' }).success).toBe(false);
+    const parsed = saleFormSchema.parse({ ...sale, opportunityName: '  Licencia anual  ' });
+    expect(parsed.opportunityName).toBe('Licencia anual');
   });
 
   it('rechaza códigos de moneda que no sean ISO de 3 letras', () => {
