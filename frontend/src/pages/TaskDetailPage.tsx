@@ -91,7 +91,7 @@ export const TaskDetailPage = () => {
       if (formData.dueDate !== undefined) payload['dueDate'] = formData.dueDate || null;
 
       const data = unwrap(
-        await teamApi.updateTask(task.task.project.id, taskId, payload),
+        await teamApi.updateTask(task.project.id, taskId, payload),
       );
       setTask(data);
       setFormData({
@@ -112,7 +112,7 @@ export const TaskDetailPage = () => {
     if (!taskId) return;
     try {
       const data = unwrap(
-        await teamApi.updateTask(task.task.project.id, taskId, {
+        await teamApi.updateTask(task.project.id, taskId, {
           status: nextStatus,
         }),
       );

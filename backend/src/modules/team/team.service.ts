@@ -339,6 +339,14 @@ export const updateTask = async (
       data: input,
       include: {
         assignee: { select: { id: true, name: true, avatarUrl: true, role: true } },
+        project: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            company: { select: { id: true, name: true } },
+          },
+        },
       },
     });
 

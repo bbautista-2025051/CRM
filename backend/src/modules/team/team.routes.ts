@@ -46,9 +46,10 @@ teamRouter.post(
   controller.createTask,
 );
 
+// El responsable asignado también puede actualizar su tarea, pero el servicio
+// limita su alcance a cambiar únicamente el estado.
 teamRouter.patch(
   '/:projectId/tasks/:taskId',
-  requireTeamTaskManager,
   csrfProtection,
   validate({ params: projectTaskParamsSchema, body: updateTaskSchema }),
   controller.updateTask,
