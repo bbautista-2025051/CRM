@@ -2,6 +2,7 @@ import {
   Prisma,
   type Sale,
   type SaleStatus,
+  type TicketStage,
   type User,
 } from '@prisma/client';
 import { prisma } from '../../config/prisma';
@@ -211,6 +212,9 @@ interface SaleInput {
   currency: string;
   status: SaleStatus;
   notes: string | null;
+  hasTicket?: boolean;
+  ticketNumber?: string | null;
+  ticketStage?: TicketStage | null;
 }
 
 interface ResolvedRelations {
@@ -312,6 +316,7 @@ export const createSale = async (input: SaleInput, actor: User) => {
   if (!input.status) input.status = 'PENDING';
 
   const relations = await resolveRelations(input, actor);
+  const hasTicket = input.hasTicket ?? false;
 
   const sale = await prisma.$transaction(
     async (tx) => {
@@ -328,6 +333,9 @@ export const createSale = async (input: SaleInput, actor: User) => {
           currency: input.currency,
           status: input.status,
           notes: input.notes,
+          hasTicket,
+          ticketNumber: hasTicket ? input.ticketNumber ?? null : null,
+          ticketStage: hasTicket ? input.ticketStage ?? 'IN_PROGRESS' : null,
         },
         include: {
           company: { select: { id: true, name: true } },
@@ -369,6 +377,9 @@ export const updateSale = async (
     currency?: string;
     status?: SaleStatus;
     notes?: string | null;
+    hasTicket?: boolean;
+    ticketNumber?: string | null;
+    ticketStage?: TicketStage | null;
   },
   actor: User,
 ) => {
@@ -427,6 +438,19 @@ export const updateSale = async (
     }
   }
 
+  const hasTicket =
+    input.hasTicket !== undefined ? input.hasTicket : existing.hasTicket;
+  const ticketNumber = hasTicket
+    ? input.ticketNumber !== undefined
+      ? input.ticketNumber
+      : existing.ticketNumber
+    : null;
+  const ticketStage: TicketStage | null = hasTicket
+    ? input.ticketStage !== undefined
+      ? input.ticketStage
+      : existing.ticketStage ?? 'IN_PROGRESS'
+    : null;
+
   const sale = await prisma.sale.update({
     where: { id },
     data: {
@@ -437,6 +461,9 @@ export const updateSale = async (
       ...(input.currency !== undefined ? { currency: input.currency } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      hasTicket,
+      ticketNumber,
+      ticketStage,
     },
     include: {
       company: { select: { id: true, name: true } },
@@ -453,6 +480,66 @@ export const updateSale = async (
     entityId: sale.id,
     description: `Venta actualizada: ${sale.saleNumber}`,
     metadata: input.status ? { status: input.status } : undefined,
+  });
+
+  return sale;
+};
+
+/**
+ * Actualiza solo los datos del ticket. A diferencia de la venta, esta acción
+ * también está disponible para el responsable cuando la venta ya está confirmada.
+ */
+export const updateSaleTicket = async (
+  id: string,
+  input: {
+    ticketNumber?: string | null;
+    ticketStage?: TicketStage;
+  },
+  actor: User,
+) => {
+  const existing = await prisma.sale.findUnique({ where: { id } });
+  if (!existing) throw new NotFoundError('La venta no existe');
+  if (!existing.hasTicket) {
+    throw new BadRequestError('Esta venta no tiene un ticket asociado');
+  }
+
+  const canManage =
+    actor.role === 'ADMIN' ||
+    actor.role === 'GERENTE' ||
+    actor.role === 'OPERACIONES' ||
+    existing.ownerId === actor.id;
+  if (!canManage) {
+    throw new ForbiddenError('No tienes permiso para gestionar este ticket');
+  }
+
+  const sale = await prisma.sale.update({
+    where: { id },
+    data: {
+      ...(input.ticketNumber !== undefined
+        ? { ticketNumber: input.ticketNumber }
+        : {}),
+      ...(input.ticketStage !== undefined
+        ? { ticketStage: input.ticketStage }
+        : {}),
+    },
+    include: {
+      company: { select: { id: true, name: true } },
+      client: { select: { id: true, firstName: true, lastName: true } },
+      owner: { select: { id: true, name: true } },
+      opportunity: { select: { id: true, name: true } },
+    },
+  });
+
+  await logActivity({
+    userId: actor.id,
+    action: input.ticketStage ? 'STATUS_CHANGE' : 'UPDATE',
+    entityType: 'SALE',
+    entityId: sale.id,
+    description: `Ticket actualizado: ${sale.saleNumber}`,
+    metadata: {
+      ticketNumber: sale.ticketNumber,
+      ticketStage: sale.ticketStage,
+    },
   });
 
   return sale;

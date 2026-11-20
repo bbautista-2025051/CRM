@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SaleStatus } from '@prisma/client';
+import { SaleStatus, TicketStage } from '@prisma/client';
 import { paginationQuerySchema } from '../../utils/pagination';
 import {
   moneySchema,
@@ -41,6 +41,9 @@ export const saleBodySchema = z.object({
     .default('GTQ'),
   status: z.nativeEnum(SaleStatus).optional().default(SaleStatus.PENDING),
   notes: optionalText(2000, 'Las observaciones'),
+  hasTicket: z.boolean().optional().default(false),
+  ticketNumber: optionalText(60, 'El número de ticket'),
+  ticketStage: z.nativeEnum(TicketStage).nullable().optional(),
 });
 
 export const saleCommentBodySchema = z.object({
@@ -60,6 +63,15 @@ export const saleFileParamsSchema = z.object({
   fileId: z.string().uuid('El identificador del archivo no es válido'),
 });
 
+export const updateSaleTicketSchema = z
+  .object({
+    ticketNumber: optionalText(60, 'El número de ticket'),
+    ticketStage: z.nativeEnum(TicketStage),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'Envía al menos un campo para actualizar',
+  });
+
 export const updateSaleSchema = z
   .object({
     companyId: optionalId(),
@@ -74,6 +86,9 @@ export const updateSaleSchema = z
       .optional(),
     status: z.nativeEnum(SaleStatus).optional(),
     notes: optionalText(2000, 'Las observaciones'),
+    hasTicket: z.boolean().optional(),
+    ticketNumber: optionalText(60, 'El número de ticket'),
+    ticketStage: z.nativeEnum(TicketStage).nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: 'Envía al menos un campo para actualizar',

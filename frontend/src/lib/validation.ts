@@ -143,6 +143,9 @@ export const saleFormSchema = z.object({
     .regex(/^[A-Z]{3}$/, 'La moneda debe ser un código ISO de 3 letras'),
   status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED']),
   notes: z.string().trim().max(10000),
+  hasTicket: z.boolean(),
+  ticketNumber: z.string().trim().max(60, 'El número de ticket no puede superar 60 caracteres'),
+  ticketStage: z.enum(['IN_PROGRESS', 'ACCEPTED', 'REJECTED']),
 });
 export type SaleFormValues = z.infer<typeof saleFormSchema>;
 

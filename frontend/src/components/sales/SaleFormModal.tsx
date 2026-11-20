@@ -37,6 +37,9 @@ const defaults = (
   currency: sale?.currency ?? 'GTQ',
   status: sale?.status ?? 'PENDING',
   notes: sale?.notes ?? '',
+  hasTicket: sale?.hasTicket ?? false,
+  ticketNumber: sale?.ticketNumber ?? '',
+  ticketStage: sale?.ticketStage ?? 'IN_PROGRESS',
 });
 
 export const SaleFormModal = ({
@@ -87,6 +90,7 @@ export const SaleFormModal = ({
 
   const companyId = watch('companyId');
   const opportunityId = watch('opportunityId');
+  const hasTicket = watch('hasTicket');
   const selectedOpportunityId = opportunityId;
 
   const companies = useCompanyOptions('', open);
@@ -154,6 +158,9 @@ export const SaleFormModal = ({
         currency: values.currency.trim().toUpperCase(),
         status: values.status,
         notes: emptyToNull(values.notes),
+        hasTicket: values.hasTicket,
+        ticketNumber: values.hasTicket ? emptyToNull(values.ticketNumber) : null,
+        ticketStage: values.hasTicket ? values.ticketStage : null,
       };
 
       if (sale) {
@@ -437,6 +444,63 @@ export const SaleFormModal = ({
             {...register('notes')}
           />
         </Field>
+
+        <div className="space-y-3 rounded-xl border border-line bg-elevated/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-ink">Ticket</p>
+              <p className="text-xs text-muted">¿Esta venta requiere ticket?</p>
+            </div>
+            <div
+              role="group"
+              aria-label="¿Esta venta requiere ticket?"
+              className="inline-flex rounded-lg border border-line bg-elevated/50 p-1"
+            >
+              <button
+                type="button"
+                aria-pressed={!hasTicket}
+                onClick={() => setValue('hasTicket', false, { shouldValidate: true })}
+                className={`focus-ring rounded-md px-4 py-1.5 text-sm font-medium transition ${
+                  !hasTicket
+                    ? 'bg-surface text-ink shadow-sm'
+                    : 'text-muted hover:text-ink'
+                }`}
+              >
+                No
+              </button>
+              <button
+                type="button"
+                aria-pressed={hasTicket}
+                onClick={() => setValue('hasTicket', true, { shouldValidate: true })}
+                className={`focus-ring rounded-md px-4 py-1.5 text-sm font-medium transition ${
+                  hasTicket
+                    ? 'bg-surface text-ink shadow-sm'
+                    : 'text-muted hover:text-ink'
+                }`}
+              >
+                Sí
+              </button>
+            </div>
+          </div>
+
+          {hasTicket ? (
+            <Field
+              label="Número de ticket"
+              htmlFor="sale-ticket-number"
+              error={errors.ticketNumber?.message}
+              hint="Se mostrará en el detalle de la venta junto a su etapa y archivos."
+            >
+              <Input
+                id="sale-ticket-number"
+                placeholder="TK-0001"
+                {...register('ticketNumber')}
+              />
+            </Field>
+          ) : (
+            <input type="hidden" {...register('ticketNumber')} />
+          )}
+          <input type="hidden" {...register('ticketStage')} />
+        </div>
       </form>
     </Modal>
   );

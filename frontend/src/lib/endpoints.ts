@@ -32,6 +32,8 @@ import type {
   SessionPayload,
   TeamOverview,
   ThemePreference,
+  TicketComment,
+  TicketFile,
   UserSession,
 } from '@/types';
 
@@ -219,10 +221,28 @@ export const salesApi = {
     api.delete<void>(`/api/sales/${id}/files/${fileId}`),
   downloadFile: (id: string, fileId: string) =>
     download(`/api/sales/${id}/files/${fileId}/download`),
+  listTicketComments: (id: string) =>
+    api.get<DataEnvelope<TicketComment[]>>(`/api/sales/${id}/ticket/comments`),
+  createTicketComment: (id: string, body: string, fileIds: string[] = []) =>
+    api.post<DataEnvelope<TicketComment>>(`/api/sales/${id}/ticket/comments`, {
+      body,
+      fileIds,
+    }),
+  uploadTicketFile: (id: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post<DataEnvelope<TicketFile>>(`/api/sales/${id}/ticket/files`, form);
+  },
+  removeTicketFile: (id: string, fileId: string) =>
+    api.delete<void>(`/api/sales/${id}/ticket/files/${fileId}`),
+  downloadTicketFile: (id: string, fileId: string) =>
+    download(`/api/sales/${id}/ticket/files/${fileId}/download`),
   create: (payload: Record<string, unknown>) =>
     api.post<DataEnvelope<Sale>>('/api/sales', payload),
   update: (id: string, payload: Record<string, unknown>) =>
     api.patch<DataEnvelope<Sale>>(`/api/sales/${id}`, payload),
+  updateTicket: (id: string, payload: Record<string, unknown>) =>
+    api.patch<DataEnvelope<Sale>>(`/api/sales/${id}/ticket`, payload),
   confirm: (id: string) =>
     api.patch<DataEnvelope<Sale>>(`/api/sales/${id}`, { status: 'CONFIRMED' }),
   cancel: (id: string) =>

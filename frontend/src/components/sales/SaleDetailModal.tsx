@@ -12,6 +12,7 @@ import {
   Image,
   Pencil,
   Target,
+  Ticket,
   UserRound,
   Trash2,
   X,
@@ -23,6 +24,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Avatar } from '@/components/ui/Avatar';
 import { SaleStatusBadge } from '@/components/ui/StatusBadges';
+import { TicketDetailModal } from '@/components/sales/TicketDetailModal';
 import { useAuth } from '@/providers/AuthProvider';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/providers/ToastProvider';
@@ -108,6 +110,7 @@ export const SaleDetailModal = ({
   const isMountedRef = useRef(false);
   const [commentDraft, setCommentDraft] = useState('');
   const [stagedFiles, setStagedFiles] = useState<SaleFile[]>([]);
+  const [ticketOpen, setTicketOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ['sales', 'detail', saleId],
@@ -282,6 +285,7 @@ export const SaleDetailModal = ({
     : false;
 
   return (
+    <>
     <Modal
       open={Boolean(saleId)}
       onClose={onClose}
@@ -329,6 +333,22 @@ export const SaleDetailModal = ({
         <div className="max-w-4xl space-y-5">
           <div className="flex flex-wrap items-center gap-2">
             <SaleStatusBadge status={sale?.status} />
+            {sale?.hasTicket ? (
+              <button
+                type="button"
+                onClick={() => setTicketOpen(true)}
+                className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand-strong transition hover:bg-brand/15 dark:text-brand"
+                title="Abrir el detalle del ticket"
+              >
+                <Ticket className="h-3.5 w-3.5" />
+                Ticket
+                {sale.ticketNumber ? (
+                  <span className="font-mono font-normal text-muted">
+                    {sale.ticketNumber}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
           </div>
 
           <div className="border-y border-line py-3.5">
@@ -657,5 +677,13 @@ export const SaleDetailModal = ({
         </div>
       )}
     </Modal>
+    {sale?.hasTicket ? (
+      <TicketDetailModal
+        saleId={saleId ?? ''}
+        open={ticketOpen}
+        onClose={() => setTicketOpen(false)}
+      />
+    ) : null}
+    </>
   );
 };

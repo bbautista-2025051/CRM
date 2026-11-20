@@ -14,6 +14,7 @@ import {
   saleListQuerySchema,
   saleSummaryQuerySchema,
   updateSaleSchema,
+  updateSaleTicketSchema,
 } from './sales.schemas';
 
 export const salesRouter = Router();
@@ -80,6 +81,49 @@ salesRouter.delete(
   csrfProtection,
   validate({ params: saleFileParamsSchema }),
   controller.removeFile,
+);
+
+// --- Ticket de la venta ---
+
+salesRouter.patch(
+  '/:id/ticket',
+  csrfProtection,
+  validate({ params: idParamSchema, body: updateSaleTicketSchema }),
+  controller.updateTicket,
+);
+
+salesRouter.get(
+  '/:id/ticket/comments',
+  validate({ params: idParamSchema }),
+  controller.listTicketComments,
+);
+
+salesRouter.post(
+  '/:id/ticket/comments',
+  csrfProtection,
+  validate({ params: idParamSchema, body: saleCommentBodySchema }),
+  controller.createTicketComment,
+);
+
+salesRouter.post(
+  '/:id/ticket/files',
+  csrfProtection,
+  validate({ params: idParamSchema }),
+  saleFileUpload.single('file'),
+  controller.uploadTicketFile,
+);
+
+salesRouter.get(
+  '/:id/ticket/files/:fileId/download',
+  validate({ params: saleFileParamsSchema }),
+  controller.downloadTicketFile,
+);
+
+salesRouter.delete(
+  '/:id/ticket/files/:fileId',
+  csrfProtection,
+  validate({ params: saleFileParamsSchema }),
+  controller.removeTicketFile,
 );
 
 // --- Estados de venta personalizados (solo ADMIN puede crear/eliminar) ---
