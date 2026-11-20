@@ -33,6 +33,8 @@ interface ListParams {
   ownerId?: string;
   clientId?: string;
   companyId?: string;
+  hasTicket?: boolean;
+  ticketStage?: TicketStage;
   dateFrom?: string;
   dateTo?: string;
   sortBy?: string;
@@ -44,6 +46,7 @@ const SORTABLE = [
   'saleDate',
   'amount',
   'status',
+  'ticketNumber',
   'createdAt',
   'updatedAt',
 ] as const;
@@ -54,10 +57,15 @@ export const listSales = async (params: ListParams) => {
     ...(params.ownerId ? { ownerId: params.ownerId } : {}),
     ...(params.clientId ? { clientId: params.clientId } : {}),
     ...(params.companyId ? { companyId: params.companyId } : {}),
+    ...(params.hasTicket !== undefined ? { hasTicket: params.hasTicket } : {}),
+    ...(params.ticketStage ? { ticketStage: params.ticketStage } : {}),
     ...(params.search
       ? {
           OR: [
             { saleNumber: { contains: params.search, mode: 'insensitive' } },
+            {
+              ticketNumber: { contains: params.search, mode: 'insensitive' },
+            },
             {
               opportunity: { name: { contains: params.search, mode: 'insensitive' } },
             },

@@ -8,6 +8,7 @@ import {
   LogOut,
   Settings,
   ShieldCheck,
+  Ticket,
   UserCheck,
   Users,
 } from "lucide-react";
@@ -42,6 +43,7 @@ const navGroups: NavGroup[] = [
     label: "Comercial",
     items: [
       { to: "/negocio", label: "Negocio", icon: Briefcase },
+      { to: "/tickets", label: "Tickets", icon: Ticket },
       { to: "/companies", label: "Empresas", icon: Building2 },
       { to: "/clients", label: "Contacto", icon: Users },
     ],

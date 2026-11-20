@@ -23,6 +23,7 @@ const sectionTitle = (pathname: string): string => {
     pathname.startsWith('/sales')
   )
     return 'Negocio';
+  if (pathname.startsWith('/tickets')) return 'Tickets';
   if (pathname.startsWith('/projects')) return 'Proyectos';
   if (pathname.startsWith('/team')) return 'Equipo';
   if (pathname.startsWith('/users')) return 'Usuarios';

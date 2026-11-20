@@ -190,6 +190,8 @@ export const salesApi = {
     ownerId?: string;
     clientId?: string;
     companyId?: string;
+    hasTicket?: boolean;
+    ticketStage?: string;
     dateFrom?: string;
     dateTo?: string;
     sortBy?: string;

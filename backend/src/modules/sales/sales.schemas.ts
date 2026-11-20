@@ -13,6 +13,11 @@ export const saleListQuerySchema = paginationQuerySchema.extend({
   ownerId: z.string().uuid().optional(),
   clientId: z.string().uuid().optional(),
   companyId: z.string().uuid().optional(),
+  hasTicket: z
+    .enum(['true', 'false'])
+    .transform((value) => value === 'true')
+    .optional(),
+  ticketStage: z.nativeEnum(TicketStage).optional(),
   dateFrom: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener formato AAAA-MM-DD')
@@ -22,7 +27,15 @@ export const saleListQuerySchema = paginationQuerySchema.extend({
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe tener formato AAAA-MM-DD')
     .optional(),
   sortBy: z
-    .enum(['saleNumber', 'saleDate', 'amount', 'status', 'createdAt', 'updatedAt'])
+    .enum([
+      'saleNumber',
+      'saleDate',
+      'amount',
+      'status',
+      'ticketNumber',
+      'createdAt',
+      'updatedAt',
+    ])
     .optional(),
 });
 
