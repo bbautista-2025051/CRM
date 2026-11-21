@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { NotFoundError } from '../../utils/errors';
 import { prisma } from '../../config/prisma';
+import * as notificationsService from './notifications.service';
 
 export const list = asyncHandler(async (req: Request, res: Response) => {
   if (!req.auth) return;
@@ -49,4 +50,9 @@ export const markAllRead = asyncHandler(async (req: Request, res: Response) => {
   });
 
   res.status(200).json({ data: { updated: result.count } });
+});
+
+export const checkTaskReminders = asyncHandler(async (_req: Request, res: Response) => {
+  const created = await notificationsService.checkTaskReminders();
+  res.status(200).json({ data: { created, count: created.length } });
 });

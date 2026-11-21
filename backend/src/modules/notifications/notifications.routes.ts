@@ -9,6 +9,11 @@ export const notificationsRouter = Router();
 
 notificationsRouter.use(requireAuth);
 notificationsRouter.get('/', controller.list);
+notificationsRouter.post(
+  '/check-task-reminders',
+  csrfProtection,
+  controller.checkTaskReminders,
+);
 notificationsRouter.patch('/read-all', csrfProtection, controller.markAllRead);
 notificationsRouter.patch(
   '/:id/read',

@@ -10,12 +10,24 @@ import type { Notification } from '@/types';
 
 export const NotificationBell = () => {
   const { user } = useAuth();
-  const { error } = useToast();
+  const { success, error: toastError } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const queryKey = ['notifications', user?.id];
+
+  const checkReminders = useMutation({
+    mutationFn: async () =>
+      unwrap(await notificationsApi.checkTaskReminders()),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    onError: () => {
+      // No bloquear la UI si falla el check de recordatorios
+      void queryClient.invalidateQueries({ queryKey });
+    },
+  });
 
   const query = useQuery({
     queryKey,
@@ -24,6 +36,12 @@ export const NotificationBell = () => {
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   });
+
+  useEffect(() => {
+    // Verificar recordatorios de tareas al montar, para generar avisos de
+    // tareas pendientes o próximas a vencer.
+    void checkReminders.mutate();
+  }, [checkReminders.mutate]);
 
   useEffect(() => {
     if (!open) return;
@@ -47,13 +65,13 @@ export const NotificationBell = () => {
   const markRead = useMutation({
     mutationFn: async (id: string) => unwrap(await notificationsApi.markRead(id)),
     onSuccess: refreshNotifications,
-    onError: () => error('No se pudo actualizar la notificación.'),
+    onError: () => toastError('No se pudo actualizar la notificación.'),
   });
 
   const markAllRead = useMutation({
     mutationFn: async () => unwrap(await notificationsApi.markAllRead()),
     onSuccess: refreshNotifications,
-    onError: () => error('No se pudieron marcar las notificaciones como leídas.'),
+    onError: () => toastError('No se pudieron marcar las notificaciones como leídas.'),
   });
 
   const openNotification = (notification: Notification) => {

@@ -370,6 +370,10 @@ export const activityApi = {
 
 export const notificationsApi = {
   list: () => api.get<DataEnvelope<NotificationCenter>>('/api/notifications'),
+  checkTaskReminders: () =>
+    api.post<DataEnvelope<{ created: unknown[]; count: number }>>(
+      '/api/notifications/check-task-reminders',
+    ),
   markRead: (id: string) =>
     api.patch<DataEnvelope<Notification>>(`/api/notifications/${id}/read`),
   markAllRead: () =>
