@@ -1,6 +1,6 @@
 -- Todos los proyectos/ventas tienen ticket y su número se asigna de forma
--- automática y consecutiva, del más antiguo al más reciente.
-CREATE SEQUENCE IF NOT EXISTS "ticket_number_seq" START 1;
+-- automática usando el mismo secuencial del número de venta
+-- (ej. V-2026-00001 -> TK-00001).
 
 ALTER TABLE "sales" ALTER COLUMN "has_ticket" SET DEFAULT true;
 ALTER TABLE "sales" ALTER COLUMN "ticket_stage" SET DEFAULT 'IN_PROGRESS';
@@ -10,23 +10,13 @@ SET
     "has_ticket" = true,
     "ticket_stage" = COALESCE("ticket_stage", 'IN_PROGRESS');
 
-WITH "ordered" AS (
-    SELECT
-        "id",
-        row_number() OVER (
-            ORDER BY "sale_date" ASC, "created_at" ASC, "id" ASC
-        ) AS "rn"
-    FROM "sales"
-)
-UPDATE "sales" AS "s"
-SET "ticket_number" = 'TK-' || lpad("o"."rn"::text, 5, '0')
-FROM "ordered" AS "o"
-WHERE "s"."id" = "o"."id";
-
-SELECT setval(
-    'ticket_number_seq',
-    GREATEST((SELECT COUNT(*) FROM "sales"), 1),
-    (SELECT COUNT(*) FROM "sales") > 0
+-- Número de ticket basado en el secuencial del número de venta:
+-- extrae los dígitos finales de "sale_number" (ej. "V-2026-00001" -> 1)
+-- y construye "TK-" con relleno a 5 dígitos (ej. "TK-00001").
+UPDATE "sales"
+SET "ticket_number" = 'TK-' || lpad(
+    regexp_replace("sale_number", '^.*-(\d+)$', '\1')::text,
+    5, '0'
 );
 
 CREATE UNIQUE INDEX "sales_ticket_number_key"

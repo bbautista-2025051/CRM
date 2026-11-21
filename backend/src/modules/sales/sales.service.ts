@@ -211,16 +211,12 @@ export const generateSaleNumber = async (tx: Prisma.TransactionClient): Promise<
 };
 
 /**
- * Número consecutivo del ticket. La secuencia es global y avanza en el mismo
- * orden en que se crean las ventas, de la más antigua a la más reciente.
+ * Extrae el número secuencial de un número de venta (ej. "V-2026-00001" -> 1)
+ * para construir el número de ticket correspondiente (ej. "TK-00001").
  */
-export const generateTicketNumber = async (
-  tx: Prisma.TransactionClient,
-): Promise<string> => {
-  const rows = await tx.$queryRaw<Array<{ seq: number }>>`
-    SELECT nextval('ticket_number_seq')::int AS seq
-  `;
-  const seq = rows[0]?.seq ?? 1;
+export const ticketNumberFromSaleNumber = (saleNumber: string): string => {
+  const match = saleNumber.match(/(\d+)$/);
+  const seq = match ? Number(match[1]) : 1;
   return `TK-${String(seq).padStart(5, '0')}`;
 };
 
@@ -366,7 +362,6 @@ export const createSale = async (input: SaleInput, actor: User) => {
       }
 
       const saleNumber = await generateSaleNumber(tx);
-      const ticketNumber = await generateTicketNumber(tx);
       return tx.sale.create({
         data: {
           saleNumber,
@@ -380,7 +375,7 @@ export const createSale = async (input: SaleInput, actor: User) => {
           status: input.status,
           notes: input.notes ?? null,
           hasTicket: true,
-          ticketNumber,
+          ticketNumber: ticketNumberFromSaleNumber(saleNumber),
           ticketStage: 'IN_PROGRESS',
         },
         include: {
