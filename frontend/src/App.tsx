@@ -66,6 +66,11 @@ const SaleFormPage = lazy(() =>
 const TicketsPage = lazy(() =>
   import('@/pages/TicketsPage').then((module) => ({ default: module.TicketsPage })),
 );
+const TicketDetailPage = lazy(() =>
+  import('@/pages/TicketDetailPage').then((module) => ({
+    default: module.TicketDetailPage,
+  })),
+);
 const OpportunityFormPage = lazy(() =>
   import('@/pages/OpportunityFormPage').then((module) => ({
     default: module.OpportunityFormPage,
@@ -160,6 +165,7 @@ export const App = () => (
           />
           <Route path="negocio" element={<NegocioPage />} />
           <Route path="tickets" element={<TicketsPage />} />
+          <Route path="tickets/:id" element={<TicketDetailPage />} />
           <Route
             path="opportunities"
             element={<LegacyBusinessRedirect view="opportunities" />}

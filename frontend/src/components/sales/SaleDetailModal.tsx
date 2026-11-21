@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Building2,
   CalendarDays,
@@ -24,7 +25,6 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Avatar } from '@/components/ui/Avatar';
 import { SaleStatusBadge } from '@/components/ui/StatusBadges';
-import { TicketDetailModal } from '@/components/sales/TicketDetailModal';
 import { useAuth } from '@/providers/AuthProvider';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/providers/ToastProvider';
@@ -105,12 +105,12 @@ export const SaleDetailModal = ({
   const { confirm } = useConfirm();
   const { success, error: toastError } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stagedFilesRef = useRef<SaleFile[]>([]);
   const isMountedRef = useRef(false);
   const [commentDraft, setCommentDraft] = useState('');
   const [stagedFiles, setStagedFiles] = useState<SaleFile[]>([]);
-  const [ticketOpen, setTicketOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ['sales', 'detail', saleId],
@@ -336,7 +336,7 @@ export const SaleDetailModal = ({
             {sale ? (
               <button
                 type="button"
-                onClick={() => setTicketOpen(true)}
+                onClick={() => navigate(`/tickets/${sale.id}`)}
                 className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand-strong transition hover:bg-brand/15 dark:text-brand"
                 title="Abrir el detalle del ticket"
               >
@@ -677,13 +677,6 @@ export const SaleDetailModal = ({
         </div>
       )}
     </Modal>
-    {sale ? (
-      <TicketDetailModal
-        saleId={saleId ?? ''}
-        open={ticketOpen}
-        onClose={() => setTicketOpen(false)}
-      />
-    ) : null}
     </>
   );
 };

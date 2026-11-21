@@ -33,7 +33,6 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui/Dropdown';
-import { TicketDetailModal } from '@/components/sales/TicketDetailModal';
 import type { Sale, TicketStage } from '@/types';
 
 const STAGE_LABELS: Record<TicketStage, string> = {
@@ -70,7 +69,6 @@ export const TicketsPage = () => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
-  const [openTicketId, setOpenTicketId] = useState<string | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
@@ -104,8 +102,8 @@ export const TicketsPage = () => {
         ownerId: ownerId || undefined,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
-        sortBy: 'saleDate',
-        sortOrder: 'desc',
+        sortBy: 'saleNumber',
+        sortOrder: 'asc',
       }),
   });
 
@@ -131,7 +129,7 @@ export const TicketsPage = () => {
       dateTo,
   );
 
-  const openTicket = (sale: Sale) => setOpenTicketId(sale.id);
+  const openTicket = (sale: Sale) => navigate(`/tickets/${sale.id}`);
 
   return (
     <div className="space-y-5">
@@ -414,12 +412,6 @@ export const TicketsPage = () => {
           </>
         )}
       </Card>
-
-      <TicketDetailModal
-        saleId={openTicketId ?? ''}
-        open={Boolean(openTicketId)}
-        onClose={() => setOpenTicketId(null)}
-      />
     </div>
   );
 };
