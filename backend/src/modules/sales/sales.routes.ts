@@ -92,40 +92,6 @@ salesRouter.patch(
   controller.updateTicket,
 );
 
-salesRouter.get(
-  '/:id/ticket/comments',
-  validate({ params: idParamSchema }),
-  controller.listTicketComments,
-);
-
-salesRouter.post(
-  '/:id/ticket/comments',
-  csrfProtection,
-  validate({ params: idParamSchema, body: saleCommentBodySchema }),
-  controller.createTicketComment,
-);
-
-salesRouter.post(
-  '/:id/ticket/files',
-  csrfProtection,
-  validate({ params: idParamSchema }),
-  saleFileUpload.single('file'),
-  controller.uploadTicketFile,
-);
-
-salesRouter.get(
-  '/:id/ticket/files/:fileId/download',
-  validate({ params: saleFileParamsSchema }),
-  controller.downloadTicketFile,
-);
-
-salesRouter.delete(
-  '/:id/ticket/files/:fileId',
-  csrfProtection,
-  validate({ params: saleFileParamsSchema }),
-  controller.removeTicketFile,
-);
-
 // --- Estados de venta personalizados (solo ADMIN puede crear/eliminar) ---
 salesRouter.get(
   '/statuses',

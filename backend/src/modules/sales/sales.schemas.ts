@@ -56,9 +56,6 @@ export const saleBodySchema = z
       .default('GTQ'),
     status: z.nativeEnum(SaleStatus).optional().default(SaleStatus.PENDING),
     notes: optionalText(2000, 'Las observaciones'),
-    hasTicket: z.boolean().optional().default(false),
-    ticketNumber: optionalText(60, 'El número de ticket'),
-    ticketStage: z.nativeEnum(TicketStage).nullable().optional(),
   })
   .refine((data) => Boolean(data.opportunityId || data.opportunityName), {
     message: 'La oportunidad ganada es obligatoria',
@@ -86,14 +83,9 @@ export const saleFileParamsSchema = z.object({
   fileId: z.string().uuid('El identificador del archivo no es válido'),
 });
 
-export const updateSaleTicketSchema = z
-  .object({
-    ticketNumber: optionalText(60, 'El número de ticket'),
-    ticketStage: z.nativeEnum(TicketStage),
-  })
-  .refine((data) => Object.keys(data).length > 0, {
-    message: 'Envía al menos un campo para actualizar',
-  });
+export const updateSaleTicketSchema = z.object({
+  ticketStage: z.nativeEnum(TicketStage),
+});
 
 export const updateSaleSchema = z
   .object({
@@ -109,9 +101,6 @@ export const updateSaleSchema = z
       .optional(),
     status: z.nativeEnum(SaleStatus).optional(),
     notes: optionalText(2000, 'Las observaciones'),
-    hasTicket: z.boolean().optional(),
-    ticketNumber: optionalText(60, 'El número de ticket'),
-    ticketStage: z.nativeEnum(TicketStage).nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: 'Envía al menos un campo para actualizar',

@@ -105,8 +105,6 @@ model User {
   companyComments  CompanyComment[] @relation("CompanyCommentAuthor")
   saleFiles        SaleFile[]      @relation("SaleFileUploader")
   saleComments     SaleComment[]   @relation("SaleCommentAuthor")
-  ticketFiles      TicketFile[]    @relation("TicketFileUploader")
-  ticketComments   TicketComment[] @relation("TicketCommentAuthor")
   activityLogs     ActivityLog[]
   notifications    Notification[]
   avatar           UserAvatar?
@@ -341,9 +339,9 @@ model Sale {
   currency      String     @default("GTQ") @db.VarChar(3)
   status        SaleStatus @default(PENDING)
   notes         String?    @db.Text
-  hasTicket     Boolean    @default(false) @map("has_ticket")
-  ticketNumber  String?    @map("ticket_number") @db.VarChar(60)
-  ticketStage   TicketStage? @map("ticket_stage")
+  hasTicket     Boolean    @default(true) @map("has_ticket")
+  ticketNumber  String?    @unique @map("ticket_number") @db.VarChar(60)
+  ticketStage   TicketStage? @default(IN_PROGRESS) @map("ticket_stage")
   createdAt     DateTime   @default(now()) @map("created_at")
   updatedAt     DateTime   @updatedAt @map("updated_at")
 
@@ -353,8 +351,6 @@ model Sale {
   owner       User        @relation("SaleOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   comments    SaleComment[]
   files       SaleFile[]
-  ticketComments TicketComment[]
-  ticketFiles    TicketFile[]
 
   @@index([companyId])
   @@index([clientId])
@@ -400,44 +396,6 @@ model SaleFile {
   @@index([commentId])
   @@index([uploadedById])
   @@map("sale_files")
-}
-
-model TicketComment {
-  id        String   @id @default(uuid()) @db.Uuid
-  saleId    String   @map("sale_id") @db.Uuid
-  authorId  String?  @map("author_id") @db.Uuid
-  body      String   @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  sale   Sale         @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  author User?        @relation("TicketCommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  files  TicketFile[] @relation("TicketFileComment")
-
-  @@index([saleId, createdAt])
-  @@map("ticket_comments")
-}
-
-model TicketFile {
-  id           String   @id @default(uuid()) @db.Uuid
-  saleId       String   @map("sale_id") @db.Uuid
-  commentId    String?  @map("comment_id") @db.Uuid
-  originalName String   @map("original_name") @db.VarChar(255)
-  storedName   String   @map("stored_name") @db.VarChar(255)
-  mimeType     String   @map("mime_type") @db.VarChar(120)
-  size         Int
-  data         Bytes    @db.ByteA
-  uploadedById String?  @map("uploaded_by_id") @db.Uuid
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  sale       Sale           @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  comment    TicketComment? @relation("TicketFileComment", fields: [commentId], references: [id], onDelete: SetNull)
-  uploadedBy User?          @relation("TicketFileUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
-
-  @@index([saleId])
-  @@index([commentId])
-  @@index([uploadedById])
-  @@map("ticket_files")
 }
 
 model Project {

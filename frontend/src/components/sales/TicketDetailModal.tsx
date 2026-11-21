@@ -27,7 +27,7 @@ import { salesApi, unwrap } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
 import { formatBytes, formatDateTime } from '@/lib/format';
 import type { BadgeTone } from '@/components/ui/Badge';
-import type { Sale, TicketComment, TicketFile, TicketStage } from '@/types';
+import type { Sale, SaleComment, SaleFile, TicketStage } from '@/types';
 
 const STAGE_LABELS: Record<TicketStage, string> = {
   IN_PROGRESS: 'Progreso',
@@ -77,7 +77,7 @@ const FILE_STYLES: Record<string, { icon: typeof FileIcon; tone: string }> = {
   '7z': { icon: FileArchive, tone: 'bg-orange-500/10 text-orange-500' },
 };
 
-const fileStyle = (file: TicketFile) =>
+const fileStyle = (file: SaleFile) =>
   FILE_STYLES[extFromName(file.originalName)] ?? {
     icon: FileIcon,
     tone: 'bg-elevated text-muted',
@@ -112,10 +112,10 @@ export const TicketDetailModal = ({
   const { success, error: toastError } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const stagedFilesRef = useRef<TicketFile[]>([]);
+  const stagedFilesRef = useRef<SaleFile[]>([]);
   const isMountedRef = useRef(false);
   const [commentDraft, setCommentDraft] = useState('');
-  const [stagedFiles, setStagedFiles] = useState<TicketFile[]>([]);
+  const [stagedFiles, setStagedFiles] = useState<SaleFile[]>([]);
 
   const saleQuery = useQuery({
     queryKey: ['sales', 'detail', saleId],
@@ -124,8 +124,8 @@ export const TicketDetailModal = ({
   });
 
   const commentsQuery = useQuery({
-    queryKey: ['sales', 'ticket-comments', saleId],
-    queryFn: async () => unwrap(await salesApi.listTicketComments(saleId)),
+    queryKey: ['sales', 'comments', saleId],
+    queryFn: async () => unwrap(await salesApi.listComments(saleId)),
     enabled: open && Boolean(saleId),
   });
 
@@ -149,11 +149,11 @@ export const TicketDetailModal = ({
   });
 
   const uploadFile = useMutation({
-    mutationFn: (file: File) => salesApi.uploadTicketFile(saleId, file),
+    mutationFn: (file: File) => salesApi.uploadFile(saleId, file),
     onSuccess: (response) => {
       const file = response.data;
       if (!isMountedRef.current) {
-        void salesApi.removeTicketFile(saleId, file.id).catch(() => undefined);
+        void salesApi.removeFile(saleId, file.id).catch(() => undefined);
         return;
       }
       stagedFilesRef.current = [...stagedFilesRef.current, file];
@@ -175,7 +175,7 @@ export const TicketDetailModal = ({
       stagedFilesRef.current = [];
       void Promise.all(
         filesToRemove.map((file) =>
-          salesApi.removeTicketFile(saleId, file.id).then(
+          salesApi.removeFile(saleId, file.id).then(
             () => null,
             (error: unknown) => error,
           ),
@@ -186,7 +186,7 @@ export const TicketDetailModal = ({
 
   const createComment = useMutation({
     mutationFn: (body: string) =>
-      salesApi.createTicketComment(saleId, body, stagedFiles.map((file) => file.id)),
+      salesApi.createComment(saleId, body, stagedFiles.map((file) => file.id)),
     onSuccess: (response) => {
       success(
         'Comentario agregado',
@@ -198,7 +198,7 @@ export const TicketDetailModal = ({
       setStagedFiles([]);
       stagedFilesRef.current = [];
       void queryClient.invalidateQueries({
-        queryKey: ['sales', 'ticket-comments', saleId],
+        queryKey: ['sales', 'comments', saleId],
       });
     },
     onError: (error) => {
@@ -210,10 +210,10 @@ export const TicketDetailModal = ({
   });
 
   const deleteFile = useMutation({
-    mutationFn: (fileId: string) => salesApi.removeTicketFile(saleId, fileId),
+    mutationFn: (fileId: string) => salesApi.removeFile(saleId, fileId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['sales', 'ticket-comments', saleId],
+        queryKey: ['sales', 'comments', saleId],
       });
     },
     onError: (error) => {
@@ -231,9 +231,9 @@ export const TicketDetailModal = ({
     }
   };
 
-  const onDownloadFile = async (file: TicketFile) => {
+  const onDownloadFile = async (file: SaleFile) => {
     try {
-      const blob = await salesApi.downloadTicketFile(saleId, file.id);
+      const blob = await salesApi.downloadFile(saleId, file.id);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -250,7 +250,7 @@ export const TicketDetailModal = ({
     }
   };
 
-  const onDeleteFile = async (file: TicketFile) => {
+  const onDeleteFile = async (file: SaleFile) => {
     const accepted = await confirm({
       title: `Eliminar ${file.originalName}`,
       description: 'El archivo se eliminará del ticket. Esta acción no se puede deshacer.',
@@ -470,7 +470,7 @@ export const TicketDetailModal = ({
               />
             ) : commentsQuery.data?.length ? (
               <ol className="divide-y divide-line rounded-xl border border-line bg-elevated/10">
-                {commentsQuery.data.map((comment: TicketComment) => (
+                {commentsQuery.data.map((comment: SaleComment) => (
                   <li key={comment.id} className="flex items-start gap-3 p-4">
                     <Avatar
                       name={comment.author?.name ?? 'Usuario'}

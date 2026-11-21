@@ -198,30 +198,6 @@ export interface SaleFile {
   uploadedBy?: { id: string; name: string; avatarUrl: string | null } | null;
 }
 
-export interface TicketComment {
-  id: string;
-  saleId: string;
-  authorId: string | null;
-  body: string;
-  createdAt: string;
-  updatedAt: string;
-  author?: { id: string; name: string; avatarUrl: string | null } | null;
-  files?: TicketFile[];
-}
-
-export interface TicketFile {
-  id: string;
-  saleId: string;
-  commentId: string | null;
-  originalName: string;
-  storedName: string;
-  mimeType: string;
-  size: number;
-  uploadedById: string | null;
-  createdAt: string;
-  uploadedBy?: { id: string; name: string; avatarUrl: string | null } | null;
-}
-
 export interface Sale {
   id: string;
   saleNumber: string;

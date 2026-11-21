@@ -333,7 +333,7 @@ export const SaleDetailModal = ({
         <div className="max-w-4xl space-y-5">
           <div className="flex flex-wrap items-center gap-2">
             <SaleStatusBadge status={sale?.status} />
-            {sale?.hasTicket ? (
+            {sale ? (
               <button
                 type="button"
                 onClick={() => setTicketOpen(true)}
@@ -677,7 +677,7 @@ export const SaleDetailModal = ({
         </div>
       )}
     </Modal>
-    {sale?.hasTicket ? (
+    {sale ? (
       <TicketDetailModal
         saleId={saleId ?? ''}
         open={ticketOpen}

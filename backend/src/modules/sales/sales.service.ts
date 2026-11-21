@@ -210,6 +210,20 @@ export const generateSaleNumber = async (tx: Prisma.TransactionClient): Promise<
   return `V-${year}-${String(seq).padStart(5, '0')}`;
 };
 
+/**
+ * Número consecutivo del ticket. La secuencia es global y avanza en el mismo
+ * orden en que se crean las ventas, de la más antigua a la más reciente.
+ */
+export const generateTicketNumber = async (
+  tx: Prisma.TransactionClient,
+): Promise<string> => {
+  const rows = await tx.$queryRaw<Array<{ seq: number }>>`
+    SELECT nextval('ticket_number_seq')::int AS seq
+  `;
+  const seq = rows[0]?.seq ?? 1;
+  return `TK-${String(seq).padStart(5, '0')}`;
+};
+
 interface SaleInput {
   companyId?: string | null;
   clientId?: string | null;
@@ -221,9 +235,6 @@ interface SaleInput {
   currency: string;
   status: SaleStatus;
   notes?: string | null;
-  hasTicket?: boolean;
-  ticketNumber?: string | null;
-  ticketStage?: TicketStage | null;
 }
 
 interface ResolvedRelations {
@@ -332,7 +343,6 @@ export const createSale = async (input: SaleInput, actor: User) => {
   if (!input.status) input.status = 'PENDING';
 
   const relations = await resolveRelations(input, actor);
-  const hasTicket = input.hasTicket ?? false;
 
   const sale = await prisma.$transaction(
     async (tx) => {
@@ -356,6 +366,7 @@ export const createSale = async (input: SaleInput, actor: User) => {
       }
 
       const saleNumber = await generateSaleNumber(tx);
+      const ticketNumber = await generateTicketNumber(tx);
       return tx.sale.create({
         data: {
           saleNumber,
@@ -368,9 +379,9 @@ export const createSale = async (input: SaleInput, actor: User) => {
           currency: input.currency,
           status: input.status,
           notes: input.notes ?? null,
-          hasTicket,
-          ticketNumber: hasTicket ? input.ticketNumber ?? null : null,
-          ticketStage: hasTicket ? input.ticketStage ?? 'IN_PROGRESS' : null,
+          hasTicket: true,
+          ticketNumber,
+          ticketStage: 'IN_PROGRESS',
         },
         include: {
           company: { select: { id: true, name: true } },
@@ -412,9 +423,6 @@ export const updateSale = async (
     currency?: string;
     status?: SaleStatus;
     notes?: string | null;
-    hasTicket?: boolean;
-    ticketNumber?: string | null;
-    ticketStage?: TicketStage | null;
   },
   actor: User,
 ) => {
@@ -473,19 +481,6 @@ export const updateSale = async (
     }
   }
 
-  const hasTicket =
-    input.hasTicket !== undefined ? input.hasTicket : existing.hasTicket;
-  const ticketNumber = hasTicket
-    ? input.ticketNumber !== undefined
-      ? input.ticketNumber
-      : existing.ticketNumber
-    : null;
-  const ticketStage: TicketStage | null = hasTicket
-    ? input.ticketStage !== undefined
-      ? input.ticketStage
-      : existing.ticketStage ?? 'IN_PROGRESS'
-    : null;
-
   const sale = await prisma.sale.update({
     where: { id },
     data: {
@@ -496,9 +491,6 @@ export const updateSale = async (
       ...(input.currency !== undefined ? { currency: input.currency } : {}),
       ...(input.status !== undefined ? { status: input.status } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
-      hasTicket,
-      ticketNumber,
-      ticketStage,
     },
     include: {
       company: { select: { id: true, name: true } },
@@ -527,16 +519,12 @@ export const updateSale = async (
 export const updateSaleTicket = async (
   id: string,
   input: {
-    ticketNumber?: string | null;
     ticketStage?: TicketStage;
   },
   actor: User,
 ) => {
   const existing = await prisma.sale.findUnique({ where: { id } });
   if (!existing) throw new NotFoundError('La venta no existe');
-  if (!existing.hasTicket) {
-    throw new BadRequestError('Esta venta no tiene un ticket asociado');
-  }
 
   const canManage =
     actor.role === 'ADMIN' ||
@@ -550,9 +538,6 @@ export const updateSaleTicket = async (
   const sale = await prisma.sale.update({
     where: { id },
     data: {
-      ...(input.ticketNumber !== undefined
-        ? { ticketNumber: input.ticketNumber }
-        : {}),
       ...(input.ticketStage !== undefined
         ? { ticketStage: input.ticketStage }
         : {}),
