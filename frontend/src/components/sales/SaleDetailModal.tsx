@@ -197,6 +197,9 @@ export const SaleDetailModal = ({
       void queryClient.invalidateQueries({
         queryKey: ['sales', 'comments', saleId],
       });
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', 'comments'],
+      });
     },
     onError: (error) => {
       toastError(
@@ -211,6 +214,9 @@ export const SaleDetailModal = ({
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ['sales', 'comments', saleId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', 'comments'],
       });
     },
     onError: (error) => {

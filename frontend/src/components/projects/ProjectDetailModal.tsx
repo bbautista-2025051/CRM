@@ -265,6 +265,7 @@ export const ProjectDetailModal = ({
       setCommentDraft('');
       setStagedFiles([]);
       void queryClient.invalidateQueries({ queryKey: ['projects', 'comments', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['sales', 'comments'] });
     },
     onError: (error) => {
       toastError(
@@ -315,6 +316,7 @@ export const ProjectDetailModal = ({
       await removeFile.mutateAsync(file.id).catch(() => undefined);
       setStagedFiles((current) => current.filter((item) => item.id !== file.id));
       void queryClient.invalidateQueries({ queryKey: ['projects', 'comments', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['sales', 'comments'] });
     }
   };
 

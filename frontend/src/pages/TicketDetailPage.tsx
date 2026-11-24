@@ -200,6 +200,9 @@ export const TicketDetailPage = () => {
       void queryClient.invalidateQueries({
         queryKey: ['sales', 'comments', saleId],
       });
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', 'comments'],
+      });
     },
     onError: (error) => {
       toastError(
@@ -214,6 +217,9 @@ export const TicketDetailPage = () => {
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ['sales', 'comments', saleId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', 'comments'],
       });
     },
     onError: (error) => {

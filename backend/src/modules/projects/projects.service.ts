@@ -64,6 +64,36 @@ const projectFileSelect = {
   uploadedBy: { select: { id: true, name: true, avatarUrl: true } },
 } satisfies Prisma.ProjectFileSelect;
 
+const linkedSaleFileSelect = {
+  id: true,
+  saleId: true,
+  commentId: true,
+  originalName: true,
+  storedName: true,
+  mimeType: true,
+  size: true,
+  uploadedById: true,
+  createdAt: true,
+  uploadedBy: { select: { id: true, name: true, avatarUrl: true } },
+} satisfies Prisma.SaleFileSelect;
+
+const findProjectWithSale = async (projectId: string) => {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      id: true,
+      name: true,
+      opportunity: {
+        select: {
+          sale: { select: { id: true } },
+        },
+      },
+    },
+  });
+  if (!project) throw new NotFoundError('El proyecto no existe');
+  return project;
+};
+
 const taskCounts = (tasks: Array<{ status: string }>) => {
   const counts = {
     total: tasks.length,
@@ -447,17 +477,46 @@ export const deleteTask = async (projectId: string, taskId: string, actor: User)
 // ---------------------------------------------------------------------------
 
 export const listProjectComments = async (projectId: string) => {
-  const project = await prisma.project.findUnique({ where: { id: projectId } });
-  if (!project) throw new NotFoundError('El proyecto no existe');
+  const project = await findProjectWithSale(projectId);
+  const linkedSaleId = project.opportunity?.sale?.id;
 
-  return prisma.projectComment.findMany({
-    where: { projectId },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      author: { select: { id: true, name: true, avatarUrl: true } },
-      files: { select: projectFileSelect },
-    },
-  });
+  const [projectComments, saleComments] = await Promise.all([
+    prisma.projectComment.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: { select: { id: true, name: true, avatarUrl: true } },
+        files: { select: projectFileSelect },
+      },
+    }),
+    linkedSaleId
+      ? prisma.saleComment.findMany({
+          where: { saleId: linkedSaleId },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            author: { select: { id: true, name: true, avatarUrl: true } },
+            files: { select: linkedSaleFileSelect },
+          },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  if (!saleComments.length) {
+    return projectComments;
+  }
+
+  const mappedSaleComments = saleComments.map(({ saleId: _saleId, files, ...comment }) => ({
+    ...comment,
+    projectId,
+    files: files.map(({ saleId: _fileSaleId, ...file }) => ({
+      ...file,
+      projectId,
+    })),
+  }));
+
+  return [...projectComments, ...mappedSaleComments].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+  );
 };
 
 export const createProjectComment = async (
@@ -513,14 +572,36 @@ const getProjectComment = (id: string) =>
 // ---------------------------------------------------------------------------
 
 export const listProjectFiles = async (projectId: string) => {
-  const project = await prisma.project.findUnique({ where: { id: projectId } });
-  if (!project) throw new NotFoundError('El proyecto no existe');
+  const project = await findProjectWithSale(projectId);
+  const linkedSaleId = project.opportunity?.sale?.id;
 
-  return prisma.projectFile.findMany({
-    where: { projectId },
-    orderBy: { createdAt: 'desc' },
-    select: projectFileSelect,
-  });
+  const [projectFiles, saleFiles] = await Promise.all([
+    prisma.projectFile.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+      select: projectFileSelect,
+    }),
+    linkedSaleId
+      ? prisma.saleFile.findMany({
+          where: { saleId: linkedSaleId },
+          orderBy: { createdAt: 'desc' },
+          select: linkedSaleFileSelect,
+        })
+      : Promise.resolve([]),
+  ]);
+
+  if (!saleFiles.length) {
+    return projectFiles;
+  }
+
+  const mappedSaleFiles = saleFiles.map(({ saleId: _saleId, ...file }) => ({
+    ...file,
+    projectId,
+  }));
+
+  return [...projectFiles, ...mappedSaleFiles].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+  );
 };
 
 export const uploadProjectFile = async (
@@ -581,18 +662,37 @@ export const getProjectFileForDownload = async (projectId: string, fileId: strin
       data: true,
     },
   });
-  if (!file) {
-    throw new NotFoundError('El archivo no existe en este proyecto');
+  if (file) {
+    const data = file.data ?? (await readProjectFile(file.storedName));
+    if (!data) {
+      throw new NotFoundError(
+        'Este archivo se subió antes de habilitar el almacenamiento en la base de datos y ya no está disponible. Vuelve a subirlo.',
+      );
+    }
+
+    return { ...file, data };
   }
 
-  const data = file.data ?? (await readProjectFile(file.storedName));
-  if (!data) {
-    throw new NotFoundError(
-      'Este archivo se subió antes de habilitar el almacenamiento en la base de datos y ya no está disponible. Vuelve a subirlo.',
-    );
+  const project = await findProjectWithSale(projectId);
+  const linkedSaleId = project.opportunity?.sale?.id;
+  if (linkedSaleId) {
+    const saleFile = await prisma.saleFile.findFirst({
+      where: { id: fileId, saleId: linkedSaleId },
+      select: {
+        id: true,
+        originalName: true,
+        mimeType: true,
+        size: true,
+        storedName: true,
+        data: true,
+      },
+    });
+    if (saleFile) {
+      return saleFile;
+    }
   }
 
-  return { ...file, data };
+  throw new NotFoundError('El archivo no existe en este proyecto');
 };
 
 export const deleteProjectFile = async (
@@ -610,24 +710,56 @@ export const deleteProjectFile = async (
       originalName: true,
     },
   });
-  if (!file || file.projectId !== projectId) {
-    throw new NotFoundError('El archivo no existe en este proyecto');
+  if (file && file.projectId === projectId) {
+    const isOwner = file.uploadedById === actor.id;
+    if (actor.role !== 'ADMIN' && !isOwner) {
+      throw new ForbiddenError('Solo puedes eliminar los archivos que subiste tú');
+    }
+
+    await prisma.projectFile.delete({ where: { id: fileId } });
+    removeProjectFile(file.storedName);
+
+    await logActivity({
+      userId: actor.id,
+      action: 'DELETE',
+      entityType: 'PROJECT',
+      entityId: projectId,
+      description: `Archivo eliminado del proyecto: ${file.originalName}`,
+      metadata: { fileId },
+    });
+    return;
   }
 
-  const isOwner = file.uploadedById === actor.id;
-  if (actor.role !== 'ADMIN' && !isOwner) {
-    throw new ForbiddenError('Solo puedes eliminar los archivos que subiste tú');
+  const project = await findProjectWithSale(projectId);
+  const linkedSaleId = project.opportunity?.sale?.id;
+  if (linkedSaleId) {
+    const saleFile = await prisma.saleFile.findFirst({
+      where: { id: fileId, saleId: linkedSaleId },
+      select: {
+        id: true,
+        uploadedById: true,
+        originalName: true,
+      },
+    });
+    if (saleFile) {
+      const isOwner = saleFile.uploadedById === actor.id;
+      if (actor.role !== 'ADMIN' && !isOwner) {
+        throw new ForbiddenError('Solo puedes eliminar los archivos que subiste tú');
+      }
+
+      await prisma.saleFile.delete({ where: { id: fileId } });
+
+      await logActivity({
+        userId: actor.id,
+        action: 'DELETE',
+        entityType: 'SALE',
+        entityId: linkedSaleId,
+        description: `Archivo eliminado de la venta: ${saleFile.originalName}`,
+        metadata: { fileId, fromProjectId: projectId },
+      });
+      return;
+    }
   }
 
-  await prisma.projectFile.delete({ where: { id: fileId } });
-  removeProjectFile(file.storedName);
-
-  await logActivity({
-    userId: actor.id,
-    action: 'DELETE',
-    entityType: 'PROJECT',
-    entityId: projectId,
-    description: `Archivo eliminado del proyecto: ${file.originalName}`,
-    metadata: { fileId },
-  });
+  throw new NotFoundError('El archivo no existe en este proyecto');
 };
