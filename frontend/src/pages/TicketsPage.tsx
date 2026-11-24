@@ -102,8 +102,8 @@ export const TicketsPage = () => {
         ownerId: ownerId || undefined,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
-        sortBy: 'saleNumber',
-        sortOrder: 'asc',
+        sortBy: 'ticketNumber',
+        sortOrder: 'desc',
       }),
   });
 

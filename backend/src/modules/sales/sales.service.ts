@@ -98,11 +98,21 @@ export const listSales = async (params: ListParams) => {
       : {}),
   };
 
+  const orderBy:
+    | Prisma.SaleOrderByWithRelationInput
+    | Prisma.SaleOrderByWithRelationInput[] =
+    params.sortBy === 'ticketNumber'
+      ? [
+          { ticketNumber: { sort: params.sortOrder, nulls: 'last' as const } },
+          { saleNumber: params.sortOrder },
+        ]
+      : buildOrderBy(params.sortBy, SORTABLE, params.sortOrder, 'saleDate');
+
   const [total, sales] = await prisma.$transaction([
     prisma.sale.count({ where }),
     prisma.sale.findMany({
       where,
-      orderBy: buildOrderBy(params.sortBy, SORTABLE, params.sortOrder, 'saleDate'),
+      orderBy,
       ...skipTake(params.page, params.pageSize),
       include: {
         company: { select: { id: true, name: true } },
