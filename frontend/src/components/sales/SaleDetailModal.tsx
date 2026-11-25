@@ -376,151 +376,157 @@ export const SaleDetailModal = ({
       ) : query.isError || !sale ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} compact />
       ) : (
-        <div className="max-w-4xl space-y-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <SaleStatusBadge status={sale?.status} />
-            {sale ? (
-              <button
-                type="button"
-                onClick={() => navigate(`/tickets/${sale.id}`)}
-                className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand-strong transition hover:bg-brand/15 dark:text-brand"
-                title="Abrir el detalle del ticket"
-              >
-                <Ticket className="h-3.5 w-3.5" />
-                Ticket
-                {sale.ticketNumber ? (
-                  <span className="font-mono font-normal text-muted">
-                    {sale.ticketNumber}
-                  </span>
-                ) : null}
-              </button>
-            ) : null}
-          </div>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+          <section className="h-fit space-y-5 rounded-xl border border-line bg-elevated/20 p-4 sm:p-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <SaleStatusBadge status={sale.status} />
+              {sale.ticketNumber ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/tickets/${sale.id}`)}
+                  className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand-strong transition hover:bg-brand/15 dark:text-brand"
+                  title="Abrir el detalle del ticket"
+                >
+                  <Ticket className="h-3.5 w-3.5" />
+                  Ticket
+                  <span className="font-mono font-normal text-muted">{sale.ticketNumber}</span>
+                </button>
+              ) : null}
+            </div>
 
-          <div className="border-y border-line py-3.5">
-            <div className="flex items-end justify-between gap-4">
-              <div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-surface p-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                   Importe
                 </p>
-                <p className="mt-1 text-2xl font-semibold tracking-tight text-ink">
-                  {formatMoney(sale?.amount, sale?.currency)}
+                <p className="mt-1 text-xl font-semibold tracking-tight text-ink">
+                  {formatMoney(sale.amount, sale.currency)}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="rounded-lg bg-surface p-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                   Moneda
                 </p>
-                <p className="mt-1 text-lg font-semibold text-ink">{sale?.currency}</p>
+                <p className="mt-1 text-lg font-semibold text-ink">{sale.currency}</p>
               </div>
             </div>
-          </div>
 
-          <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Fecha de venta
-              </dt>
-              <dd className="mt-1 flex items-center gap-1.5 text-sm text-ink">
-                <CalendarDays className="h-3.5 w-3.5 text-muted" />
-                {formatDate(sale?.saleDate)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Responsable
-              </dt>
-              <dd className="mt-1 flex items-center gap-2 text-sm text-ink">
-                {sale?.owner ? (
-                  <>
-                    <Avatar name={sale.owner.name} size="xs" />
-                    {sale.owner.name}
-                  </>
-                ) : (
-                  '—'
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Cliente
-              </dt>
-              <dd className="mt-1 flex items-center gap-1.5 text-sm text-ink">
-                <UserRound className="h-3.5 w-3.5 text-muted" />
-                {sale?.client ? (
-                  <a
-                    href={`/clients/${sale.client.id}`}
-                    className="hover:text-brand-strong hover:underline dark:hover:text-brand"
-                  >
-                    {sale.client.firstName} {sale.client.lastName}
-                  </a>
-                ) : (
-                  '—'
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Empresa
-              </dt>
-              <dd className="mt-1 flex items-center gap-1.5 text-sm text-ink">
-                <Building2 className="h-3.5 w-3.5 text-muted" />
-                {sale?.company ? (
-                  <a
-                    href={`/companies/${sale.company.id}`}
-                    className="hover:text-brand-strong hover:underline dark:hover:text-brand"
-                  >
-                    {sale.company.name}
-                  </a>
-                ) : (
-                  '—'
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Oportunidad
-              </dt>
-              <dd className="mt-1 flex items-center gap-1.5 text-sm text-ink">
-                <Target className="h-3.5 w-3.5 text-muted" />
-                {sale?.opportunity ? (
-                  <a
-                    href={`/negocio/oportunidad/${sale.opportunity.id}`}
-                    className="hover:text-brand-strong hover:underline dark:hover:text-brand"
-                  >
-                    {sale.opportunity.name}
-                  </a>
-                ) : (
-                  <span className="text-muted">Venta manual sin oportunidad</span>
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Registrada
-              </dt>
-              <dd className="mt-1 text-sm text-ink">{formatDateTime(sale?.createdAt)}</dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Última actualización
-              </dt>
-              <dd className="mt-1 text-sm text-ink">{formatDateTime(sale?.updatedAt)}</dd>
-            </div>
-          </dl>
+            <dl className="grid gap-x-5 gap-y-5 sm:grid-cols-2">
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Fecha de venta
+                </dt>
+                <dd className="mt-1.5 flex items-center gap-1.5 text-sm text-ink">
+                  <CalendarDays className="h-3.5 w-3.5 text-muted" />
+                  {formatDate(sale.saleDate)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Responsable
+                </dt>
+                <dd className="mt-1.5 flex items-center gap-2 text-sm text-ink">
+                  {sale.owner ? (
+                    <>
+                      <Avatar
+                        name={sale.owner.name}
+                        src={sale.owner.avatarUrl}
+                        size="xs"
+                      />
+                      {sale.owner.name}
+                    </>
+                  ) : (
+                    '—'
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Cliente
+                </dt>
+                <dd className="mt-1.5 flex items-center gap-1.5 text-sm text-ink">
+                  <UserRound className="h-3.5 w-3.5 text-muted" />
+                  {sale.client ? (
+                    <a
+                      href={`/clients/${sale.client.id}`}
+                      className="hover:text-brand-strong hover:underline dark:hover:text-brand"
+                    >
+                      {sale.client.firstName} {sale.client.lastName}
+                    </a>
+                  ) : (
+                    '—'
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Empresa
+                </dt>
+                <dd className="mt-1.5 flex items-center gap-1.5 text-sm text-ink">
+                  <Building2 className="h-3.5 w-3.5 text-muted" />
+                  {sale.company ? (
+                    <a
+                      href={`/companies/${sale.company.id}`}
+                      className="hover:text-brand-strong hover:underline dark:hover:text-brand"
+                    >
+                      {sale.company.name}
+                    </a>
+                  ) : (
+                    '—'
+                  )}
+                </dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Oportunidad
+                </dt>
+                <dd className="mt-1.5 flex items-center gap-1.5 text-sm text-ink">
+                  <Target className="h-3.5 w-3.5 text-muted" />
+                  {sale.opportunity ? (
+                    <a
+                      href={`/negocio/oportunidad/${sale.opportunity.id}`}
+                      className="hover:text-brand-strong hover:underline dark:hover:text-brand"
+                    >
+                      {sale.opportunity.name}
+                    </a>
+                  ) : (
+                    <span className="text-muted">Venta manual sin oportunidad</span>
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Registrada
+                </dt>
+                <dd className="mt-1.5 text-sm text-ink">{formatDateTime(sale.createdAt)}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Última actualización
+                </dt>
+                <dd className="mt-1.5 text-sm text-ink">{formatDateTime(sale.updatedAt)}</dd>
+              </div>
+            </dl>
 
-          {sale.notes ? (
-            <div className="border-t border-line pt-3.5">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                Observaciones
-              </p>
-              <p className="mt-1.5 whitespace-pre-line text-sm leading-6 text-ink">
-                {sale.notes}
-              </p>
-            </div>
-          ) : null}
+            {sale.notes ? (
+              <div className="rounded-lg bg-surface p-3.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Observaciones
+                </p>
+                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-ink">
+                  {sale.notes}
+                </p>
+              </div>
+            ) : null}
+            <p className="flex items-center gap-1.5 text-[11px] text-muted">
+              <Target className="h-3.5 w-3.5" />
+              {canManage
+                ? 'Tienes permiso para gestionar esta venta.'
+                : 'Solo lectura: esta venta pertenece a otro responsable.'}
+            </p>
+          </section>
 
-          <section aria-labelledby="sale-comments-heading" className="space-y-4 border-t border-line pt-5">
+          <section aria-labelledby="sale-comments-heading" className="space-y-4">
             <div>
               <h2 id="sale-comments-heading" className="text-sm font-semibold text-ink">
                 Comentarios y archivos
@@ -623,111 +629,115 @@ export const SaleDetailModal = ({
               </div>
             </div>
 
-            {commentsQuery.isLoading ? (
-              <Skeleton className="h-24 w-full" />
-            ) : commentsQuery.isError ? (
-              <ErrorState
-                error={commentsQuery.error}
-                onRetry={() => void commentsQuery.refetch()}
-                compact
-              />
-            ) : commentsQuery.data?.length ? (
-              <ol className="divide-y divide-line rounded-xl border border-line bg-elevated/10">
-                {commentsQuery.data.map((comment: SaleComment) => (
-                  <li key={comment.id} className="flex items-start gap-3 p-4">
-                    <Avatar
-                      name={comment.author?.name ?? 'Usuario'}
-                      src={comment.author?.avatarUrl ?? null}
-                      size="sm"
-                      className="mt-0.5 shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-semibold text-ink">
-                          {comment.author?.name ?? 'Usuario'}
-                        </span>
-                        <span className="text-[11px] text-muted">
-                          {formatDateTime(comment.createdAt)}
-                        </span>
-                      </div>
-                      <p className="mt-1 whitespace-pre-line text-sm leading-5 text-ink">
-                        {comment.body}
-                      </p>
-                      {comment.files?.length ? (
-                        <ul className="mt-2 flex flex-wrap gap-2">
-                          {comment.files.map((file) => {
-                            const FileTypeIcon = /\.(zip|rar|7z|tar|gz)$/i.test(
-                              file.originalName,
-                            )
-                              ? FileArchive
-                              : /\.(png|jpe?g|gif|webp|svg)$/i.test(file.originalName)
-                              ? Image
-                              : FileIcon;
-                            const canDeleteFile =
-                              user?.role === 'ADMIN' || file.uploadedById === user?.id;
-                            return (
-                              <li
-                                key={file.id}
-                                className="flex max-w-full items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2"
-                              >
-                                <FileTypeIcon className="h-4 w-4 shrink-0 text-muted" />
-                                <div className="min-w-0">
-                                  <p
-                                    className="max-w-[220px] truncate text-xs font-medium text-ink"
-                                    title={file.originalName}
-                                  >
-                                    {file.originalName}
-                                  </p>
-                                  <p className="text-[10px] text-muted">{formatBytes(file.size)}</p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => void onDownloadFile(file)}
-                                  className="focus-ring rounded-md p-1.5 text-muted hover:bg-elevated hover:text-ink"
-                                  aria-label={`Descargar ${file.originalName}`}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-ink">Historial de comentarios</h3>
+                <span className="text-xs text-muted">{commentsQuery.data?.length ?? 0}</span>
+              </div>
+              {commentsQuery.isLoading ? (
+                <Skeleton className="h-24 w-full" />
+              ) : commentsQuery.isError ? (
+                <ErrorState
+                  error={commentsQuery.error}
+                  onRetry={() => void commentsQuery.refetch()}
+                  compact
+                />
+              ) : commentsQuery.data?.length ? (
+                <ol className="space-y-3">
+                  {commentsQuery.data.map((comment: SaleComment) => (
+                    <li
+                      key={comment.id}
+                      className="flex items-start gap-3 rounded-xl border border-line bg-elevated/10 p-4"
+                    >
+                      <Avatar
+                        name={comment.author?.name ?? 'Usuario'}
+                        src={comment.author?.avatarUrl ?? null}
+                        size="sm"
+                        className="mt-0.5 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-ink">
+                            {comment.author?.name ?? 'Usuario'}
+                          </span>
+                          <span className="text-[11px] text-muted">
+                            {formatDateTime(comment.createdAt)}
+                          </span>
+                        </div>
+                        <p className="mt-1 whitespace-pre-line text-sm leading-5 text-ink">
+                          {comment.body}
+                        </p>
+                        {comment.files?.length ? (
+                          <ul className="mt-2 flex flex-wrap gap-2">
+                            {comment.files.map((file) => {
+                              const FileTypeIcon = /\.(zip|rar|7z|tar|gz)$/i.test(
+                                file.originalName,
+                              )
+                                ? FileArchive
+                                : /\.(png|jpe?g|gif|webp|svg)$/i.test(file.originalName)
+                                  ? Image
+                                  : FileIcon;
+                              const canDeleteFile =
+                                user?.role === 'ADMIN' || file.uploadedById === user?.id;
+                              return (
+                                <li
+                                  key={file.id}
+                                  className="flex max-w-full items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2"
                                 >
-                                  <Download className="h-4 w-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => void onPreviewFile(file)}
-                                  className="focus-ring rounded-md p-1.5 text-muted hover:bg-elevated hover:text-ink"
-                                  aria-label={`Vista previa de ${file.originalName}`}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </button>
-                                {canDeleteFile ? (
+                                  <FileTypeIcon className="h-4 w-4 shrink-0 text-muted" />
+                                  <div className="min-w-0">
+                                    <p
+                                      className="max-w-[220px] truncate text-xs font-medium text-ink"
+                                      title={file.originalName}
+                                    >
+                                      {file.originalName}
+                                    </p>
+                                    <p className="text-[10px] text-muted">
+                                      {formatBytes(file.size)}
+                                    </p>
+                                  </div>
                                   <button
                                     type="button"
-                                    onClick={() => void onDeleteFile(file)}
-                                    className="focus-ring rounded-md p-1.5 text-muted hover:bg-rose-500/10 hover:text-rose-500"
-                                    aria-label={`Eliminar ${file.originalName}`}
+                                    onClick={() => void onDownloadFile(file)}
+                                    className="focus-ring rounded-md p-1.5 text-muted hover:bg-elevated hover:text-ink"
+                                    aria-label={`Descargar ${file.originalName}`}
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Download className="h-4 w-4" />
                                   </button>
-                                ) : null}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="rounded-xl border border-dashed border-line px-4 py-6 text-center text-sm text-muted">
-                Todavía no hay comentarios. Agrega el primero para iniciar el seguimiento.
-              </p>
-            )}
+                                  <button
+                                    type="button"
+                                    onClick={() => void onPreviewFile(file)}
+                                    className="focus-ring rounded-md p-1.5 text-muted hover:bg-elevated hover:text-ink"
+                                    aria-label={`Vista previa de ${file.originalName}`}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </button>
+                                  {canDeleteFile ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => void onDeleteFile(file)}
+                                      className="focus-ring rounded-md p-1.5 text-muted hover:bg-rose-500/10 hover:text-rose-500"
+                                      aria-label={`Eliminar ${file.originalName}`}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  ) : null}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="rounded-xl border border-dashed border-line px-4 py-6 text-center text-sm text-muted">
+                  Todavía no hay comentarios. Agrega el primero para iniciar el seguimiento.
+                </p>
+              )}
+            </div>
           </section>
-
-          <p className="flex items-center gap-1.5 text-[11px] text-muted">
-            <Target className="h-3.5 w-3.5" />
-            {canManage
-              ? 'Tienes permiso para gestionar esta venta.'
-              : 'Solo lectura: esta venta pertenece a otro responsable.'}
-          </p>
         </div>
       )}
     </Modal>
