@@ -98,8 +98,12 @@ export const LoginPage = () => {
       <ThemeToggle className="absolute right-4 top-4 z-20 border border-white/60 bg-white/70 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5" />
 
       <div className="relative z-10 w-full max-w-4xl animate-login-scale overflow-hidden rounded-2xl bg-white shadow-xl shadow-indigo-200/40 ring-1 ring-black/5 dark:bg-slate-900 dark:shadow-black/40 dark:ring-white/10">
-        <div className="flex">
-          <section className="relative hidden w-1/2 overflow-hidden border-r border-gray-100 md:block dark:border-white/10">
+        <div className="flex flex-col lg:flex-row">
+          {/* Sección de imagen (solo visible en tablets y desktop) */}
+          <section
+            className="relative hidden lg:flex w-full lg:w-1/2 overflow-hidden border-r border-white/10 dark:border-white/10"
+            aria-hidden="true"
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-indigo-100 dark:from-black dark:via-slate-950 dark:to-indigo-950">
               <LoginDotMap />
 
@@ -120,7 +124,7 @@ export const LoginPage = () => {
                 <img
                   src="/login-brand.png"
                   alt={brand.product}
-                  className="w-full max-w-[300px] animate-login-up select-none drop-shadow-sm"
+                  className="w-full max-w-[300px] lg:max-w-[380px] animate-login-up select-none drop-shadow-sm"
                   style={{ animationDelay: '220ms' }}
                   draggable={false}
                 />
@@ -138,8 +142,9 @@ export const LoginPage = () => {
             </div>
           </section>
 
-          <section className="flex w-full flex-col justify-center bg-white p-5 sm:p-10 md:w-1/2 dark:bg-slate-900">
-            <div className="mx-auto w-full max-w-[380px]">
+          {/* Sección del formulario */}
+          <section className="flex w-full flex-col justify-center bg-white p-4 sm:p-6 lg:p-10 dark:bg-slate-900">
+            <div className="mx-auto w-full max-w-[380px] lg:max-w-[420px]">
               <div className="animate-login-up">
                 <h1 className="text-2xl font-bold tracking-tight text-gray-800 sm:text-3xl dark:text-slate-100">
                   Bienvenido de nuevo
@@ -155,8 +160,8 @@ export const LoginPage = () => {
                     className={cn(
                       'overflow-hidden rounded-lg',
                       googleLoading && 'pointer-events-none opacity-60',
-                    )}
-                  >
+                    )}>
+
                     <GoogleSignInButton
                       clientId={googleStatus.data?.clientId ?? ''}
                       onCredential={(credential) => void onGoogle(credential)}
