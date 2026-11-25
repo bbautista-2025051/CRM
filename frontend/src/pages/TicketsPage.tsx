@@ -288,14 +288,11 @@ export const TicketsPage = () => {
                     >
                       <td>
                         <div className="min-w-0 max-w-[220px]">
-                          <div className="flex items-center gap-2">
-                            <Ticket className="h-4 w-4 shrink-0 text-brand" />
-                            <span className="truncate font-mono text-sm font-semibold text-brand-strong dark:text-brand">
-                              {sale.ticketNumber?.trim() || 'Sin número'}
-                            </span>
-                          </div>
-                          <span className="mt-0.5 block truncate font-mono text-[11px] text-muted">
+                          <span className="block truncate text-sm font-semibold text-brand-strong hover:underline dark:text-brand">
                             {sale.opportunity?.name ?? sale.saleNumber}
+                          </span>
+                          <span className="mt-0.5 block font-mono text-[11px] text-muted">
+                            {sale.saleNumber}
                           </span>
                         </div>
                       </td>
