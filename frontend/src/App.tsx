@@ -190,6 +190,14 @@ export const App = () => (
               </AdminRoute>
             }
           />
+          <Route
+            path="users/:id/editar"
+            element={
+              <AdminRoute>
+                <UserDetailPage />
+              </AdminRoute>
+            }
+          />
           <Route path="activity" element={<ActivityPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />

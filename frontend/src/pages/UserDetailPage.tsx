@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ShieldCheck, UserRound } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useAuth } from '@/providers/AuthProvider';
@@ -13,14 +14,23 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { UserStatusBadge } from '@/components/ui/StatusBadges';
+import { UserEditModal } from '@/components/users/UserEditModal';
 import type { PublicUser } from '@/types';
 
 export const UserDetailPage = () => {
   usePageTitle('Detalle de usuario');
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const userId = id;
+
+  const [editing, setEditing] = useState<boolean>(false);
+
+  // Abrir el modal de edición automáticamente si se accede por /users/:id/editar
+  useEffect(() => {
+    setEditing(location.pathname.endsWith('/editar'));
+  }, [location.pathname]);
 
   const query = useQuery({
     queryKey: ['users', 'detail', userId],
@@ -50,7 +60,7 @@ export const UserDetailPage = () => {
           </Button>
           {user && isAdmin && !isSelf ? (
             <Button
-              onClick={() => navigate(`/users/${user.id}/editar`)}
+              onClick={() => setEditing(true)}
               leftIcon={<ShieldCheck className="h-4 w-4" />}
             >
               Editar usuario
@@ -105,7 +115,7 @@ export const UserDetailPage = () => {
               <div className="flex items-end gap-2">
                 {isAdmin && !isSelf ? (
                   <Button
-                    onClick={() => navigate(`/users/${user.id}/editar`)}
+                    onClick={() => setEditing(true)}
                     leftIcon={<ShieldCheck className="h-4 w-4" />}
                   >
                     Editar
@@ -156,6 +166,12 @@ export const UserDetailPage = () => {
           </div>
         </div>
       )}
+      <UserEditModal
+        open={editing}
+        onClose={() => setEditing(false)}
+        user={user ?? null}
+        currentUserId={currentUser?.id}
+      />
     </div>
   );
 };
