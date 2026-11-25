@@ -83,6 +83,12 @@ salesRouter.get(
   controller.downloadFile,
 );
 
+salesRouter.get(
+  '/:id/files/:fileId/preview',
+  validate({ params: saleFileParamsSchema }),
+  controller.previewFile,
+);
+
 salesRouter.delete(
   '/:id/files/:fileId',
   csrfProtection,

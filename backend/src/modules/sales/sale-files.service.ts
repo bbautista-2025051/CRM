@@ -1,7 +1,7 @@
 import { Prisma, type User } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { logActivity } from '../../utils/activity';
-import { readProjectFile, removeProjectFile } from '../../middlewares/upload';
+import { readProjectFile, removeProjectFile, validateFileIntegrity } from '../../middlewares/upload';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../utils/errors';
 
 const saleFileSelect = {
@@ -155,6 +155,10 @@ export const uploadSaleFile = async (
   actor: User,
 ) => {
   const sale = await findSale(saleId);
+
+  // Validar que el archivo no esté corrupto y coincida con su tipo declarado.
+  validateFileIntegrity(file.data, file.mimeType, file.originalName);
+
   const created = await prisma.saleFile.create({
     data: {
       saleId,

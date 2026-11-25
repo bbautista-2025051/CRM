@@ -81,6 +81,11 @@ opportunitiesRouter.get(
   validate({ params: opportunityFileParamsSchema }),
   controller.downloadFile,
 );
+opportunitiesRouter.get(
+  '/:id/files/:fileId/preview',
+  validate({ params: opportunityFileParamsSchema }),
+  controller.previewFile,
+);
 opportunitiesRouter.delete(
   '/:id/files/:fileId',
   csrfProtection,

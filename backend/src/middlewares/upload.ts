@@ -17,6 +17,87 @@ const extFromName = (name: string): string => {
 const sanitizeFileName = (name: string): string =>
   (name.replace(WINDOWS_RESERVED, '_').trim() || 'archivo').slice(0, 180);
 
+// Firmas binarias (magic bytes) por tipo de archivo para detectar archivos corruptos.
+// Cada entrada: [extensiones, array de posibles firmas válidas (offset, bytes)]
+const FILE_SIGNATURES: Record<
+  string,
+  Array<{ offset: number; bytes: number[] }>
+> = {
+  pdf: [{ offset: 0, bytes: [0x25, 0x50, 0x44, 0x46] }], // %PDF
+  zip: [{ offset: 0, bytes: [0x50, 0x4b, 0x03, 0x04] }], // PK.. (ZIP, docx, xlsx, pptx, etc.)
+  docx: [{ offset: 0, bytes: [0x50, 0x4b, 0x03, 0x04] }],
+  xlsx: [{ offset: 0, bytes: [0x50, 0x4b, 0x03, 0x04] }],
+  pptx: [{ offset: 0, bytes: [0x50, 0x4b, 0x03, 0x04] }],
+  jpg: [{ offset: 0, bytes: [0xff, 0xd8, 0xff] }],
+  jpeg: [{ offset: 0, bytes: [0xff, 0xd8, 0xff] }],
+  png: [{ offset: 0, bytes: [0x89, 0x50, 0x4e, 0x47] }],
+  gif: [{ offset: 0, bytes: [0x47, 0x49, 0x46, 0x38] }],
+  webp: [{ offset: 8, bytes: [0x57, 0x45, 0x42, 0x50] }], // RIFF....WEBP
+  zip2: [{ offset: 0, bytes: [0x50, 0x4b, 0x05, 0x06] }], // ZIP vacío
+};
+
+const extensionFromMime = (mimeType: string): string | null => {
+  const map: Record<string, string> = {
+    'application/pdf': 'pdf',
+    'application/zip': 'zip',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'text/plain': 'txt',
+    'text/csv': 'csv',
+  };
+  return map[mimeType] ?? null;
+};
+
+/**
+ * Verifica que el contenido binario del archivo coincida con su tipo declarado.
+ * Lanza BadRequestError si el archivo parece corrupto o su firma no coincide.
+ */
+export const validateFileIntegrity = (
+  buffer: Buffer,
+  mimeType: string,
+  originalName: string,
+): void => {
+  // Archivos de texto y CSV no tienen firma binaria confiable; solo verificamos que no estén vacíos.
+  if (mimeType.startsWith('text/') || mimeType === 'application/csv') {
+    if (buffer.length === 0) {
+      throw new BadRequestError('El archivo está vacío');
+    }
+    return;
+  }
+
+  const ext = extensionFromMime(mimeType);
+  const fileExt = originalName
+    .toLowerCase()
+    .split('.')
+    .pop() ?? '';
+  const signatureKey = ext ?? fileExt;
+  const signatures = FILE_SIGNATURES[signatureKey];
+
+  if (!signatures || signatures.length === 0) {
+    // Tipo de archivo no reconocido: no bloqueamos, solo advertimos si está vacío.
+    if (buffer.length === 0) {
+      throw new BadRequestError('El archivo está vacío');
+    }
+    return;
+  }
+
+  const isValid = signatures.some((sig) => {
+    if (buffer.length < sig.offset + sig.bytes.length) return false;
+    return sig.bytes.every((b, i) => buffer[sig.offset + i] === b);
+  });
+
+  if (!isValid) {
+    throw new BadRequestError(
+      `El archivo "${originalName}" parece estar corrupto o no coincide con su tipo`,
+    );
+  }
+};
+
 // Los archivos de proyecto se mantienen en memoria y se persisten en la base
 // de datos (columna project_files.data). Así sobreviven a reinicios y a
 // despliegues con sistema de archivos efímero.

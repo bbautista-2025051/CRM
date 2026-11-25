@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Download,
+  Eye,
   File as FileIcon,
   FileArchive,
   FileImage,
@@ -249,6 +250,18 @@ export const SaleDetailModal = ({
     } catch (error) {
       toastError(
         'No se pudo descargar el archivo',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
+      );
+    }
+  };
+
+  const onPreviewFile = async (file: SaleFile) => {
+    try {
+      const url = salesApi.previewFile(file.saleId, file.id);
+      window.open(url, '_blank');
+    } catch (error) {
+      toastError(
+        'No se pudo previsualizar el archivo',
         error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
       );
     }
@@ -674,6 +687,14 @@ export const SaleDetailModal = ({
                                   aria-label={`Descargar ${file.originalName}`}
                                 >
                                   <Download className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => void onPreviewFile(file)}
+                                  className="focus-ring rounded-md p-1.5 text-muted hover:bg-elevated hover:text-ink"
+                                  aria-label={`Vista previa de ${file.originalName}`}
+                                >
+                                  <Eye className="h-4 w-4" />
                                 </button>
                                 {canDeleteFile ? (
                                   <button

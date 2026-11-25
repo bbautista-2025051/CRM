@@ -80,6 +80,11 @@ projectsRouter.get(
   validate({ params: projectFileParamsSchema }),
   controller.downloadFile,
 );
+projectsRouter.get(
+  '/:id/files/:fileId/preview',
+  validate({ params: projectFileParamsSchema }),
+  controller.previewFile,
+);
 projectsRouter.post(
   '/:id/files',
   csrfProtection,

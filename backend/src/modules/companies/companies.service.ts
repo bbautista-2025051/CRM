@@ -1,6 +1,7 @@
 import { Prisma, type User } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { logActivity } from '../../utils/activity';
+import { validateFileIntegrity } from '../../middlewares/upload';
 import { ForbiddenError, NotFoundError } from '../../utils/errors';
 import {
   buildOrderBy,
@@ -321,6 +322,8 @@ export const uploadCompanyFile = async (
   if (!company) {
     throw new NotFoundError('La empresa no existe');
   }
+
+  validateFileIntegrity(file.data, file.mimeType, file.originalName);
 
   const created = await prisma.companyFile.create({
     data: {

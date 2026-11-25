@@ -2,7 +2,7 @@ import { Prisma, type User } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { logActivity } from '../../utils/activity';
 import { createTaskAssignmentNotification } from '../../utils/notifications';
-import { readProjectFile, removeProjectFile } from '../../middlewares/upload';
+import { readProjectFile, removeProjectFile, validateFileIntegrity } from '../../middlewares/upload';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../utils/errors';
 import {
   buildOrderBy,
@@ -630,6 +630,8 @@ export const uploadProjectFile = async (
   if (!project) {
     throw new NotFoundError('El proyecto no existe');
   }
+
+  validateFileIntegrity(file.data, file.mimeType, file.originalName);
 
   const created = await prisma.projectFile.create({
     data: {

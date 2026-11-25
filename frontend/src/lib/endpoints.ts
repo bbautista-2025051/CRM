@@ -107,6 +107,8 @@ export const companiesApi = {
     api.delete<void>(`/api/companies/${companyId}/files/${fileId}`),
   downloadFileUrl: (companyId: string, fileId: string) =>
     `/api/companies/${companyId}/files/${fileId}/download`,
+  previewFileUrl: (companyId: string, fileId: string) =>
+    `/api/companies/${companyId}/files/${fileId}/preview`,
 };
 
 export const clientsApi = {
@@ -172,6 +174,8 @@ export const opportunitiesApi = {
     api.delete<void>(`/api/opportunities/${id}/files/${fileId}`),
   downloadFile: (id: string, fileId: string) =>
     download(`/api/opportunities/${id}/files/${fileId}/download`),
+  previewFile: (id: string, fileId: string) =>
+    download(`/api/opportunities/${id}/files/${fileId}/preview`),
   create: (payload: Record<string, unknown>) =>
     api.post<DataEnvelope<Opportunity>>('/api/opportunities', payload),
   update: (id: string, payload: Record<string, unknown>) =>
@@ -221,6 +225,8 @@ export const salesApi = {
     api.delete<void>(`/api/sales/${id}/files/${fileId}`),
   downloadFile: (id: string, fileId: string) =>
     download(`/api/sales/${id}/files/${fileId}/download`),
+  previewFile: (id: string, fileId: string) =>
+    `/api/sales/${id}/files/${fileId}/preview`,
   create: (payload: Record<string, unknown>) =>
     api.post<DataEnvelope<Sale>>('/api/sales', payload),
   update: (id: string, payload: Record<string, unknown>) =>
@@ -274,6 +280,8 @@ export const projectsApi = {
     api.delete<void>(`/api/projects/${projectId}/files/${fileId}`),
   downloadFile: (projectId: string, fileId: string) =>
     download(`/api/projects/${projectId}/files/${fileId}/download`),
+  previewFile: (projectId: string, fileId: string) =>
+    download(`/api/projects/${projectId}/files/${fileId}/preview`),
 };
 
 export const teamApi = {

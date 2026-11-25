@@ -115,6 +115,26 @@ export const downloadFile = asyncHandler(async (req: Request, res: Response) => 
   res.status(200).end(file.data);
 });
 
+export const previewFile = asyncHandler(async (req: Request, res: Response) => {
+  const file = await saleFilesService.getFileForDownload(
+    req.validated.params.id,
+    req.validated.params.fileId,
+  );
+  const encodedName = encodeURIComponent(file.originalName).replace(
+    /['()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+  res.setHeader('Content-Type', file.mimeType || 'application/octet-stream');
+  res.setHeader(
+    'Content-Disposition',
+    `inline; filename*=UTF-8''${encodedName}`,
+  );
+  res.setHeader('Content-Length', file.data.length);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.status(200).end(file.data);
+});
+
 export const removeFile = asyncHandler(async (req: Request, res: Response) => {
   if (!req.auth) return;
   await saleFilesService.deleteFile(

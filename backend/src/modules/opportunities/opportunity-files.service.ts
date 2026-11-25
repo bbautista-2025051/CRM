@@ -1,6 +1,7 @@
 import { Prisma, type User } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { logActivity } from '../../utils/activity';
+import { validateFileIntegrity } from '../../middlewares/upload';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../utils/errors';
 
 const opportunityFileSelect = {
@@ -102,6 +103,7 @@ export const uploadFile = async (
   actor: User,
 ) => {
   const opportunity = await findOpportunity(opportunityId);
+  validateFileIntegrity(file.data, file.mimeType, file.originalName);
   const created = await prisma.opportunityFile.create({
     data: {
       opportunityId,

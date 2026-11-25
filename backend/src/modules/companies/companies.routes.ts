@@ -68,6 +68,11 @@ companiesRouter.get(
   validate({ params: companyFileParamsSchema }),
   controller.downloadFile,
 );
+companiesRouter.get(
+  '/:id/files/:fileId/preview',
+  validate({ params: companyFileParamsSchema }),
+  controller.previewFile,
+);
 companiesRouter.post(
   '/:id/files',
   csrfProtection,
