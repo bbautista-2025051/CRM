@@ -333,6 +333,7 @@ model Sale {
   companyId     String?    @map("company_id") @db.Uuid
   clientId      String?    @map("client_id") @db.Uuid
   opportunityId String?    @unique @map("opportunity_id") @db.Uuid
+  projectId     String?    @map("project_id") @db.Uuid
   ownerId       String     @map("owner_id") @db.Uuid
   saleDate      DateTime   @map("sale_date") @db.Date
   amount        Decimal    @db.Decimal(14, 2)
@@ -348,6 +349,7 @@ model Sale {
   company     Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
   client      Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
   opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  project     Project?    @relation("SaleProject", fields: [projectId], references: [id], onDelete: SetNull)
   owner       User        @relation("SaleOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   comments    SaleComment[]
   files       SaleFile[]
@@ -355,6 +357,7 @@ model Sale {
   @@index([companyId])
   @@index([clientId])
   @@index([ownerId])
+  @@index([projectId])
   @@index([saleDate])
   @@index([status])
   @@map("sales")
@@ -424,6 +427,7 @@ model Project {
   tasks       ProjectTask[]
   files       ProjectFile[]
   comments    ProjectComment[]
+  sales       Sale[]         @relation("SaleProject")
 
   @@index([companyId])
   @@index([managerId])

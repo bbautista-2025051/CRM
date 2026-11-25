@@ -480,6 +480,17 @@ export const listProjectComments = async (projectId: string) => {
   const project = await findProjectWithSale(projectId);
   const linkedSaleId = project.opportunity?.sale?.id;
 
+  // También buscar si existe una venta vinculada directamente a este proyecto
+  // (creada automáticamente al confirmar la venta).
+  let saleFromDirectLink: { id: string } | null = null;
+  if (!linkedSaleId) {
+    saleFromDirectLink = await prisma.sale.findFirst({
+      where: { projectId },
+      select: { id: true },
+    });
+  }
+  const finalSaleId = linkedSaleId ?? saleFromDirectLink?.id;
+
   const [projectComments, saleComments] = await Promise.all([
     prisma.projectComment.findMany({
       where: { projectId },
@@ -489,9 +500,9 @@ export const listProjectComments = async (projectId: string) => {
         files: { select: projectFileSelect },
       },
     }),
-    linkedSaleId
+    finalSaleId
       ? prisma.saleComment.findMany({
-          where: { saleId: linkedSaleId },
+          where: { saleId: finalSaleId },
           orderBy: { createdAt: 'desc' },
           include: {
             author: { select: { id: true, name: true, avatarUrl: true } },

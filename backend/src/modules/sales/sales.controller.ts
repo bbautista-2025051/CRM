@@ -47,6 +47,12 @@ export const cancel = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json({ data: sale, message: 'Venta cancelada correctamente' });
 });
 
+export const confirm = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  const sale = await salesService.updateSale(req.validated.params.id, { status: 'CONFIRMED' }, req.auth.user);
+  res.status(200).json({ data: sale, message: 'Venta confirmada correctamente' });
+});
+
 export const updateTicket = asyncHandler(async (req: Request, res: Response) => {
   if (!req.auth) return;
   const sale = await salesService.updateSaleTicket(

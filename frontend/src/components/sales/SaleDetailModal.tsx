@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Building2,
   CalendarDays,
+  CheckCircle2,
   Download,
   File as FileIcon,
   FileArchive,
@@ -286,6 +287,24 @@ export const SaleDetailModal = ({
   const canManageFile = (file: SaleFile) =>
     user?.role === 'ADMIN' || file.uploadedById === user?.id;
 
+  const confirmSale = useMutation({
+    mutationFn: (id: string) => salesApi.confirm(id),
+    onSuccess: () => {
+      success(
+        'Venta confirmada',
+        'La venta ha sido confirmada y se ha creado su proyecto asociado automáticamente.',
+      );
+      void queryClient.invalidateQueries({ queryKey: ['sales', 'detail', saleId] });
+      void queryClient.invalidateQueries({ queryKey: ['sales'] });
+    },
+    onError: (error) => {
+      toastError(
+        'No se pudo confirmar',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
+      );
+    },
+  });
+
   const canManage = sale
     ? user?.role === 'ADMIN' || (sale.ownerId && sale.ownerId === user?.id)
     : false;
@@ -320,6 +339,14 @@ export const SaleDetailModal = ({
           <Button variant="secondary" onClick={onClose}>
             Cerrar
           </Button>
+          {sale && sale.status === 'PENDING' && canManage ? (
+            <Button
+              onClick={() => confirmSale.mutate(sale.id)}
+              leftIcon={<CheckCircle2 className="h-4 w-4" />}
+            >
+              Confirmar venta
+            </Button>
+          ) : null}
           {sale && canManage ? (
             <Button onClick={() => onEdit(sale)} leftIcon={<Pencil className="h-4 w-4" />}>
               Editar

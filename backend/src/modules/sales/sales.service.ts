@@ -18,6 +18,7 @@ import {
   buildPaginationMeta,
   skipTake,
 } from '../../utils/pagination';
+import { generateProjectNumber } from '../projects/projects.service';
 
 const isAdmin = (role: string) => role === 'ADMIN';
 const isGerente = (role: string) => role === 'GERENTE';
@@ -504,6 +505,33 @@ export const updateSale = async (
       opportunity: { select: { id: true, name: true } },
     },
   });
+
+  /**
+   * Al confirmar una venta que no tiene proyecto, se crea automáticamente
+   * un proyecto con el nombre de la venta y se vincula a esta.
+   * Así los comentarios del proyecto y de la venta quedan conectados.
+   */
+  if (
+    input.status === 'CONFIRMED' &&
+    existing.status !== 'CONFIRMED' &&
+    !sale.projectId
+  ) {
+    const projectName = sale.opportunity?.name ?? sale.saleNumber;
+    const project = await prisma.project.create({
+      data: {
+        name: projectName,
+        companyId: sale.companyId ?? null,
+        managerId: sale.ownerId,
+        status: 'ACTIVE',
+        number: await generateProjectNumber(prisma as unknown as Prisma.TransactionClient),
+      },
+    });
+
+    await prisma.sale.update({
+      where: { id },
+      data: { projectId: project.id },
+    });
+  }
 
   await logActivity({
     userId: actor.id,

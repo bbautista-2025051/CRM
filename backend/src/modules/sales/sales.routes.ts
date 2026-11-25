@@ -47,6 +47,13 @@ salesRouter.post(
   controller.cancel,
 );
 
+salesRouter.post(
+  '/:id/confirm',
+  csrfProtection,
+  validate({ params: idParamSchema }),
+  controller.confirm,
+);
+
 // Comment routes
 salesRouter.get(
   '/:id/comments',
