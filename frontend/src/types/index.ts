@@ -75,6 +75,7 @@ export interface Company {
   website: string | null;
   status: CompanyStatus;
   notes: string | null;
+  avatarUrl: string | null;
   createdById: string | null;
   createdAt: string;
   updatedAt: string;
@@ -106,7 +107,7 @@ export interface Client {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
-  company?: { id: string; name: string } | null;
+  company?: { id: string; name: string; avatarUrl?: string | null } | null;
   _count?: { opportunities: number; sales: number };
 }
 
@@ -142,7 +143,7 @@ export interface Opportunity {
   lostAt: string | null;
   createdAt: string;
   updatedAt: string;
-  company?: { id: string; name: string } | null;
+  company?: { id: string; name: string; avatarUrl?: string | null } | null;
   client?: { id: string; firstName: string; lastName: string; email?: string } | null;
   owner?: { id: string; name: string; email?: string; avatarUrl?: string | null };
   sale?: { id: string; saleNumber: string; status: SaleStatus; amount?: string } | null;
@@ -213,9 +214,20 @@ export interface Sale {
   hasTicket: boolean;
   ticketNumber: string | null;
   ticketStage: TicketStage | null;
+  projectId?: string | null;
+  project?: {
+    id: string;
+    name: string;
+    number?: number | null;
+    solution?: string | null;
+    preSales?: string | null;
+    status?: ProjectStatus;
+    startDate?: string | null;
+    dueDate?: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
-  company?: { id: string; name: string } | null;
+  company?: { id: string; name: string; avatarUrl?: string | null } | null;
   client?: { id: string; firstName: string; lastName: string; email?: string } | null;
   opportunity?: {
     id: string;
@@ -333,7 +345,7 @@ export interface Project {
   completedAt?: string | null;
   createdAt: string;
   updatedAt: string;
-  company?: { id: string; name: string } | null;
+  company?: { id: string; name: string; avatarUrl?: string | null } | null;
   manager?: { id: string; name: string; email?: string; avatarUrl: string | null } | null;
   taskCounts: ProjectTaskCounts;
 }

@@ -147,6 +147,18 @@ export const getSale = async (id: string) => {
         },
       },
       owner: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      project: {
+        select: {
+          id: true,
+          name: true,
+          number: true,
+          solution: true,
+          preSales: true,
+          status: true,
+          startDate: true,
+          dueDate: true,
+        },
+      },
     },
   });
   if (!sale) throw new NotFoundError('La venta no existe');

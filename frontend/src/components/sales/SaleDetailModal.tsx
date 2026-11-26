@@ -31,9 +31,9 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useConfirm } from '@/providers/ConfirmProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { salesApi, unwrap } from '@/lib/endpoints';
-import { ApiError } from '@/lib/api';
-import { formatBytes, formatDate, formatDateTime, formatMoney } from '@/lib/format';
-import type { Sale, SaleComment, SaleFile } from '@/types';
+import { ApiError, resolveAssetUrl } from '@/lib/api';
+import { formatBytes, formatDate, formatDateTime, formatMoney, initials } from '@/lib/format';
+import type { Sale, SaleComment, SaleFile, TicketStage } from '@/types';
 
 const extFromName = (name: string): string => {
   const index = name.lastIndexOf('.');
@@ -74,21 +74,26 @@ interface SaleFieldsDraft {
 export const saleNumberLabel = (number?: string | null): string =>
   number ? `V-${number}` : '—';
 
-const RowInline = ({
+const TICKET_STAGE_LABELS: Record<TicketStage, string> = {
+  IN_PROGRESS: 'En proceso',
+  ACCEPTED: 'Aceptado',
+  REJECTED: 'Rechazado',
+};
+
+const Field = ({
   label,
-  icon: Icon,
+  className,
   children,
 }: {
   label: string;
-  icon?: typeof CalendarDays;
-  children: React.ReactNode;
+  className?: string;
+  children: ReactNode;
 }) => (
-  <div className="flex items-center gap-3 px-4 py-2.5">
-    {Icon ? <Icon className="h-4 w-4 shrink-0 text-muted" /> : null}
-    <div className="min-w-0 flex-1">
-      <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
-      <div className="mt-0.5 text-sm text-ink">{children}</div>
-    </div>
+  <div className={className}>
+    <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+      {label}
+    </dt>
+    <dd className="mt-1.5 text-sm text-ink">{children}</dd>
   </div>
 );
 
@@ -376,8 +381,56 @@ export const SaleDetailModal = ({
       ) : query.isError || !sale ? (
         <ErrorState error={query.error} onRetry={() => void query.refetch()} compact />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-          <section className="h-fit space-y-5 rounded-xl border border-line bg-elevated/20 p-4 sm:p-5">
+        <div className="space-y-5">
+          {/* Cabecera: imagen + nombre de la empresa, estado y ticket */}
+          <div className="flex flex-col gap-4 rounded-xl border border-line bg-elevated/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-line bg-surface sm:h-20 sm:w-20">
+                {sale.company?.avatarUrl ? (
+                  <img
+                    src={resolveAssetUrl(sale.company.avatarUrl)}
+                    alt={sale.company.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : sale.company?.name ? (
+                  <span className="font-display text-xl font-bold tracking-tight text-ink">
+                    {initials(sale.company.name)}
+                  </span>
+                ) : (
+                  <Building2 className="h-7 w-7 text-muted" />
+                )}
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+                  Empresa
+                </p>
+                <h3 className="mt-0.5 truncate text-lg font-semibold text-ink">
+                  {sale.company ? (
+                    <a
+                      href={`/companies/${sale.company.id}`}
+                      className="hover:text-brand-strong hover:underline dark:hover:text-brand"
+                    >
+                      {sale.company.name}
+                    </a>
+                  ) : (
+                    'Sin empresa'
+                  )}
+                </h3>
+                <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-muted">
+                  <UserRound className="h-3.5 w-3.5 shrink-0" />
+                  {sale.client ? (
+                    <a
+                      href={`/clients/${sale.client.id}`}
+                      className="truncate hover:text-brand-strong hover:underline dark:hover:text-brand"
+                    >
+                      {sale.client.firstName} {sale.client.lastName}
+                    </a>
+                  ) : (
+                    'Sin cliente'
+                  )}
+                </p>
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <SaleStatusBadge status={sale.status} />
               {sale.ticketNumber ? (
@@ -393,140 +446,112 @@ export const SaleDetailModal = ({
                 </button>
               ) : null}
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-surface p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Importe
-                </p>
-                <p className="mt-1 text-xl font-semibold tracking-tight text-ink">
-                  {formatMoney(sale.amount, sale.currency)}
-                </p>
-              </div>
-              <div className="rounded-lg bg-surface p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Moneda
-                </p>
-                <p className="mt-1 text-lg font-semibold text-ink">{sale.currency}</p>
-              </div>
-            </div>
-
-            <dl className="grid gap-x-5 gap-y-5 sm:grid-cols-2">
-              <div>
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Fecha de venta
-                </dt>
-                <dd className="mt-1.5 flex items-center gap-1.5 text-sm text-ink">
-                  <CalendarDays className="h-3.5 w-3.5 text-muted" />
-                  {formatDate(sale.saleDate)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Responsable
-                </dt>
-                <dd className="mt-1.5 flex items-center gap-2 text-sm text-ink">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+            <section className="h-fit rounded-xl border border-line bg-elevated/20 p-4 sm:p-5">
+              <h2 className="text-sm font-semibold text-ink">Datos de la venta</h2>
+              <dl className="mt-4 grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2">
+                <Field label="Vendedor">
                   {sale.owner ? (
-                    <>
-                      <Avatar
-                        name={sale.owner.name}
-                        src={sale.owner.avatarUrl}
-                        size="xs"
-                      />
-                      {sale.owner.name}
-                    </>
+                    <span className="flex items-center gap-2">
+                      <Avatar name={sale.owner.name} src={sale.owner.avatarUrl} size="xs" />
+                      <span className="truncate">{sale.owner.name}</span>
+                    </span>
                   ) : (
                     '—'
                   )}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Cliente
-                </dt>
-                <dd className="mt-1.5 flex items-center gap-1.5 text-sm text-ink">
-                  <UserRound className="h-3.5 w-3.5 text-muted" />
-                  {sale.client ? (
-                    <a
-                      href={`/clients/${sale.client.id}`}
-                      className="hover:text-brand-strong hover:underline dark:hover:text-brand"
+                </Field>
+                <Field label="No. de venta">
+                  <span className="font-mono text-[13px]">{saleNumberLabel(sale.saleNumber)}</span>
+                </Field>
+                <Field label="Etapa">
+                  {sale.ticketStage ? TICKET_STAGE_LABELS[sale.ticketStage] : '—'}
+                </Field>
+                <Field label="Estado">
+                  <SaleStatusBadge status={sale.status} />
+                </Field>
+                <Field label="Solución" className="sm:col-span-2">
+                  {sale.project?.solution ? (
+                    <span className="block whitespace-pre-line break-words leading-6">
+                      {sale.project.solution}
+                    </span>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </Field>
+                <Field label="Preventa">
+                  {sale.project?.preSales ? (
+                    <span className="break-words">{sale.project.preSales}</span>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
+                </Field>
+                <Field label="No. Ticket">
+                  {sale.ticketNumber ? (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/tickets/${sale.id}`)}
+                      className="focus-ring rounded font-mono text-[13px] text-brand-strong hover:underline dark:text-brand"
                     >
-                      {sale.client.firstName} {sale.client.lastName}
-                    </a>
+                      {sale.ticketNumber}
+                    </button>
                   ) : (
-                    '—'
+                    <span className="text-muted">—</span>
                   )}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Empresa
-                </dt>
-                <dd className="mt-1.5 flex items-center gap-1.5 text-sm text-ink">
-                  <Building2 className="h-3.5 w-3.5 text-muted" />
-                  {sale.company ? (
-                    <a
-                      href={`/companies/${sale.company.id}`}
-                      className="hover:text-brand-strong hover:underline dark:hover:text-brand"
-                    >
-                      {sale.company.name}
-                    </a>
-                  ) : (
-                    '—'
-                  )}
-                </dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Oportunidad
-                </dt>
-                <dd className="mt-1.5 flex items-center gap-1.5 text-sm text-ink">
-                  <Target className="h-3.5 w-3.5 text-muted" />
+                </Field>
+                <Field label="Importe" className="sm:col-span-2">
+                  <span className="text-xl font-semibold tracking-tight text-ink">
+                    {formatMoney(sale.amount, sale.currency)}
+                  </span>
+                </Field>
+                <Field label="Oportunidad" className="sm:col-span-2">
                   {sale.opportunity ? (
                     <a
                       href={`/negocio/oportunidad/${sale.opportunity.id}`}
-                      className="hover:text-brand-strong hover:underline dark:hover:text-brand"
+                      className="flex items-center gap-1.5 hover:text-brand-strong hover:underline dark:hover:text-brand"
                     >
+                      <Target className="h-3.5 w-3.5 text-muted" />
                       {sale.opportunity.name}
                     </a>
                   ) : (
                     <span className="text-muted">Venta manual sin oportunidad</span>
                   )}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Registrada
-                </dt>
-                <dd className="mt-1.5 text-sm text-ink">{formatDateTime(sale.createdAt)}</dd>
-              </div>
-              <div>
-                <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Última actualización
-                </dt>
-                <dd className="mt-1.5 text-sm text-ink">{formatDateTime(sale.updatedAt)}</dd>
-              </div>
-            </dl>
+                </Field>
+                <Field label="Fecha de venta">
+                  <span className="flex items-center gap-1.5">
+                    <CalendarDays className="h-3.5 w-3.5 text-muted" />
+                    {formatDate(sale.saleDate)}
+                  </span>
+                </Field>
+                <Field label="Registrada">{formatDateTime(sale.createdAt)}</Field>
+                <Field label="Última actualización" className="sm:col-span-2">
+                  {formatDateTime(sale.updatedAt)}
+                </Field>
+              </dl>
 
-            {sale.notes ? (
-              <div className="rounded-lg bg-surface p-3.5">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  Observaciones
-                </p>
-                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-ink">
-                  {sale.notes}
-                </p>
-              </div>
-            ) : null}
-            <p className="flex items-center gap-1.5 text-[11px] text-muted">
-              <Target className="h-3.5 w-3.5" />
-              {canManage
-                ? 'Tienes permiso para gestionar esta venta.'
-                : 'Solo lectura: esta venta pertenece a otro responsable.'}
-            </p>
-          </section>
+              {sale.notes ? (
+                <div className="mt-4 rounded-lg bg-surface p-3.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                    Observaciones
+                  </p>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-6 text-ink">
+                    {sale.notes}
+                  </p>
+                </div>
+              ) : null}
+              <p className="mt-4 flex items-center gap-1.5 text-[11px] text-muted">
+                <Target className="h-3.5 w-3.5" />
+                {canManage
+                  ? 'Tienes permiso para gestionar esta venta.'
+                  : 'Solo lectura: esta venta pertenece a otro responsable.'}
+              </p>
+            </section>
 
-          <section aria-labelledby="sale-comments-heading" className="space-y-4">
+          <section
+            aria-labelledby="sale-comments-heading"
+            className="h-fit space-y-4 rounded-xl border border-line bg-elevated/20 p-4 sm:p-5"
+          >
             <div>
               <h2 id="sale-comments-heading" className="text-sm font-semibold text-ink">
                 Comentarios y archivos
@@ -537,7 +562,7 @@ export const SaleDetailModal = ({
               </p>
             </div>
 
-            <div className="rounded-xl border border-line bg-elevated/20 p-4">
+            <div className="rounded-lg border border-line bg-surface p-4">
               <div className="flex items-start gap-3">
                 <Avatar
                   name={user?.name ?? ''}
@@ -738,6 +763,7 @@ export const SaleDetailModal = ({
               )}
             </div>
           </section>
+        </div>
         </div>
       )}
     </Modal>

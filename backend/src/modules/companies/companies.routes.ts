@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAdmin, requireAuth } from '../../middlewares/auth';
 import { csrfProtection } from '../../middlewares/csrf';
-import { companyFileUpload } from '../../middlewares/upload';
+import { avatarUpload, companyFileUpload } from '../../middlewares/upload';
 import { validate } from '../../middlewares/validate';
 import { idParamSchema } from '../../utils/zod';
 import * as controller from './companies.controller';
@@ -44,6 +44,20 @@ companiesRouter.delete(
   csrfProtection,
   validate({ params: idParamSchema }),
   controller.archive,
+);
+
+companiesRouter.post(
+  '/:id/avatar',
+  csrfProtection,
+  validate({ params: idParamSchema }),
+  avatarUpload.single('avatar'),
+  controller.uploadAvatar,
+);
+companiesRouter.delete(
+  '/:id/avatar',
+  csrfProtection,
+  validate({ params: idParamSchema }),
+  controller.deleteAvatar,
 );
 
 companiesRouter.get(

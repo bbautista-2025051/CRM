@@ -89,6 +89,18 @@ export const companiesApi = {
     api.patch<DataEnvelope<Company>>(`/api/companies/${id}`, payload),
   archive: (id: string) =>
     api.delete<DataEnvelope<Company> & { message: string }>(`/api/companies/${id}`),
+  uploadAvatar: (id: string, file: File) => {
+    const form = new FormData();
+    form.append('avatar', file);
+    return api.post<DataEnvelope<Company> & { message: string }>(
+      `/api/companies/${id}/avatar`,
+      form,
+    );
+  },
+  removeAvatar: (id: string) =>
+    api.delete<DataEnvelope<Company> & { message: string }>(
+      `/api/companies/${id}/avatar`,
+    ),
   listFiles: (companyId: string) =>
     api.get<DataEnvelope<CompanyFile[]>>(`/api/companies/${companyId}/files`),
   listComments: (companyId: string) =>

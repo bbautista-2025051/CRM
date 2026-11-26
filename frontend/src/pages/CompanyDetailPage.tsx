@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -8,12 +8,14 @@ import {
   ExternalLink,
   Globe2,
   Handshake,
+  ImagePlus,
   Mail,
   MapPin,
   Pencil,
   Phone,
   Plus,
   Target,
+  Trash2,
   UsersRound,
 } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
@@ -23,8 +25,14 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useOpportunityStages } from '@/hooks/queries';
 import { companiesApi, unwrap } from '@/lib/endpoints';
 import { canArchive } from '@/lib/permissions';
-import { formatDate, formatDateTime, formatMoney, formatNumber } from '@/lib/format';
-import { ApiError } from '@/lib/api';
+import {
+  formatDate,
+  formatDateTime,
+  formatMoney,
+  formatNumber,
+  initials,
+} from '@/lib/format';
+import { ApiError, resolveAssetUrl } from '@/lib/api';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Button, buttonStyles } from '@/components/ui/Button';
@@ -79,6 +87,57 @@ export const CompanyDetailPage = () => {
     },
   });
 
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [company?.avatarUrl]);
+
+  const uploadAvatar = useMutation({
+    mutationFn: (file: File) => companiesApi.uploadAvatar(id!, file),
+    onSuccess: (response) => {
+      success('Imagen actualizada', response.message);
+      void queryClient.invalidateQueries({ queryKey: ['companies'] });
+    },
+    onError: (error) => {
+      toastError(
+        'No se pudo subir la imagen',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
+      );
+    },
+  });
+
+  const removeAvatar = useMutation({
+    mutationFn: () => companiesApi.removeAvatar(id!),
+    onSuccess: (response) => {
+      success('Imagen eliminada', response.message);
+      void queryClient.invalidateQueries({ queryKey: ['companies'] });
+    },
+    onError: (error) => {
+      toastError(
+        'No se pudo eliminar la imagen',
+        error instanceof ApiError ? error.message : 'Inténtalo de nuevo.',
+      );
+    },
+  });
+
+  const onAvatarFile = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (file) uploadAvatar.mutate(file);
+  };
+
+  const onRemoveAvatar = async () => {
+    const accepted = await confirm({
+      title: 'Quitar imagen de la empresa',
+      description: 'Se eliminará el logotipo actual. Podrás subir otro cuando quieras.',
+      confirmLabel: 'Quitar imagen',
+      variant: 'danger',
+    });
+    if (accepted) removeAvatar.mutate();
+  };
+
   const onArchive = async () => {
     if (!company) return;
     const accepted = await confirm({
@@ -132,7 +191,31 @@ export const CompanyDetailPage = () => {
       <PageHeader
         title={
           <span className="flex items-center gap-3">
-            {company.name}
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadAvatar.isPending}
+              aria-label="Cambiar imagen de la empresa"
+              title="Cambiar imagen de la empresa"
+              className="focus-ring group relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-line bg-surface text-ink transition hover:border-brand disabled:cursor-wait disabled:opacity-70 sm:h-16 sm:w-16"
+            >
+              {company.avatarUrl && !avatarFailed ? (
+                <img
+                  src={resolveAssetUrl(company.avatarUrl)}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  onError={() => setAvatarFailed(true)}
+                />
+              ) : (
+                <span className="font-display text-lg font-bold tracking-tight">
+                  {initials(company.name)}
+                </span>
+              )}
+              <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-white opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+                <ImagePlus className="h-5 w-5" />
+              </span>
+            </button>
+            <span className="min-w-0 truncate">{company.name}</span>
             <CompanyStatusBadge status={company.status} />
           </span>
         }
@@ -283,6 +366,62 @@ export const CompanyDetailPage = () => {
         </Card>
 
         <div className="space-y-4 lg:col-span-4">
+          <Card>
+            <CardHeader
+              title="Imagen de la empresa"
+              description="Logotipo visible en la ficha y en las ventas"
+            />
+            <CardBody className="flex flex-col items-center gap-4">
+              <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border border-line bg-surface">
+                {company.avatarUrl && !avatarFailed ? (
+                  <img
+                    src={resolveAssetUrl(company.avatarUrl)}
+                    alt={company.name}
+                    className="h-full w-full object-cover"
+                    onError={() => setAvatarFailed(true)}
+                  />
+                ) : (
+                  <span className="font-display text-3xl font-bold tracking-tight text-ink">
+                    {initials(company.name)}
+                  </span>
+                )}
+              </span>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={onAvatarFile}
+              />
+              <div className="flex w-full flex-wrap items-center justify-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => avatarInputRef.current?.click()}
+                  loading={uploadAvatar.isPending}
+                  leftIcon={<ImagePlus className="h-4 w-4" />}
+                >
+                  Subir imagen
+                </Button>
+                {company.avatarUrl ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void onRemoveAvatar()}
+                    loading={removeAvatar.isPending}
+                    leftIcon={<Trash2 className="h-4 w-4" />}
+                  >
+                    Quitar
+                  </Button>
+                ) : null}
+              </div>
+              <p className="text-center text-[11px] leading-5 text-muted">
+                Formatos JPG, PNG o WebP. La imagen se recorta al centro para verse en forma
+                cuadrada.
+              </p>
+            </CardBody>
+          </Card>
+
           <Card>
             <CardHeader title="Resumen comercial" />
             <div className="grid grid-cols-3 divide-x divide-line border-b border-line">

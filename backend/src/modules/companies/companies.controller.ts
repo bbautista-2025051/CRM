@@ -1,7 +1,11 @@
 import type { Request, Response } from 'express';
+import { prisma } from '../../config/prisma';
+import { logActivity } from '../../utils/activity';
 import { asyncHandler } from '../../utils/asyncHandler';
-import { BadRequestError } from '../../utils/errors';
+import { BadRequestError, NotFoundError } from '../../utils/errors';
 import {
+  detectImageMime,
+  removeUploadedFile,
   uploadedFileOriginalName,
   uploadedFileStoredName,
 } from '../../middlewares/upload';
@@ -150,4 +154,79 @@ export const removeFile = asyncHandler(async (req: Request, res: Response) => {
     req.auth.user,
   );
   res.status(204).send();
+});
+
+export const uploadAvatar = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+  if (!req.file) throw new BadRequestError('Selecciona una imagen para subir');
+
+  const companyId = req.validated.params.id;
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { id: true, name: true, avatarUrl: true },
+  });
+  if (!company) throw new NotFoundError('La empresa no existe');
+
+  const mimeType = detectImageMime(req.file.buffer);
+  const data = new Uint8Array(req.file.buffer);
+
+  await prisma.companyAvatar.upsert({
+    where: { companyId },
+    create: { companyId, mimeType, data },
+    update: { mimeType, data },
+  });
+
+  // `v` cambia en cada subida para que el navegador no reutilice la imagen anterior.
+  const updated = await prisma.company.update({
+    where: { id: companyId },
+    data: { avatarUrl: `/api/company-avatars/${companyId}?v=${Date.now()}` },
+  });
+
+  // Si venía de una versión anterior que guardaba en disco, limpia ese archivo.
+  removeUploadedFile(company.avatarUrl);
+
+  await logActivity({
+    userId: req.auth.user.id,
+    action: 'COMPANY_AVATAR_UPDATE',
+    entityType: 'COMPANY',
+    entityId: companyId,
+    description: `Imagen de la empresa ${company.name} actualizada`,
+  });
+
+  res.status(200).json({
+    data: updated,
+    message: 'Imagen de la empresa actualizada',
+  });
+});
+
+export const deleteAvatar = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.auth) return;
+
+  const companyId = req.validated.params.id;
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { id: true, name: true, avatarUrl: true },
+  });
+  if (!company) throw new NotFoundError('La empresa no existe');
+
+  await prisma.companyAvatar.deleteMany({ where: { companyId } });
+  const updated = await prisma.company.update({
+    where: { id: companyId },
+    data: { avatarUrl: null },
+  });
+
+  removeUploadedFile(company.avatarUrl);
+
+  await logActivity({
+    userId: req.auth.user.id,
+    action: 'COMPANY_AVATAR_DELETE',
+    entityType: 'COMPANY',
+    entityId: companyId,
+    description: `Imagen de la empresa ${company.name} eliminada`,
+  });
+
+  res.status(200).json({
+    data: updated,
+    message: 'Imagen de la empresa eliminada',
+  });
 });

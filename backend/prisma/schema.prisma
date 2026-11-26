@@ -196,6 +196,7 @@ model Company {
   website     String?       @db.VarChar(300)
   status      CompanyStatus @default(ACTIVE)
   notes       String?       @db.Text
+  avatarUrl   String?       @map("avatar_url") @db.VarChar(300)
   createdById String?       @map("created_by_id") @db.Uuid
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
@@ -207,11 +208,24 @@ model Company {
   projects      Project[]
   files         CompanyFile[]
   comments      CompanyComment[]
+  avatar        CompanyAvatar?
 
   @@index([name])
   @@index([sector])
   @@index([status])
   @@map("companies")
+}
+
+/// Logotipo de la empresa guardado en PostgreSQL, igual que los avatares de usuario.
+model CompanyAvatar {
+  companyId String   @id @map("company_id") @db.Uuid
+  mimeType  String   @map("mime_type") @db.VarChar(50)
+  data      Bytes    @db.ByteA
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_avatars")
 }
 
 model Client {

@@ -14,6 +14,7 @@ import { globalLimiter } from './middlewares/rateLimit';
 import { requireAuth } from './middlewares/auth';
 import { apiRouter } from './routes';
 import { avatarsRouter } from './modules/avatars/avatars.routes';
+import { companyAvatarsRouter } from './modules/company-avatars/company-avatars.routes';
 
 const allowedOrigins = new Set([...env.allowedOrigins, env.appUrl]);
 
@@ -107,6 +108,7 @@ export const createApp = () => {
 
   // Avatares: público y cacheable (se monta antes del `no-store` de /api).
   app.use('/api/avatars', avatarsRouter);
+  app.use('/api/company-avatars', companyAvatarsRouter);
 
   app.use('/api', (_req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
